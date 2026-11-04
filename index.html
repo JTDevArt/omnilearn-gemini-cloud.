@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#f7f7f2">
+<title>OmniLearn AI — Belajar dengan caramu</title>
+<style>
+:root{--ink:#172b3a;--muted:#687982;--paper:#f7f7f2;--white:#fff;--line:#e7e9e4;--blue:#426b86;--blue-dark:#31566d;--blue-soft:#e7eff2;--green:#eaf1e9;--peach:#f6ebe3;--yellow:#f4efd9;--lav:#eeeaf4;--shadow:0 18px 50px rgba(27,48,60,.08);--radius:22px}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--paper);color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.55}body.dark{--ink:#e9eef0;--muted:#a9b5ba;--paper:#15232c;--white:#1e303b;--line:#344751;--blue:#8bb4cb;--blue-dark:#b3d2e0;--blue-soft:#263d49;--green:#263a33;--peach:#45352e;--yellow:#443f2b;--lav:#393449;--shadow:0 18px 50px rgba(0,0,0,.22)}button,input,select,textarea{font:inherit}button,a{-webkit-tap-highlight-color:transparent}a{color:inherit;text-decoration:none}.shell{width:min(1160px,calc(100% - 48px));margin:auto}.topbar{height:82px;display:flex;align-items:center;justify-content:space-between;gap:24px}.brand{display:flex;align-items:center;gap:10px;font-weight:850;font-size:21px;letter-spacing:-.7px}.brand-mark{width:35px;height:35px;border-radius:12px;background:var(--blue);display:grid;place-items:center;color:white;font-size:19px;transform:rotate(-5deg)}.nav{display:flex;align-items:center;gap:30px;color:var(--muted);font-size:14px;font-weight:650}.nav a:hover{color:var(--blue)}.nav-actions{display:flex;align-items:center;gap:10px}.icon-btn{width:40px;height:40px;border:1px solid var(--line);background:var(--white);border-radius:13px;cursor:pointer;color:var(--ink)}.btn{border:0;border-radius:13px;padding:12px 18px;font-weight:750;cursor:pointer;transition:.18s;display:inline-flex;align-items:center;justify-content:center;gap:8px}.btn:hover{transform:translateY(-2px)}.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}.btn-primary{background:var(--blue);color:#fff;box-shadow:0 7px 16px rgba(66,107,134,.18)}.btn-primary:hover{background:var(--blue-dark)}.btn-soft{background:var(--blue-soft);color:var(--ink)}.btn-plain{background:transparent;color:var(--ink);border:1px solid var(--line)}.menu-btn{display:none;background:none;border:0;font-size:25px;color:var(--ink)}
+.hero{padding:62px 0 72px;display:grid;grid-template-columns:1fr 1.03fr;align-items:center;gap:52px}.eyebrow{display:inline-flex;align-items:center;gap:8px;padding:7px 12px;border-radius:999px;background:var(--green);color:#52745a;font-size:11px;font-weight:850;letter-spacing:.35px}.eyebrow-dot{width:7px;height:7px;background:#79a17d;border-radius:50%}h1{font-size:clamp(42px,5.2vw,65px);line-height:1.04;letter-spacing:-3px;margin:22px 0 18px;font-weight:850;max-width:590px}h1 span{color:var(--blue);font-family:Georgia,serif;font-style:italic;font-weight:500;letter-spacing:-2px}.hero-copy{font-size:17px;color:var(--muted);max-width:490px;margin:0 0 27px}.hero-actions{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.tiny-note{font-size:12px;color:var(--muted);margin-top:15px}.hero-art{position:relative;min-height:430px;display:grid;place-items:center}.blob{position:absolute;width:380px;height:380px;border-radius:48% 52% 58% 42%/48% 42% 58% 52%;background:var(--green);right:5%;top:4%;transform:rotate(13deg)}.study-card{position:relative;width:min(100%,480px);background:var(--white);border:1px solid var(--line);border-radius:24px;padding:22px;box-shadow:var(--shadow);transform:rotate(1.2deg)}.card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}.card-title{font-weight:850;font-size:15px}.status{font-size:11px;color:#55765a;background:var(--green);padding:6px 9px;border-radius:99px;font-weight:750}.upload-mini{border:1.5px dashed #cbd7d1;background:var(--paper);border-radius:16px;padding:17px;display:flex;gap:13px;align-items:center}.file-icon{width:43px;height:47px;border-radius:11px;background:var(--blue-soft);display:grid;place-items:center;font-size:21px}.file-name{font-size:13px;font-weight:800}.file-sub{font-size:11px;color:var(--muted);margin-top:3px}.progress{height:6px;background:var(--line);border-radius:99px;margin-top:12px;overflow:hidden}.progress span{display:block;width:72%;height:100%;background:#82a18a;border-radius:99px}.mini-label{font-size:11px;color:var(--muted);font-weight:850;text-transform:uppercase;letter-spacing:1px;margin:20px 0 10px}.output-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.output{padding:13px;border-radius:14px;min-height:83px}.output:nth-child(1){background:var(--green)}.output:nth-child(2){background:var(--peach)}.output:nth-child(3){background:var(--blue-soft)}.output:nth-child(4){background:var(--yellow)}.output b{font-size:12px;display:block;margin:5px 0 2px}.output small{font-size:10px;color:var(--muted)}.output .ico{font-size:17px}.floating-note{position:absolute;bottom:22px;left:-10px;background:var(--white);border:1px solid var(--line);border-radius:15px;padding:12px 15px;box-shadow:var(--shadow);font-size:12px;transform:rotate(-4deg);display:flex;gap:9px;align-items:center}.floating-note strong{display:block;font-size:12px}.floating-note span{color:var(--muted);font-size:10px}
+.section{padding:66px 0}.section-head{display:flex;align-items:end;justify-content:space-between;gap:25px;margin-bottom:28px}.kicker{color:#789080;font-size:11px;text-transform:uppercase;font-weight:850;letter-spacing:1.5px}h2{font-size:clamp(28px,3vw,39px);letter-spacing:-1.5px;line-height:1.15;margin:9px 0 0}.section-desc{color:var(--muted);max-width:440px;margin:0;font-size:14px}.workspace-wrap{background:var(--green);padding:64px 0}.workspace{background:var(--white);border:1px solid var(--line);border-radius:26px;padding:22px;box-shadow:0 12px 36px rgba(27,48,60,.045)}.workspace-head{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:18px}.workspace-head h3{margin:0;font-size:17px}.workspace-head p{margin:3px 0 0;color:var(--muted);font-size:12px}.head-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap}.ai-status{font-size:11px;font-weight:800;color:#6f7e75;background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:8px 11px;white-space:nowrap}.ai-status.ready{color:#4c7657;background:var(--green);border-color:#dce9d8}.ai-status.error{color:#9a5d4d;background:var(--peach);border-color:#f0ddd5}.model-select{border:1px solid var(--line);background:var(--white);color:var(--ink);border-radius:11px;padding:9px 10px;font-size:12px;max-width:210px}.workspace-body{display:grid;grid-template-columns:245px 1fr;gap:16px}.side-panel{background:var(--paper);border-radius:18px;padding:16px;min-width:0}.side-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-weight:850;margin:2px 0 12px}.lesson{display:flex;align-items:center;gap:10px;padding:10px;border-radius:11px;font-size:12px;color:var(--muted);margin-bottom:4px;cursor:pointer;overflow-wrap:anywhere}.lesson.active{background:var(--blue-soft);color:var(--ink);font-weight:800}.lesson-icon{width:27px;height:27px;border-radius:9px;background:var(--white);display:grid;place-items:center;flex:0 0 27px}.privacy-note{font-size:10px;color:var(--muted);line-height:1.5;margin:14px 2px 0}.content-panel{border:1px solid var(--line);border-radius:18px;padding:18px;min-width:0}.ai-setup{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:13px 14px;background:var(--blue-soft);border-radius:14px;margin-bottom:14px}.ai-setup p{margin:2px 0 0;color:var(--muted);font-size:11px}.ai-setup strong{font-size:13px}.setup-progress{display:none;margin:0 0 14px}.setup-progress.show{display:block}.setup-progress-top{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:6px}.setup-progress .progress{margin:0;height:8px}.tabs{display:flex;gap:6px;border-bottom:1px solid var(--line);padding-bottom:12px;overflow:auto}.task-options{display:none;align-items:center;gap:10px;flex-wrap:wrap;margin:12px 0;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--paper);font-size:11px;color:var(--muted)}.task-options.show{display:flex}.task-options label{font-weight:800;color:var(--ink)}.task-options select{border:1px solid var(--line);border-radius:9px;background:var(--white);color:var(--ink);padding:7px 9px;font:inherit}.tab{border:0;background:transparent;padding:8px 12px;border-radius:9px;color:var(--muted);font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap}.tab.active{background:var(--blue-soft);color:var(--ink)}.tool-output{padding:18px 4px 10px;min-height:150px;white-space:pre-wrap;line-height:1.75;font-size:13px;color:var(--ink);overflow-wrap:anywhere}.tool-output h4{margin:0 0 9px;font-size:18px}.tool-output p{margin:0;color:var(--muted)}.tool-output .placeholder{color:var(--muted)}.tool-output .key-points{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}.key-points span{background:var(--paper);border:1px solid var(--line);padding:7px 10px;border-radius:99px;font-size:11px;color:var(--muted)}.chat-messages{display:flex;flex-direction:column;gap:10px;max-height:360px;overflow:auto;padding:8px 2px 14px}.chat-message{max-width:90%;padding:12px 14px;border-radius:15px;font-size:13px;line-height:1.65;white-space:pre-wrap;overflow-wrap:anywhere}.chat-message.assistant{background:var(--paper);border:1px solid var(--line);align-self:flex-start;border-bottom-left-radius:5px}.chat-message.user{background:var(--blue-soft);color:var(--ink);align-self:flex-end;border-bottom-right-radius:5px}.chat-message.pending{color:var(--muted);font-style:italic}.chat-row{border-top:1px solid var(--line);padding-top:14px;display:flex;gap:9px}.chat-row input{flex:1;min-width:0;border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:12px;padding:12px 14px;outline:none;font-size:12px}.chat-row input:focus{border-color:var(--blue)}.chat-row button{width:45px;border:0;border-radius:12px;background:var(--blue);color:#fff;font-size:18px;cursor:pointer}.chat-feedback{font-size:11px;color:var(--muted);padding:9px 4px 0;min-height:25px}.upload-input{display:none}.dropzone{border:1.5px dashed #cbd7d1;background:var(--paper);border-radius:14px;padding:16px;text-align:center;margin-bottom:14px;cursor:pointer;transition:.2s}.dropzone:hover,.dropzone.dragover{border-color:var(--blue);background:var(--blue-soft)}.dropzone strong{display:block;font-size:12px}.dropzone span{display:block;color:var(--muted);font-size:10px;margin-top:3px}.tool-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.tool-action{border:1px solid var(--line);background:var(--white);color:var(--ink);border-radius:10px;padding:8px 11px;font-size:11px;font-weight:750;cursor:pointer}.tool-action:hover{background:var(--blue-soft)}.tool-action:disabled{opacity:.5;cursor:not-allowed}
+.feature-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}.feature{background:var(--white);border:1px solid var(--line);border-radius:20px;padding:22px;min-height:175px;transition:.2s}.feature:hover{transform:translateY(-4px);box-shadow:var(--shadow)}.feature-icon{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;font-size:19px;margin-bottom:17px;background:var(--blue-soft)}.feature:nth-child(2) .feature-icon{background:var(--peach)}.feature:nth-child(3) .feature-icon{background:var(--green)}.feature:nth-child(4) .feature-icon{background:var(--yellow)}.feature:nth-child(5) .feature-icon{background:var(--lav)}.feature:nth-child(6) .feature-icon{background:var(--blue-soft)}.feature h3{font-size:15px;margin:0 0 7px}.feature p{font-size:12px;color:var(--muted);margin:0;line-height:1.65}.subjects{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px}.subject{border:1px solid var(--line);background:var(--white);color:var(--muted);padding:10px 15px;border-radius:99px;font-size:12px;cursor:pointer;transition:.2s}.subject:hover,.subject.selected{background:var(--blue-soft);border-color:#c8d8dd;color:var(--ink)}.subject-result{font-size:12px;color:var(--muted);margin-top:14px;min-height:20px}.cta{background:var(--green);border-radius:28px;padding:38px;display:flex;align-items:center;justify-content:space-between;gap:25px;position:relative;overflow:hidden}.cta:after{content:"✳";position:absolute;right:28%;top:-58px;font-size:190px;color:rgba(255,255,255,.35);transform:rotate(18deg)}.cta h2{max-width:520px}.cta p{color:var(--muted);font-size:14px;margin:12px 0 0}.cta .btn{position:relative;z-index:1}footer{padding:25px 0 38px;color:var(--muted);font-size:11px}.footer-inner{border-top:1px solid var(--line);padding-top:22px;display:flex;align-items:center;justify-content:space-between;gap:20px}.footer-inner .brand{color:var(--ink);font-size:17px}.footer-inner .brand-mark{width:29px;height:29px;font-size:15px}.toast{position:fixed;bottom:20px;left:50%;transform:translate(-50%,15px);opacity:0;pointer-events:none;background:#1e303b;color:#fff;padding:11px 16px;border-radius:12px;font-size:12px;box-shadow:var(--shadow);transition:.2s;z-index:20;max-width:min(90vw,520px);text-align:center}.toast.show{opacity:1;transform:translate(-50%,0)}.small-muted{font-size:10px;color:var(--muted)}
+@media(max-width:900px){.nav{gap:17px}.hero{gap:25px}.workspace-body{grid-template-columns:205px 1fr}.model-select{max-width:160px}}
+@media(max-width:700px){.shell{width:min(100% - 30px,560px)}.topbar{height:70px}.nav{display:none;position:absolute;top:65px;left:15px;right:15px;background:var(--white);border:1px solid var(--line);border-radius:16px;padding:15px;box-shadow:var(--shadow);z-index:10;flex-direction:column;align-items:flex-start}.nav.open{display:flex}.menu-btn{display:block}.hero{padding:36px 0 48px;grid-template-columns:1fr;gap:20px}.hero-art{min-height:360px}.blob{width:300px;height:300px}.study-card{width:min(100%,440px)}h1{font-size:clamp(40px,12vw,56px);letter-spacing:-2.3px}.hero-copy{font-size:15px}.section{padding:48px 0}.section-head{display:block}.section-desc{margin-top:12px}.workspace-wrap{padding:48px 0}.workspace{padding:14px}.workspace-head{align-items:flex-start;flex-direction:column}.head-actions{width:100%}.ai-status{white-space:normal}.model-select{max-width:none;flex:1}.workspace-body{grid-template-columns:1fr}.side-panel{order:2}.content-panel{order:1;padding:13px}.ai-setup{align-items:flex-start;flex-direction:column}.ai-setup .btn{width:100%}.feature-grid{grid-template-columns:1fr 1fr}.feature{padding:17px;min-height:165px}.cta{padding:26px;display:block}.cta .btn{margin-top:20px}.footer-inner{flex-wrap:wrap}.floating-note{left:0;bottom:5px}}
+@media(max-width:430px){.feature-grid{grid-template-columns:1fr}.hero-actions .btn{width:100%}.output-grid{gap:8px}.output{padding:11px}.chat-message{max-width:96%}.head-actions .btn{flex:1}}
+</style>
+</head>
+<body>
+<header class="shell topbar" id="home">
+  <a class="brand" href="#home" aria-label="OmniLearn beranda"><span class="brand-mark">✳</span><span>omni <span style="font-weight:500">learn</span></span></a>
+  <nav class="nav" id="nav"><a href="#cara-kerja">Cara kerja</a><a href="#fitur">Fitur</a><a href="#jelajahi">Jelajahi ilmu</a><a href="#ruang-belajar">Ruang belajar</a></nav>
+  <div class="nav-actions"><button class="icon-btn" id="themeToggle" title="Ganti tema" aria-label="Ganti tema">☾</button><a class="btn btn-primary" href="#ruang-belajar">Mulai belajar ↗</a><button class="menu-btn" id="menuBtn" aria-label="Buka menu">☰</button></div>
+</header>
+<main>
+<section class="shell hero">
+ <div>
+  <div class="eyebrow"><span class="eyebrow-dot"></span> RUANG BELAJAR YANG LEBIH PERSONAL</div>
+  <h1>Belajar banyak hal, dengan cara <span>yang lebih masuk akal.</span></h1>
+  <p class="hero-copy">Bawa materi apa pun. Pahami pelan-pelan. Ubah jadi catatan, latihan, dan obrolan yang bikin kamu benar-benar mengerti.</p>
+  <div class="hero-actions"><a href="#ruang-belajar" class="btn btn-primary">Coba tutor AI ↗</a><a href="#fitur" class="btn btn-soft">Lihat fitur</a></div>
+  <div class="tiny-note">Gemini Cloud di server · API key aman di backend · Tanpa unduhan model</div>
+ </div>
+ <div class="hero-art" aria-hidden="true"><div class="blob"></div><div class="study-card"><div class="card-top"><div class="card-title">Ruang belajarmu</div><div class="status">● Siap digunakan</div></div><div class="upload-mini"><div class="file-icon">📄</div><div style="flex:1"><div class="file-name">Pengantar astronomi.pdf</div><div class="file-sub">24 halaman · Materi baru</div><div class="progress"><span></span></div></div><span style="color:#7f9b84;font-size:18px">✓</span></div><div class="mini-label">Mulai dari sini</div><div class="output-grid"><div class="output"><span class="ico">✍️</span><b>Ringkasan inti</b><small>Ambil ide penting</small></div><div class="output"><span class="ico">🧩</span><b>Latihan soal</b><small>Cek pemahamanmu</small></div><div class="output"><span class="ico">💬</span><b>Tanya tutor</b><small>Bahas bagian sulit</small></div><div class="output"><span class="ico">🗂️</span><b>Kartu belajar</b><small>Ulangi kapan saja</small></div></div></div><div class="floating-note"><span style="font-size:21px">🌱</span><div><strong>Belajar sesuai ritmemu</strong><span>Satu langkah kecil setiap hari.</span></div></div></div>
+</section>
+<section class="workspace-wrap" id="ruang-belajar"><div class="shell">
+ <div class="section-head"><div><div class="kicker">Ruang belajar AI</div><h2>Satu materi. Banyak cara memahami.</h2></div><p class="section-desc">Unggah materi atau mulai dari pertanyaan. Tutor AI membantu menjelaskan, merangkum, dan membuat latihan melalui Gemini Cloud.</p></div>
+ <div class="workspace">
+  <div class="workspace-head"><div><h3>Ruang belajarmu</h3><p id="materialLabel">Belum ada materi · Mulai dengan pertanyaan bebas</p></div><div class="head-actions"><span class="ai-status" id="aiStatus">● Memeriksa Gemini Cloud…</span><input class="upload-input" id="materialFile" type="file" accept=".pdf,.docx,.pptx,.txt"><button class="btn btn-soft" id="uploadButton" type="button">＋ Tambah materi</button></div></div>
+  <div class="workspace-body">
+   <aside class="side-panel"><div class="side-label">Materi kamu</div><div id="materialList"><div class="lesson active"><span class="lesson-icon">💡</span>Pertanyaan bebas</div></div><div class="privacy-note">🔒 File diproses sementara di server untuk diekstrak. Teks dikirim ke Gemini saat kamu meminta bantuan AI. Jangan unggah dokumen rahasia.</div></aside>
+   <div class="content-panel">
+    <div class="ai-setup"><div><strong>Gemini Cloud · Tutor AI OmniLearn</strong><p>AI berjalan di server Node.js. Kunci API disimpan sebagai secret server-side dan tidak dikirim ke browser.</p></div><span class="status">Cloud AI</span></div>
+    <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Pilih atau jatuhkan dokumen"><strong>Tarik dokumen ke sini atau klik untuk memilih</strong><span>PDF, DOCX, PPTX, TXT · Maksimal 15 MB · PDF scan perlu OCR dulu</span></div>
+    <div class="tabs" role="tablist" aria-label="Alat belajar"><button class="tab active" data-tab="chat">Tutor AI</button><button class="tab" data-tab="summary">Ringkasan</button><button class="tab" data-tab="quiz">Kuis</button><button class="tab" data-tab="cards">Flashcard</button><button class="tab" data-tab="map">Peta konsep</button><button class="tab" data-tab="plan">Rencana 7 hari</button><button class="tab" data-tab="translate">Penerjemah</button><button class="tab" data-tab="research">Asisten riset</button></div>
+    <div class="task-options" id="taskOptions"><label for="targetLanguage">Terjemahkan ke</label><select id="targetLanguage"><option>Bahasa Inggris</option><option>Bahasa Indonesia</option><option>Bahasa Melayu</option><option>Bahasa Arab</option><option>Bahasa Jepang</option><option>Bahasa Korea</option><option>Bahasa Mandarin</option><option>Bahasa Spanyol</option><option>Bahasa Prancis</option><option>Bahasa Jerman</option></select><span>Gunakan materi yang diunggah atau teks di kolom pertanyaan.</span></div>
+    <div class="tool-output" id="toolOutput"><h4>Mulai dari rasa ingin tahu.</h4><p class="placeholder">Gemini Cloud siap membantu. Tanyakan apa saja atau unggah materi untuk dipelajari bersama.</p><div class="key-points"><span>Semua bidang ilmu</span><span>Gemini Cloud</span><span>API key aman di server</span></div></div>
+    <div class="chat-messages" id="chatMessages" aria-live="polite"><div class="chat-message assistant">Hai! Aku tutor OmniLearn. Aku bisa menjelaskan topik, membantumu memahami dokumen, atau membuat latihan. Sekarang kamu bisa bertanya atau mengunggah materi untuk mulai belajar.</div></div>
+    <form class="chat-row" id="chatForm"><input id="chatInput" placeholder="Tanyakan apa saja tentang materi atau topikmu…" aria-label="Tulis pertanyaan" autocomplete="off"><button id="sendButton" aria-label="Kirim pertanyaan">↑</button></form>
+    <div class="tool-actions"><button class="tool-action" id="clearChat">Hapus chat</button><button class="tool-action" id="copyOutput">Salin hasil</button><span class="small-muted" id="chatFeedback">Memeriksa koneksi Gemini Cloud…</span></div>
+   </div>
+  </div>
+ </div>
+</div></section>
+<section class="section" id="fitur"><div class="shell"><div class="section-head"><div><div class="kicker">Teman belajar serbaguna</div><h2>Semua alat penting, di satu tempat.</h2></div><p class="section-desc">Bukan sekadar memberi jawaban. OmniLearn membantu kamu membangun pemahaman, sedikit demi sedikit.</p></div><div class="feature-grid">
+ <article class="feature"><div class="feature-icon">💬</div><h3>Tutor yang sabar</h3><p>Tanya dengan bahasamu sendiri. Minta penjelasan ulang sampai terasa masuk akal.</p></article>
+ <article class="feature"><div class="feature-icon">📑</div><h3>Ringkasan yang jelas</h3><p>Ubah bacaan panjang menjadi inti materi, istilah penting, dan contoh.</p></article>
+ <article class="feature"><div class="feature-icon">🧠</div><h3>Kuis untuk menguji diri</h3><p>Latihan pilihan ganda atau esai, lengkap dengan pembahasan jawaban.</p></article>
+ <article class="feature"><div class="feature-icon">🃏</div><h3>Flashcard pintar</h3><p>Ulangi konsep dan istilah penting supaya lebih mudah diingat.</p></article>
+ <article class="feature"><div class="feature-icon">🗺️</div><h3>Peta konsep</h3><p>Lihat hubungan antaride dalam satu gambaran yang lebih mudah dibaca.</p></article>
+ <article class="feature"><div class="feature-icon">🧭</div><h3>Rencana belajar</h3><p>Susun langkah belajar 7 hari sesuai topik dan tujuanmu.</p></article>
+ <article class="feature"><div class="feature-icon">🌐</div><h3>Penerjemah materi</h3><p>Terjemahkan materi belajar sambil menjaga istilah dan makna aslinya.</p></article>
+ <article class="feature"><div class="feature-icon">🔎</div><h3>Asisten riset</h3><p>Bantu menyusun pertanyaan, kerangka, variabel, dan rancangan penelitian.</p></article>
+ </div></div></section>
+<section class="section" id="jelajahi" style="padding-top:12px"><div class="shell"><div class="section-head"><div><div class="kicker">Tak ada batas bidang</div><h2>Hari ini mau belajar apa?</h2></div><p class="section-desc">Pilih topik untuk memulai percakapan dengan tutor.</p></div><div class="subjects" id="subjects"><button class="subject" data-name="Sains">🔬 Sains</button><button class="subject" data-name="Matematika">📐 Matematika</button><button class="subject" data-name="Sejarah">🏛️ Sejarah</button><button class="subject" data-name="Bahasa">🔤 Bahasa</button><button class="subject" data-name="Teknologi">💻 Teknologi</button><button class="subject" data-name="Ekonomi">📊 Ekonomi</button><button class="subject" data-name="Seni dan desain">🎨 Seni & desain</button><button class="subject" data-name="Filsafat">💭 Filsafat</button><button class="subject" data-name="Geografi">🌏 Geografi</button><button class="subject" data-name="Hukum">⚖️ Hukum</button><button class="subject" data-name="Kesehatan">🩺 Kesehatan</button><button class="subject" data-name="Teknik">⚙️ Teknik</button><button class="subject" data-name="Pemrograman">⌨️ Pemrograman</button><button class="subject" data-name="Astronomi">🪐 Astronomi</button></div><div class="subject-result" id="subjectResult">Pilih bidang. Rasa ingin tahu boleh ke mana saja.</div></div></section>
+<section class="shell section" id="cara-kerja" style="padding-top:10px"><div class="cta"><div><div class="kicker">Mulai dari rasa ingin tahu</div><h2>Belajar tidak harus langsung mengerti semuanya.</h2><p>Mulai dengan satu pertanyaan. Lanjutkan dengan satu langkah kecil.</p></div><a href="#ruang-belajar" class="btn btn-primary">Buka ruang belajar ↗</a></div></section>
+</main>
+<footer class="shell"><div class="footer-inner"><a class="brand" href="#home"><span class="brand-mark">✳</span>omni<span style="font-weight:500">learn</span></a><span>OmniLearn AI · 2026</span><span>Belajar dengan caramu.</span></div></footer>
+<div class="toast" id="toast" role="status"></div>
+<script>
+const $ = (id) => document.getElementById(id);
+const aiStatus = $('aiStatus');
+const chatMessages = $('chatMessages');
+const chatFeedback = $('chatFeedback');
+const toolOutput = $('toolOutput');
+const chatInput = $('chatInput');
+const sendButton = $('sendButton');
+const taskOptions = $('taskOptions');
+let materialText = '';
+let materialName = '';
+let chatHistory = [];
+let lastOutput = '';
+let activeTab = 'chat';
+let busy = false;
+
+function setStatus(state, label) {
+  aiStatus.className = 'ai-status' + (state ? ' ' + state : '');
+  aiStatus.textContent = '● ' + label;
+}
+function toast(message) {
+  const el = $('toast');
+  el.textContent = message;
+  el.classList.add('show');
+  window.setTimeout(() => el.classList.remove('show'), 2600);
+}
+function addMessage(role, text, extra = '') {
+  const el = document.createElement('div');
+  el.className = `chat-message ${role} ${extra}`.trim();
+  el.textContent = text;
+  chatMessages.appendChild(el);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+  return el;
+}
+function saveHistory() {
+  try { localStorage.setItem('omnilearn-chat', JSON.stringify(chatHistory.slice(-30))); } catch (_) {}
+}
+function restoreHistory() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('omnilearn-chat') || '[]');
+    if (!Array.isArray(saved)) return;
+    chatHistory = saved.slice(-30).filter(x => x && ['user', 'assistant'].includes(x.role) && typeof x.content === 'string');
+    for (const item of chatHistory) addMessage(item.role, item.content);
+  } catch (_) { chatHistory = []; }
+}
+function setBusy(value) {
+  busy = value;
+  sendButton.disabled = value;
+  $('uploadButton').disabled = value;
+  document.querySelectorAll('.tab').forEach(button => { button.disabled = value; });
+}
+async function checkAI() {
+  try {
+    const response = await fetch('/api/health', { headers: { 'Accept': 'application/json' } });
+    const data = await response.json();
+    if (response.ok && data.ready) {
+      setStatus('ready', 'Gemini Cloud siap');
+      chatFeedback.textContent = `Terhubung ke ${data.provider || 'Gemini Cloud'} · ${data.model || 'model AI'}.`;
+    } else {
+      setStatus('error', 'Secret Gemini belum tersedia');
+      chatFeedback.textContent = 'Tambahkan GEMINI_API_KEY melalui Settings → Secrets di Google AI Studio Build Mode.';
+    }
+  } catch (_) {
+    setStatus('error', 'Backend belum berjalan');
+    chatFeedback.textContent = 'Backend Node.js belum berjalan atau belum selesai dimuat.';
+  }
+}
+async function readJson(response) {
+  const data = await response.json().catch(() => ({ error: 'Respons server tidak valid.' }));
+  if (!response.ok) throw new Error(data.error || 'Permintaan gagal diproses.');
+  return data;
+}
+async function askAI(message) {
+  const response = await fetch('/api/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+    body: JSON.stringify({
+      message,
+      history: chatHistory.slice(-12),
+      material: materialText,
+      materialName
+    })
+  });
+  const data = await readJson(response);
+  return data.answer;
+}
+async function sendChat(event) {
+  event?.preventDefault();
+  const message = chatInput.value.trim();
+  if (!message || busy) return;
+  chatInput.value = '';
+  addMessage('user', message);
+  const pending = addMessage('assistant', 'Gemini sedang berpikir…', 'pending');
+  setBusy(true);
+  chatFeedback.textContent = 'Tutor sedang menyusun jawaban.';
+  try {
+    const answer = await askAI(message);
+    pending.classList.remove('pending');
+    pending.textContent = answer;
+    chatHistory.push({ role: 'user', content: message }, { role: 'assistant', content: answer });
+    saveHistory();
+    setStatus('ready', 'Gemini Cloud tersambung');
+    chatFeedback.textContent = 'Jawaban dibuat oleh OmniLearn AI. Periksa fakta penting dari sumber tepercaya.';
+  } catch (error) {
+    pending.classList.remove('pending');
+    pending.textContent = error.message;
+    chatFeedback.textContent = error.message;
+    if (/secret|API key|backend/i.test(error.message)) setStatus('error', 'Perlu pemeriksaan');
+  } finally {
+    setBusy(false);
+    chatInput.focus();
+  }
+}
+const taskNames = {
+  summary: 'Ringkasan materi', quiz: 'Kuis latihan', cards: 'Flashcard', map: 'Peta konsep',
+  plan: 'Rencana belajar 7 hari', translate: 'Terjemahan materi', research: 'Asisten riset'
+};
+async function runTool(task) {
+  if (busy || !taskNames[task]) return;
+  const typedText = chatInput.value.trim();
+  if (task === 'translate' && !materialText.trim() && !typedText) {
+    chatFeedback.textContent = 'Unggah materi atau tulis teks yang ingin diterjemahkan di kolom pertanyaan.';
+    toast('Masukkan teks untuk diterjemahkan.');
+    return;
+  }
+  const subjectText = $('subjectResult').textContent.startsWith('Bidang pilihan:') ? $('subjectResult').textContent.replace('Bidang pilihan:', '').trim() : '';
+  const topic = typedText || subjectText || 'dasar-dasar ilmu pengetahuan umum';
+  toolOutput.textContent = `${taskNames[task]} sedang dibuat oleh Gemini Cloud…`;
+  chatFeedback.textContent = 'AI sedang mengolah materi.';
+  setBusy(true);
+  try {
+    const response = await fetch('/api/study', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({
+        task,
+        material: materialText,
+        topic,
+        materialName,
+        count: 8,
+        targetLanguage: $('targetLanguage').value
+      })
+    });
+    const data = await readJson(response);
+    const result = data.result || 'Gemini tidak menghasilkan teks.';
+    lastOutput = `${taskNames[task]}\n\n${result}`;
+    toolOutput.textContent = lastOutput;
+    addMessage('assistant', `${taskNames[task]} selesai.\n\n${result}`);
+    chatHistory.push({ role: 'assistant', content: `${taskNames[task]}:\n${result}` });
+    saveHistory();
+    chatFeedback.textContent = `${taskNames[task]} selesai dibuat.`;
+  } catch (error) {
+    toolOutput.textContent = error.message;
+    chatFeedback.textContent = error.message;
+  } finally {
+    setBusy(false);
+  }
+}
+function selectTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll('.tab').forEach(button => button.classList.toggle('active', button.dataset.tab === tab));
+  taskOptions.classList.toggle('show', tab === 'translate');
+  if (tab === 'chat') {
+    toolOutput.innerHTML = '<h4>Mulai dari rasa ingin tahu.</h4><p class="placeholder">Tanyakan apa saja pada tutor OmniLearn.</p>';
+    lastOutput = '';
+    return;
+  }
+  runTool(tab);
+}
+document.querySelectorAll('.tab').forEach(button => button.addEventListener('click', () => selectTab(button.dataset.tab)));
+
+async function uploadFile(file) {
+  if (!file || busy) return;
+  const allowed = ['.pdf', '.docx', '.pptx', '.txt'];
+  const ext = '.' + file.name.split('.').pop().toLowerCase();
+  if (!allowed.includes(ext)) { toast('Gunakan PDF, DOCX, PPTX, atau TXT.'); return; }
+  if (file.size > 15 * 1024 * 1024) { toast('Ukuran file maksimal 15 MB.'); return; }
+  const form = new FormData();
+  form.append('file', file);
+  chatFeedback.textContent = `Mengunggah ${file.name} untuk ekstraksi teks sementara…`;
+  setBusy(true);
+  try {
+    const response = await fetch('/api/upload', { method: 'POST', body: form });
+    const data = await readJson(response);
+    materialText = String(data.text || '').slice(0, 50000);
+    materialName = data.filename || file.name;
+    if (!materialText.trim()) throw new Error('Tidak ada teks yang dapat dibaca. PDF hasil scan perlu OCR terlebih dahulu.');
+    chatHistory = [];
+    saveHistory();
+    chatMessages.innerHTML = '';
+    $('materialLabel').textContent = `${materialName} · ${Number(data.characters || materialText.length).toLocaleString('id-ID')} karakter${data.truncated ? ' · teks dipotong' : ''}`;
+    const list = $('materialList');
+    list.innerHTML = '';
+    const item = document.createElement('div');
+    item.className = 'lesson active';
+    const icon = document.createElement('span');
+    icon.className = 'lesson-icon';
+    icon.textContent = '📄';
+    const name = document.createElement('span');
+    name.textContent = materialName;
+    item.append(icon, name);
+    list.append(item);
+    toolOutput.textContent = 'Materi berhasil dibaca. Pilih Ringkasan, Kuis, Flashcard, Peta konsep, Rencana 7 hari, Penerjemah, atau tanyakan isi dokumen ke tutor.';
+    addMessage('assistant', `Materi “${materialName}” berhasil dibaca. Sekarang kamu bisa bertanya berdasarkan isi dokumen itu.`);
+    chatFeedback.textContent = 'Teks berhasil diekstrak sementara. Teks akan dikirim ke Gemini hanya saat kamu meminta AI mengolahnya.';
+    toast('Materi berhasil ditambahkan.');
+  } catch (error) {
+    chatFeedback.textContent = error.message;
+    toast(error.message);
+  } finally {
+    setBusy(false);
+    $('materialFile').value = '';
+  }
+}
+$('uploadButton').addEventListener('click', () => $('materialFile').click());
+$('materialFile').addEventListener('change', event => uploadFile(event.target.files[0]));
+const dropzone = $('dropzone');
+dropzone.addEventListener('click', () => $('materialFile').click());
+dropzone.addEventListener('keydown', event => {
+  if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); $('materialFile').click(); }
+});
+for (const name of ['dragenter', 'dragover']) dropzone.addEventListener(name, event => { event.preventDefault(); dropzone.classList.add('dragover'); });
+for (const name of ['dragleave', 'drop']) dropzone.addEventListener(name, event => { event.preventDefault(); dropzone.classList.remove('dragover'); });
+dropzone.addEventListener('drop', event => uploadFile(event.dataTransfer.files[0]));
+$('chatForm').addEventListener('submit', sendChat);
+$('clearChat').addEventListener('click', () => {
+  chatHistory = [];
+  chatMessages.innerHTML = '';
+  localStorage.removeItem('omnilearn-chat');
+  addMessage('assistant', 'Chat dibersihkan. Mulai percakapan baru kapan saja.');
+  chatFeedback.textContent = 'Riwayat chat lokal sudah dihapus.';
+});
+$('copyOutput').addEventListener('click', async () => {
+  if (!lastOutput) { toast('Belum ada hasil untuk disalin.'); return; }
+  try { await navigator.clipboard.writeText(lastOutput); toast('Hasil berhasil disalin.'); }
+  catch (_) { toast('Browser tidak mengizinkan salin otomatis.'); }
+});
+document.querySelectorAll('.subject').forEach(button => button.addEventListener('click', () => {
+  document.querySelectorAll('.subject').forEach(item => item.classList.remove('selected'));
+  button.classList.add('selected');
+  const subject = button.dataset.name;
+  $('subjectResult').textContent = `Bidang pilihan: ${subject}`;
+  chatInput.value = `Ajari aku dasar-dasar ${subject} dari awal dengan contoh sederhana.`;
+  document.querySelector('#ruang-belajar').scrollIntoView({ behavior: 'smooth' });
+  chatInput.focus();
+}));
+$('menuBtn').addEventListener('click', () => $('nav').classList.toggle('open'));
+document.querySelectorAll('.nav a').forEach(link => link.addEventListener('click', () => $('nav').classList.remove('open')));
+$('themeToggle').addEventListener('click', () => {
+  document.body.classList.toggle('dark');
+  const dark = document.body.classList.contains('dark');
+  localStorage.setItem('omnilearn-theme', dark ? 'dark' : 'light');
+  $('themeToggle').textContent = dark ? '☀' : '☾';
+});
+if (localStorage.getItem('omnilearn-theme') === 'dark') $('themeToggle').click();
+restoreHistory();
+checkAI();
+</script>
+</body>
+</html>
