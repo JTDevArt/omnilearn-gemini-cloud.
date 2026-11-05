@@ -1,3 +1,4 @@
+import { loadOfficeArchive } from './lib/office-archive.js';
 import { AI_SYSTEM_INSTRUCTION, validateStudyResult } from './lib/ai-policy.js';
 import { SUMMARY_SYSTEM_INSTRUCTION, resolveOutputLanguage, languageInstruction, buildSummaryPrompt, normalizeSummaryOutput } from './lib/output-language.js';
 import { runProviderRequest } from './lib/provider-request.js';
@@ -366,7 +367,7 @@ function deduplicateExtractedText(rawText) {
 
 async function extractPptx(buffer) {
   try {
-    const zip = await JSZip.loadAsync(buffer);
+    const zip = await loadOfficeArchive(buffer);
     const slidePaths = Object.keys(zip.files)
       .filter(name => /^ppt\/slides\/slide\d+\.xml$/.test(name))
       .sort((a, b) => Number(a.match(/slide(\d+)/)[1]) - Number(b.match(/slide(\d+)/)[1]));
@@ -814,6 +815,7 @@ async function extractFileContentFromBuffer(fileMeta, buffer, sessionId, onStage
     notifyStage('extracting', 3, 'Membaca halaman dokumen DOCX…');
     try {
       notifyStage('extracting', 4, 'Mengekstrak teks dari dokumen DOCX…');
+      await loadOfficeArchive(buffer);
       const parsed = await mammoth.extractRawText({ buffer });
       const text = deduplicateExtractedText(String(parsed.value || ''));
       result = { text, pageCount: 1, ocrUsed: false, extractionMode: 'docx' };
@@ -1038,7 +1040,7 @@ app.post('/api/chat', aiLimiter, async (req, res, next) => {
 
     const { text: answer, actualModel } = await generateText({
       contents,
-      systemInstruction: SYSTEM_INSTRUCTION + '\n' + languageInstruction(outputLanguage) + '\nTASK: Ordinary tutor chat. Answer in concise Markdown, never JSON. Prefer 2–5 short bullets for comparisons. Add examples only if requested or essential. Do not restate the same definition under multiple headings.',
+      systemInstruction: SYSTEM_INSTRUCTION + '\n' + languageInstruction(outputLanguage) + '\nTASK: Ordinary tutor chat. Answer in concise Markdown, never JSON. Use separate points for comparisons when helpful; adapt depth and length to the question. Add examples only if requested or essential. Do not restate the same definition under multiple headings.',
       responseMimeType: 'text/plain',
       thinkingLevel: depthInfo.depth === 'ADVANCED' ? depthInfo.thinkingLevel : ThinkingLevel.LOW,
       signal: req.aiSignal, stage: 'chat-generate'
@@ -1066,7 +1068,7 @@ ${styleConfig.instruction}
 
 Syarat Mutu Wajib:
 0. WAJIB gunakan bahasa dominan isi dokumen untuk semua judul dan isi. Abaikan bahasa antarmuka, nama file, serta prompt fitur. Jangan alihbahasakan materi kecuali tugasnya Terjemahan. Sebelum mengirim, cek ulang agar judul dan seluruh paragraf memakai bahasa yang sama.
-0a. RINGKAS, JANGAN TULIS ULANG DOKUMEN. Ringkasan Lengkap maksimal 350 kata; Ringkasan Singkat maksimal 120 kata. Gabungkan ide berulang, pilih hanya konsep inti, bukti penting, dan rumus yang perlu. Gunakan kalimat sederhana dan pendek. Jelaskan istilah teknis sekali dengan kata mudah. Hindari rincian kecil, contoh berulang, dan sub-bullet panjang.
+0a. RINGKAS, JANGAN TULIS ULANG DOKUMEN. Sesuaikan panjang dengan kompleksitas dan gaya yang dipilih; jangan menerapkan batas kata kaku. Gabungkan ide berulang, pilih hanya konsep inti, bukti penting, dan rumus yang perlu. Gunakan kalimat sederhana dan pendek. Jelaskan istilah teknis sekali dengan kata mudah. Hindari rincian kecil, contoh berulang, dan sub-bullet panjang.
 1. Langsung masuk ke isi ringkasan tanpa kalimat pembuka atau penutup basa-basi.
 2. Pertahankan seluruh informasi penting dan terminologi asli bidang ilmu (jelaskan definisinya secara jernih).
 3. Identifikasi gagasan sentral dan jelaskan hubungan sebab-akibat atau mekanisme antar-konsep.
@@ -1277,7 +1279,7 @@ app.post('/api/study', aiLimiter, async (req, res, next) => {
 
     // Use smart excerpt selection for long materials so context stays accurate and fast
     const sampledMaterial = material
-      ? selectRelevantMaterialExcerpt(material, topic || '', task === 'summary' || task === 'translate' ? 32000 : 24000)
+      ? (task === 'translate' ? material : selectRelevantMaterialExcerpt(material, topic || '', task === 'summary' ? 32000 : 24000))
       : '';
 
     const source = task === 'translate'
