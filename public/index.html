@@ -5,15 +5,140 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#f7f7f2">
 <title>OmniLearn AI — Belajar dengan caramu</title>
+<meta name="description" content="Ruang belajar personal bertenaga Gemini Cloud untuk ringkasan materi, kuis latihan, flashcard, peta konsep, dan tutor AI interaktif.">
+<meta property="og:title" content="OmniLearn AI — Belajar dengan caramu">
+<meta property="og:description" content="Ruang belajar personal bertenaga Gemini Cloud untuk ringkasan materi, kuis latihan, flashcard, peta konsep, dan tutor AI interaktif.">
+<link rel="stylesheet" href="/vendor/katex.min.css">
+<script src="/vendor/marked.umd.js"></script>
+<script src="/vendor/purify.min.js"></script>
+<script src="/vendor/katex.min.js"></script>
 <style>
 :root{--ink:#172b3a;--muted:#687982;--paper:#f7f7f2;--white:#fff;--line:#e7e9e4;--blue:#426b86;--blue-dark:#31566d;--blue-soft:#e7eff2;--green:#eaf1e9;--peach:#f6ebe3;--yellow:#f4efd9;--lav:#eeeaf4;--shadow:0 18px 50px rgba(27,48,60,.08);--radius:22px}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--paper);color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.55}body.dark{--ink:#e9eef0;--muted:#a9b5ba;--paper:#15232c;--white:#1e303b;--line:#344751;--blue:#8bb4cb;--blue-dark:#b3d2e0;--blue-soft:#263d49;--green:#263a33;--peach:#45352e;--yellow:#443f2b;--lav:#393449;--shadow:0 18px 50px rgba(0,0,0,.22)}button,input,select,textarea{font:inherit}button,a{-webkit-tap-highlight-color:transparent}a{color:inherit;text-decoration:none}.shell{width:min(1160px,calc(100% - 48px));margin:auto}.topbar{height:82px;display:flex;align-items:center;justify-content:space-between;gap:24px}.brand{display:flex;align-items:center;gap:10px;font-weight:850;font-size:21px;letter-spacing:-.7px}.brand-mark{width:35px;height:35px;border-radius:12px;background:var(--blue);display:grid;place-items:center;color:white;font-size:19px;transform:rotate(-5deg)}.nav{display:flex;align-items:center;gap:30px;color:var(--muted);font-size:14px;font-weight:650}.nav a:hover{color:var(--blue)}.nav-actions{display:flex;align-items:center;gap:10px}.icon-btn{width:40px;height:40px;border:1px solid var(--line);background:var(--white);border-radius:13px;cursor:pointer;color:var(--ink)}.btn{border:0;border-radius:13px;padding:12px 18px;font-weight:750;cursor:pointer;transition:.18s;display:inline-flex;align-items:center;justify-content:center;gap:8px}.btn:hover{transform:translateY(-2px)}.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}.btn-primary{background:var(--blue);color:#fff;box-shadow:0 7px 16px rgba(66,107,134,.18)}.btn-primary:hover{background:var(--blue-dark)}.btn-soft{background:var(--blue-soft);color:var(--ink)}.btn-plain{background:transparent;color:var(--ink);border:1px solid var(--line)}.menu-btn{display:none;background:none;border:0;font-size:25px;color:var(--ink)}
-.hero{padding:62px 0 72px;display:grid;grid-template-columns:1fr 1.03fr;align-items:center;gap:52px}.eyebrow{display:inline-flex;align-items:center;gap:8px;padding:7px 12px;border-radius:999px;background:var(--green);color:#52745a;font-size:11px;font-weight:850;letter-spacing:.35px}.eyebrow-dot{width:7px;height:7px;background:#79a17d;border-radius:50%}h1{font-size:clamp(42px,5.2vw,65px);line-height:1.04;letter-spacing:-3px;margin:22px 0 18px;font-weight:850;max-width:590px}h1 span{color:var(--blue);font-family:Georgia,serif;font-style:italic;font-weight:500;letter-spacing:-2px}.hero-copy{font-size:17px;color:var(--muted);max-width:490px;margin:0 0 27px}.hero-actions{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.tiny-note{font-size:12px;color:var(--muted);margin-top:15px}.hero-art{position:relative;min-height:430px;display:grid;place-items:center}.blob{position:absolute;width:380px;height:380px;border-radius:48% 52% 58% 42%/48% 42% 58% 52%;background:var(--green);right:5%;top:4%;transform:rotate(13deg)}.study-card{position:relative;width:min(100%,480px);background:var(--white);border:1px solid var(--line);border-radius:24px;padding:22px;box-shadow:var(--shadow);transform:rotate(1.2deg)}.card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}.card-title{font-weight:850;font-size:15px}.status{font-size:11px;color:#55765a;background:var(--green);padding:6px 9px;border-radius:99px;font-weight:750}.upload-mini{border:1.5px dashed #cbd7d1;background:var(--paper);border-radius:16px;padding:17px;display:flex;gap:13px;align-items:center}.file-icon{width:43px;height:47px;border-radius:11px;background:var(--blue-soft);display:grid;place-items:center;font-size:21px}.file-name{font-size:13px;font-weight:800}.file-sub{font-size:11px;color:var(--muted);margin-top:3px}.progress{height:6px;background:var(--line);border-radius:99px;margin-top:12px;overflow:hidden}.progress span{display:block;width:72%;height:100%;background:#82a18a;border-radius:99px}.mini-label{font-size:11px;color:var(--muted);font-weight:850;text-transform:uppercase;letter-spacing:1px;margin:20px 0 10px}.output-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.output{padding:13px;border-radius:14px;min-height:83px}.output:nth-child(1){background:var(--green)}.output:nth-child(2){background:var(--peach)}.output:nth-child(3){background:var(--blue-soft)}.output:nth-child(4){background:var(--yellow)}.output b{font-size:12px;display:block;margin:5px 0 2px}.output small{font-size:10px;color:var(--muted)}.output .ico{font-size:17px}.floating-note{position:absolute;bottom:22px;left:-10px;background:var(--white);border:1px solid var(--line);border-radius:15px;padding:12px 15px;box-shadow:var(--shadow);font-size:12px;transform:rotate(-4deg);display:flex;gap:9px;align-items:center}.floating-note strong{display:block;font-size:12px}.floating-note span{color:var(--muted);font-size:10px}
-.section{padding:66px 0}.section-head{display:flex;align-items:end;justify-content:space-between;gap:25px;margin-bottom:28px}.kicker{color:#789080;font-size:11px;text-transform:uppercase;font-weight:850;letter-spacing:1.5px}h2{font-size:clamp(28px,3vw,39px);letter-spacing:-1.5px;line-height:1.15;margin:9px 0 0}.section-desc{color:var(--muted);max-width:440px;margin:0;font-size:14px}.workspace-wrap{background:var(--green);padding:64px 0}.workspace{background:var(--white);border:1px solid var(--line);border-radius:26px;padding:22px;box-shadow:0 12px 36px rgba(27,48,60,.045)}.workspace-head{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:18px}.workspace-head h3{margin:0;font-size:17px}.workspace-head p{margin:3px 0 0;color:var(--muted);font-size:12px}.head-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap}.ai-status{font-size:11px;font-weight:800;color:#6f7e75;background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:8px 11px;white-space:nowrap}.ai-status.ready{color:#4c7657;background:var(--green);border-color:#dce9d8}.ai-status.error{color:#9a5d4d;background:var(--peach);border-color:#f0ddd5}.model-select{border:1px solid var(--line);background:var(--white);color:var(--ink);border-radius:11px;padding:9px 10px;font-size:12px;max-width:210px}.workspace-body{display:grid;grid-template-columns:245px 1fr;gap:16px}.side-panel{background:var(--paper);border-radius:18px;padding:16px;min-width:0}.side-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-weight:850;margin:2px 0 12px}.lesson{display:flex;align-items:center;gap:10px;padding:10px;border-radius:11px;font-size:12px;color:var(--muted);margin-bottom:4px;cursor:pointer;overflow-wrap:anywhere}.lesson.active{background:var(--blue-soft);color:var(--ink);font-weight:800}.lesson-icon{width:27px;height:27px;border-radius:9px;background:var(--white);display:grid;place-items:center;flex:0 0 27px}.privacy-note{font-size:10px;color:var(--muted);line-height:1.5;margin:14px 2px 0}.content-panel{border:1px solid var(--line);border-radius:18px;padding:18px;min-width:0}.ai-setup{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:13px 14px;background:var(--blue-soft);border-radius:14px;margin-bottom:14px}.ai-setup p{margin:2px 0 0;color:var(--muted);font-size:11px}.ai-setup strong{font-size:13px}.setup-progress{display:none;margin:0 0 14px}.setup-progress.show{display:block}.setup-progress-top{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:6px}.setup-progress .progress{margin:0;height:8px}.tabs{display:flex;gap:6px;border-bottom:1px solid var(--line);padding-bottom:12px;overflow:auto}.task-options{display:none;align-items:center;gap:10px;flex-wrap:wrap;margin:12px 0;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--paper);font-size:11px;color:var(--muted)}.task-options.show{display:flex}.task-options label{font-weight:800;color:var(--ink)}.task-options select{border:1px solid var(--line);border-radius:9px;background:var(--white);color:var(--ink);padding:7px 9px;font:inherit}.tab{border:0;background:transparent;padding:8px 12px;border-radius:9px;color:var(--muted);font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap}.tab.active{background:var(--blue-soft);color:var(--ink)}.tool-output{padding:18px 4px 10px;min-height:150px;white-space:pre-wrap;line-height:1.75;font-size:13px;color:var(--ink);overflow-wrap:anywhere}.tool-output h4{margin:0 0 9px;font-size:18px}.tool-output p{margin:0;color:var(--muted)}.tool-output .placeholder{color:var(--muted)}.tool-output .key-points{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}.key-points span{background:var(--paper);border:1px solid var(--line);padding:7px 10px;border-radius:99px;font-size:11px;color:var(--muted)}.chat-messages{display:flex;flex-direction:column;gap:10px;max-height:360px;overflow:auto;padding:8px 2px 14px}.chat-message{max-width:90%;padding:12px 14px;border-radius:15px;font-size:13px;line-height:1.65;white-space:pre-wrap;overflow-wrap:anywhere}.chat-message.assistant{background:var(--paper);border:1px solid var(--line);align-self:flex-start;border-bottom-left-radius:5px}.chat-message.user{background:var(--blue-soft);color:var(--ink);align-self:flex-end;border-bottom-right-radius:5px}.chat-message.pending{color:var(--muted);font-style:italic}.chat-row{border-top:1px solid var(--line);padding-top:14px;display:flex;gap:9px}.chat-row input{flex:1;min-width:0;border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:12px;padding:12px 14px;outline:none;font-size:12px}.chat-row input:focus{border-color:var(--blue)}.chat-row button{width:45px;border:0;border-radius:12px;background:var(--blue);color:#fff;font-size:18px;cursor:pointer}.chat-feedback{font-size:11px;color:var(--muted);padding:9px 4px 0;min-height:25px}.upload-input{display:none}.dropzone{border:1.5px dashed #cbd7d1;background:var(--paper);border-radius:14px;padding:16px;text-align:center;margin-bottom:14px;cursor:pointer;transition:.2s}.dropzone:hover,.dropzone.dragover{border-color:var(--blue);background:var(--blue-soft)}.dropzone strong{display:block;font-size:12px}.dropzone span{display:block;color:var(--muted);font-size:10px;margin-top:3px}.tool-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.tool-action{border:1px solid var(--line);background:var(--white);color:var(--ink);border-radius:10px;padding:8px 11px;font-size:11px;font-weight:750;cursor:pointer}.tool-action:hover{background:var(--blue-soft)}.tool-action:disabled{opacity:.5;cursor:not-allowed}
+.hero{padding:62px 0 72px;display:grid;grid-template-columns:1fr 1.03fr;align-items:center;gap:52px}.eyebrow{display:inline-flex;align-items:center;gap:8px;padding:7px 12px;border-radius:999px;background:var(--green);color:#52745a;font-size:11px;font-weight:850;letter-spacing:.35px}.eyebrow-dot{width:7px;height:7px;background:#79a17d;border-radius:50%}h1{font-size:clamp(42px,5.2vw,65px);line-height:1.04;letter-spacing:-3px;margin:22px 0 18px;font-weight:850;max-width:590px}h1 span{color:var(--blue);font-family:Georgia,serif;font-style:italic;font-weight:500;letter-spacing:-2px}.hero-copy{font-size:17px;color:var(--muted);max-width:490px;margin:0 0 27px}.hero-actions{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.tiny-note{font-size:12px;color:var(--muted);margin-top:15px}.hero-art{position:relative;min-height:430px;display:grid;place-items:center}.blob{position:absolute;width:380px;height:380px;border-radius:48% 52% 58% 42%/48% 42% 58% 52%;background:var(--green);right:5%;top:4%;transform:rotate(13deg)}.study-card{position:relative;width:min(100%,480px);background:var(--white);border:1px solid var(--line);border-radius:24px;padding:22px;box-shadow:var(--shadow);transform:rotate(1.2deg)}.card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}.card-title{font-weight:850;font-size:15px}.status{font-size:11px;color:#55765a;background:var(--green);padding:6px 9px;border-radius:99px;font-weight:750}.upload-mini{border:1.5px dashed #cbd7d1;background:var(--paper);border-radius:16px;padding:17px;display:flex;gap:13px;align-items:center}.file-icon{width:43px;height:47px;border-radius:11px;background:var(--blue-soft);display:grid;place-items:center;font-size:21px}.file-name{font-size:13px;font-weight:800}.file-sub{font-size:11px;color:var(--muted);margin-top:3px}.progress{height:6px;background:var(--line);border-radius:99px;margin-top:12px;overflow:hidden}.progress span{display:block;width:72%;height:100%;background:#82a18a;border-radius:99px;transition:width .28s ease}.mini-label{font-size:11px;color:var(--muted);font-weight:850;text-transform:uppercase;letter-spacing:1px;margin:20px 0 10px}.output-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.output{padding:13px;border-radius:14px;min-height:83px}.output:nth-child(1){background:var(--green)}.output:nth-child(2){background:var(--peach)}.output:nth-child(3){background:var(--blue-soft)}.output:nth-child(4){background:var(--yellow)}.output b{font-size:12px;display:block;margin:5px 0 2px}.output small{font-size:10px;color:var(--muted)}.output .ico{font-size:17px}.floating-note{position:absolute;bottom:22px;left:-10px;background:var(--white);border:1px solid var(--line);border-radius:15px;padding:12px 15px;box-shadow:var(--shadow);font-size:12px;transform:rotate(-4deg);display:flex;gap:9px;align-items:center}.floating-note strong{display:block;font-size:12px}.floating-note span{color:var(--muted);font-size:10px}
+.section{padding:66px 0}.section-head{display:flex;align-items:end;justify-content:space-between;gap:25px;margin-bottom:28px}.kicker{color:#789080;font-size:11px;text-transform:uppercase;font-weight:850;letter-spacing:1.5px}h2{font-size:clamp(28px,3vw,39px);letter-spacing:-1.5px;line-height:1.15;margin:9px 0 0}.section-desc{color:var(--muted);max-width:440px;margin:0;font-size:14px}.workspace-wrap{background:var(--green);padding:64px 0}.workspace{background:var(--white);border:1px solid var(--line);border-radius:26px;padding:22px;box-shadow:0 12px 36px rgba(27,48,60,.045)}.workspace-head{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:18px}.workspace-head h3{margin:0;font-size:17px}.workspace-head p{margin:3px 0 0;color:var(--muted);font-size:12px}.head-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap}.ai-status{font-size:11px;font-weight:800;color:#6f7e75;background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:8px 11px;white-space:nowrap}.ai-status.ready{color:#4c7657;background:var(--green);border-color:#dce9d8}.ai-status.error{color:#9a5d4d;background:var(--peach);border-color:#f0ddd5}.model-select{border:1px solid var(--line);background:var(--white);color:var(--ink);border-radius:11px;padding:9px 10px;font-size:12px;max-width:210px}.workspace-body{display:grid;grid-template-columns:245px 1fr;gap:16px}.side-panel{background:var(--paper);border-radius:18px;padding:16px;min-width:0}.side-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-weight:850;margin:2px 0 12px}.lesson{display:flex;align-items:center;gap:10px;padding:10px;border-radius:11px;font-size:12px;color:var(--muted);margin-bottom:4px;cursor:pointer;overflow-wrap:anywhere}.lesson.active{background:var(--blue-soft);color:var(--ink);font-weight:800}.lesson-icon{width:27px;height:27px;border-radius:9px;background:var(--white);display:grid;place-items:center;flex:0 0 27px}.privacy-note{font-size:10px;color:var(--muted);line-height:1.5;margin:14px 2px 0}.content-panel{border:1px solid var(--line);border-radius:18px;padding:18px;min-width:0}.ai-setup{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:13px 14px;background:var(--blue-soft);border-radius:14px;margin-bottom:14px}.ai-setup p{margin:2px 0 0;color:var(--muted);font-size:11px}.ai-setup strong{font-size:13px}.setup-progress{display:none;margin:0 0 14px;padding:11px 13px;background:var(--paper);border:1px solid var(--line);border-radius:13px}.setup-progress.show{display:block}.setup-progress-top{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--ink);font-weight:700;margin-bottom:7px}.setup-progress .progress{margin:0;height:7px}.tabs{display:flex;gap:6px;border-bottom:1px solid var(--line);padding-bottom:12px;overflow:auto}.task-options{display:none;align-items:center;gap:10px;flex-wrap:wrap;margin:12px 0;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--paper);font-size:11px;color:var(--muted)}.task-options.show{display:flex}.task-options label{font-weight:800;color:var(--ink)}.task-options select{border:1px solid var(--line);border-radius:9px;background:var(--white);color:var(--ink);padding:7px 9px;font:inherit}.tab{border:0;background:transparent;padding:8px 12px;border-radius:9px;color:var(--muted);font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap}.tab.active{background:var(--blue-soft);color:var(--ink)}.tool-output{padding:18px 4px 10px;min-height:150px;white-space:pre-wrap;line-height:1.75;font-size:13.5px;color:var(--ink);overflow-wrap:anywhere}.tool-output.md-rendered{white-space:normal}.tool-output h4{margin:0 0 9px;font-size:18px}.tool-output p{margin:0;color:var(--muted)}.tool-output .placeholder{color:var(--muted)}.tool-output .key-points{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}.key-points span{background:var(--paper);border:1px solid var(--line);padding:7px 10px;border-radius:99px;font-size:11px;color:var(--muted)}.chat-messages{display:flex;flex-direction:column;gap:10px;max-height:420px;overflow:auto;padding:8px 2px 14px}.chat-message{max-width:90%;padding:12px 15px;border-radius:15px;font-size:13.5px;line-height:1.68;white-space:pre-wrap;overflow-wrap:anywhere}.chat-message.assistant{background:var(--paper);border:1px solid var(--line);align-self:flex-start;border-bottom-left-radius:5px}.chat-message.assistant.md-rendered{white-space:normal}.chat-message.user{background:var(--blue-soft);color:var(--ink);align-self:flex-end;border-bottom-right-radius:5px}.chat-message.pending{color:var(--muted);font-style:italic}.chat-row{border-top:1px solid var(--line);padding-top:14px;display:flex;gap:9px}.chat-row input{flex:1;min-width:0;border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:12px;padding:12px 14px;outline:none;font-size:12px}.chat-row input:focus{border-color:var(--blue)}.chat-row button{width:45px;border:0;border-radius:12px;background:var(--blue);color:#fff;font-size:18px;cursor:pointer}.chat-feedback{font-size:11px;color:var(--muted);padding:9px 4px 0;min-height:25px}.upload-input{display:none}.dropzone{border:1.5px dashed #cbd7d1;background:var(--paper);border-radius:14px;padding:16px;text-align:center;margin-bottom:14px;cursor:pointer;transition:.2s}.dropzone:hover,.dropzone.dragover{border-color:var(--blue);background:var(--blue-soft)}.dropzone.disabled{opacity:.55;cursor:not-allowed;pointer-events:none}.dropzone strong{display:block;font-size:12px}.dropzone span{display:block;color:var(--muted);font-size:10px;margin-top:3px}.tool-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.tool-action{border:1px solid var(--line);background:var(--white);color:var(--ink);border-radius:10px;padding:8px 11px;font-size:11px;font-weight:750;cursor:pointer}.tool-action:hover{background:var(--blue-soft)}.tool-action:disabled{opacity:.5;cursor:not-allowed}
+/* Smart Markdown Typography & Elements */
+.md-rendered{color:var(--ink);line-height:1.72}
+.md-rendered p{margin:0 0 .85em;color:var(--ink)}
+.md-rendered p:last-child{margin-bottom:0}
+.md-rendered h1,.md-rendered h2,.md-rendered h3,.md-rendered h4{color:var(--ink);font-weight:800;line-height:1.28;letter-spacing:-.3px;margin:1.15em 0 .45em}
+.md-rendered h1:first-child,.md-rendered h2:first-child,.md-rendered h3:first-child,.md-rendered h4:first-child{margin-top:0}
+.md-rendered h1{font-size:1.32em;border-bottom:1px solid var(--line);padding-bottom:.3em}
+.md-rendered h2{font-size:1.18em}
+.md-rendered h3{font-size:1.06em}
+.md-rendered h4{font-size:1em}
+.md-rendered strong,.md-rendered b{font-weight:780;color:var(--ink)}
+.md-rendered em,.md-rendered i{font-style:italic}
+.md-rendered ul,.md-rendered ol{margin:.45em 0 .9em;padding-left:1.45em}
+.md-rendered li{margin:.28em 0;color:var(--ink)}
+.md-rendered li>p{margin:.2em 0}
+.md-rendered ul ul,.md-rendered ol ol,.md-rendered ul ol,.md-rendered ol ul{margin:.25em 0 .35em}
+.md-rendered blockquote{margin:.75em 0;padding:.65em 1em;border-left:3.5px solid var(--blue);background:var(--blue-soft);border-radius:0 10px 10px 0;color:var(--ink)}
+.md-rendered blockquote p{margin:0}
+.md-rendered code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:.88em;background:var(--blue-soft);color:var(--ink);padding:2px 6px;border-radius:6px}
+.md-rendered pre{margin:.8em 0;padding:12px 14px;background:#1b2a33;color:#e9eef0;border-radius:12px;overflow-x:auto;line-height:1.55;border:1px solid var(--line)}
+.md-rendered pre code{background:transparent;color:inherit;padding:0;font-size:.86em}
+.md-rendered .md-table-wrap{width:100%;overflow-x:auto;margin:.85em 0;border:1px solid var(--line);border-radius:11px;background:var(--white)}
+.md-rendered table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:320px}
+.md-rendered th,.md-rendered td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+.md-rendered th{background:var(--blue-soft);font-weight:800;color:var(--ink)}
+.md-rendered tr:last-child td{border-bottom:0}
+.md-rendered hr{border:0;border-top:1px solid var(--line);margin:1em 0}
+.md-rendered a{color:var(--blue);text-decoration:underline;font-weight:650}
+.md-rendered .katex-display{margin:.75em 0;overflow-x:auto;overflow-y:hidden;padding:4px 0}
+/* Interactive Learning Engines: Quiz, Flashcard, Concept Map, Plan & Subject Explorer */
+.study-loading{display:flex;align-items:center;gap:12px;padding:20px 16px;background:var(--paper);border:1px solid var(--line);border-radius:15px;color:var(--ink);font-size:13px;font-weight:650;white-space:normal}
+.study-spinner{width:20px;height:20px;border:2.5px solid var(--line);border-top-color:var(--blue);border-radius:50%;animation:omniSpin .8s linear infinite;flex:0 0 20px}
+@keyframes omniSpin{to{transform:rotate(360deg)}}
+.depth-pill{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:800;padding:3px 9px;border-radius:99px;background:var(--blue-soft);color:var(--blue-dark);margin-bottom:8px;letter-spacing:.3px}
+.quiz-widget,.fc-widget,.cmap-widget{display:flex;flex-direction:column;gap:14px;width:100%;white-space:normal}
+.quiz-topbar,.fc-topbar,.cmap-topbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:11px 14px;background:var(--paper);border:1px solid var(--line);border-radius:14px}
+.quiz-meta,.fc-stats-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:11.5px;font-weight:750}
+.badge-pill{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:99px;font-size:11px;font-weight:800;background:var(--white);border:1px solid var(--line);color:var(--ink)}
+.badge-pill.easy,.badge-pill.ok{background:var(--green);color:#3f6345;border-color:#cfe0cc}
+.badge-pill.medium{background:var(--blue-soft);color:var(--blue-dark);border-color:#c8dbe4}
+.badge-pill.hard,.badge-pill.warn{background:var(--peach);color:#8d493a;border-color:#ebd2c7}
+.quiz-progress-track,.fc-progress-track{height:7px;background:var(--line);border-radius:99px;overflow:hidden;width:100%}
+.quiz-progress-fill,.fc-progress-fill{height:100%;background:var(--blue);border-radius:99px;transition:width .28s ease}
+.quiz-card{background:var(--white);border:1px solid var(--line);border-radius:16px;padding:18px}
+.quiz-question-title{font-size:15px;font-weight:800;line-height:1.55;margin:0 0 14px;color:var(--ink)}
+.quiz-options-grid{display:flex;flex-direction:column;gap:9px}
+.quiz-opt-btn{display:flex;align-items:flex-start;gap:11px;width:100%;text-align:left;padding:12px 14px;border-radius:13px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink);cursor:pointer;transition:.16s;font-size:13px;line-height:1.55}
+.quiz-opt-btn:hover:not(:disabled){border-color:var(--blue);background:var(--blue-soft)}
+.quiz-opt-btn.selected{border-color:var(--blue);background:var(--blue-soft);box-shadow:0 0 0 2px rgba(66,107,134,.14)}
+.quiz-opt-btn.correct{border-color:#5b8c64;background:var(--green);color:var(--ink)}
+.quiz-opt-btn.wrong{border-color:#c26d5a;background:var(--peach);color:var(--ink)}
+.quiz-opt-letter{width:26px;height:26px;border-radius:8px;background:var(--white);border:1px solid var(--line);display:grid;place-items:center;font-weight:850;font-size:12px;flex:0 0 26px;margin-top:1px}
+.quiz-opt-btn.selected .quiz-opt-letter{background:var(--blue);color:#fff;border-color:var(--blue)}
+.quiz-opt-btn.correct .quiz-opt-letter{background:#4f7d57;color:#fff;border-color:#4f7d57}
+.quiz-opt-btn.wrong .quiz-opt-letter{background:#b85d49;color:#fff;border-color:#b85d49}
+.quiz-opt-body{flex:1;min-width:0}
+.quiz-opt-body p{margin:0;color:inherit}
+.quiz-actions-row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:14px}
+.quiz-feedback-box{margin-top:14px;padding:14px 16px;border-radius:14px;border:1px solid var(--line);background:var(--paper);font-size:13px;line-height:1.65}
+.quiz-feedback-box.is-correct{background:var(--green);border-color:#c9dec6}
+.quiz-feedback-box.is-wrong{background:var(--peach);border-color:#e9cfc4}
+.quiz-feedback-title{font-weight:850;font-size:13.5px;margin-bottom:6px;display:block}
+.quiz-exp-block{margin-top:8px;padding-top:8px;border-top:1px dashed rgba(23,43,58,.15)}
+.quiz-results-card{background:var(--white);border:1px solid var(--line);border-radius:18px;padding:20px}
+.quiz-score-banner{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:16px;border-radius:15px;background:var(--blue-soft);margin-bottom:16px}
+.quiz-score-big{font-size:28px;font-weight:900;letter-spacing:-1px;color:var(--ink)}
+.quiz-review-list{display:flex;flex-direction:column;gap:12px;margin-top:12px}
+.quiz-review-item{padding:14px;border-radius:13px;border:1px solid var(--line);background:var(--paper);font-size:12.5px}
+/* Flashcard Flip UX */
+.fc-stage{perspective:1100px;width:100%;margin:2px 0}
+.fc-card-btn{width:100%;border:0;background:transparent;padding:0;text-align:left;cursor:pointer;display:block;outline:none}
+.fc-card-btn:focus-visible .fc-face{box-shadow:0 0 0 3px rgba(66,107,134,.28)}
+.fc-card-inner{position:relative;width:100%;min-height:220px;transition:transform .42s cubic-bezier(.22,1,.36,1);transform-style:preserve-3d}
+.fc-card-inner.is-flipped{transform:rotateY(180deg)}
+.fc-face{border:1.5px solid var(--line);border-radius:18px;padding:20px 22px;background:var(--white);box-shadow:0 10px 28px rgba(27,48,60,.06);backface-visibility:hidden;-webkit-backface-visibility:hidden;display:flex;flex-direction:column;justify-content:space-between;min-height:220px}
+.fc-front{background:var(--white)}
+.fc-back{position:absolute;inset:0;transform:rotateY(180deg);background:var(--blue-soft);border-color:#c5d8e2;overflow-y:auto}
+.fc-card-inner.is-flipped .fc-front{visibility:hidden}
+.fc-card-inner:not(.is-flipped) .fc-back{visibility:hidden}
+.fc-face-top{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.6px}
+.fc-face-content{margin:14px 0;font-size:15.5px;font-weight:750;line-height:1.62;color:var(--ink)}
+.fc-back .fc-face-content{font-size:14px;font-weight:500}
+.fc-face-hint{font-size:11px;color:var(--muted);display:flex;align-items:center;justify-content:space-between;gap:8px}
+.fc-controls-bar{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.fc-nav-group,.fc-assess-group{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+/* Hierarchical Concept Map Tree */
+.cmap-root-node{padding:16px 18px;border-radius:16px;background:var(--blue);color:#fff;box-shadow:0 8px 22px rgba(66,107,134,.18)}
+.cmap-root-kicker{font-size:10px;text-transform:uppercase;letter-spacing:1.1px;color:rgba(255,255,255,.85);font-weight:800}
+.cmap-root-title{font-size:18px;font-weight:850;margin:4px 0 6px;color:#fff}
+.tool-output .cmap-root-summary,.cmap-root-summary{font-size:13px;line-height:1.6;color:rgba(255,255,255,.95);margin:0}
+.cmap-branches{display:flex;flex-direction:column;gap:12px;padding-left:14px;border-left:2.5px solid var(--blue);margin-left:10px}
+.cmap-branch{background:var(--paper);border:1px solid var(--line);border-radius:15px;padding:14px 16px;position:relative}
+.cmap-branch::before{content:"├──";position:absolute;left:-16px;top:16px;color:var(--blue);font-family:monospace;font-weight:900;font-size:12px;background:var(--white);padding:0 2px}
+.cmap-branch:last-child::before{content:"└──"}
+.cmap-branch-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.tool-output .cmap-branch-title,.cmap-branch-title{font-size:14.5px;font-weight:850;color:var(--ink);margin:0;display:inline}
+.cmap-rel-badge{display:inline-block;padding:2px 8px;border-radius:99px;background:var(--blue-soft);color:var(--blue-dark);font-size:10.5px;font-weight:800;margin-right:6px}
+.cmap-toggle-btn{border:1px solid var(--line);background:var(--white);color:var(--ink);border-radius:8px;padding:4px 9px;font-size:11px;font-weight:750;cursor:pointer;white-space:nowrap}
+.cmap-branch-desc{font-size:12.5px;color:var(--ink);margin:7px 0 0;line-height:1.6}
+.cmap-sub-list{display:flex;flex-direction:column;gap:9px;margin-top:11px;padding-left:14px;border-left:2px dashed #9ab5c4}
+.cmap-sub-list.collapsed{display:none}
+.cmap-sub-node{background:var(--white);border:1px solid var(--line);border-radius:12px;padding:11px 13px;font-size:12.5px;line-height:1.58}
+.cmap-sub-title{font-weight:800;color:var(--ink);margin-bottom:3px}
+.cmap-sub-meta{font-size:11.5px;color:var(--muted);margin-top:5px}
+.cmap-sub-meta p{display:inline;margin:0;color:inherit}
+/* Subject Exploration Card */
+.subject-explorer-card{display:none;margin-top:18px;background:var(--white);border:1px solid var(--line);border-radius:22px;padding:22px;box-shadow:var(--shadow)}
+.subject-explorer-card.show{display:block}
+.subject-explorer-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.subject-levels-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:14px 0}
+.subject-level-box{padding:14px;border-radius:14px;border:1px solid var(--line);background:var(--paper);font-size:12.5px;line-height:1.6}
+.subject-level-box.lvl-1{background:var(--green)}
+.subject-level-box.lvl-2{background:var(--blue-soft)}
+.subject-level-box.lvl-3{background:var(--lav)}
+.subject-level-box strong{display:block;font-size:13px;margin-bottom:5px}
+.subject-meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;font-size:12.5px}
+.subject-meta-item{padding:12px 14px;border-radius:13px;background:var(--paper);border:1px solid var(--line)}
+.subject-meta-item strong{display:block;font-size:12px;margin-bottom:4px;color:var(--ink)}
 .feature-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}.feature{background:var(--white);border:1px solid var(--line);border-radius:20px;padding:22px;min-height:175px;transition:.2s}.feature:hover{transform:translateY(-4px);box-shadow:var(--shadow)}.feature-icon{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;font-size:19px;margin-bottom:17px;background:var(--blue-soft)}.feature:nth-child(2) .feature-icon{background:var(--peach)}.feature:nth-child(3) .feature-icon{background:var(--green)}.feature:nth-child(4) .feature-icon{background:var(--yellow)}.feature:nth-child(5) .feature-icon{background:var(--lav)}.feature:nth-child(6) .feature-icon{background:var(--blue-soft)}.feature h3{font-size:15px;margin:0 0 7px}.feature p{font-size:12px;color:var(--muted);margin:0;line-height:1.65}.subjects{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px}.subject{border:1px solid var(--line);background:var(--white);color:var(--muted);padding:10px 15px;border-radius:99px;font-size:12px;cursor:pointer;transition:.2s}.subject:hover,.subject.selected{background:var(--blue-soft);border-color:#c8d8dd;color:var(--ink)}.subject-result{font-size:12px;color:var(--muted);margin-top:14px;min-height:20px}.cta{background:var(--green);border-radius:28px;padding:38px;display:flex;align-items:center;justify-content:space-between;gap:25px;position:relative;overflow:hidden}.cta:after{content:"✳";position:absolute;right:28%;top:-58px;font-size:190px;color:rgba(255,255,255,.35);transform:rotate(18deg)}.cta h2{max-width:520px}.cta p{color:var(--muted);font-size:14px;margin:12px 0 0}.cta .btn{position:relative;z-index:1}footer{padding:25px 0 38px;color:var(--muted);font-size:11px}.footer-inner{border-top:1px solid var(--line);padding-top:22px;display:flex;align-items:center;justify-content:space-between;gap:20px}.footer-inner .brand{color:var(--ink);font-size:17px}.footer-inner .brand-mark{width:29px;height:29px;font-size:15px}.toast{position:fixed;bottom:20px;left:50%;transform:translate(-50%,15px);opacity:0;pointer-events:none;background:#1e303b;color:#fff;padding:11px 16px;border-radius:12px;font-size:12px;box-shadow:var(--shadow);transition:.2s;z-index:20;max-width:min(90vw,520px);text-align:center}.toast.show{opacity:1;transform:translate(-50%,0)}.small-muted{font-size:10px;color:var(--muted)}
-@media(max-width:900px){.nav{gap:17px}.hero{gap:25px}.workspace-body{grid-template-columns:205px 1fr}.model-select{max-width:160px}}
-@media(max-width:700px){.shell{width:min(100% - 30px,560px)}.topbar{height:70px}.nav{display:none;position:absolute;top:65px;left:15px;right:15px;background:var(--white);border:1px solid var(--line);border-radius:16px;padding:15px;box-shadow:var(--shadow);z-index:10;flex-direction:column;align-items:flex-start}.nav.open{display:flex}.menu-btn{display:block}.hero{padding:36px 0 48px;grid-template-columns:1fr;gap:20px}.hero-art{min-height:360px}.blob{width:300px;height:300px}.study-card{width:min(100%,440px)}h1{font-size:clamp(40px,12vw,56px);letter-spacing:-2.3px}.hero-copy{font-size:15px}.section{padding:48px 0}.section-head{display:block}.section-desc{margin-top:12px}.workspace-wrap{padding:48px 0}.workspace{padding:14px}.workspace-head{align-items:flex-start;flex-direction:column}.head-actions{width:100%}.ai-status{white-space:normal}.model-select{max-width:none;flex:1}.workspace-body{grid-template-columns:1fr}.side-panel{order:2}.content-panel{order:1;padding:13px}.ai-setup{align-items:flex-start;flex-direction:column}.ai-setup .btn{width:100%}.feature-grid{grid-template-columns:1fr 1fr}.feature{padding:17px;min-height:165px}.cta{padding:26px;display:block}.cta .btn{margin-top:20px}.footer-inner{flex-wrap:wrap}.floating-note{left:0;bottom:5px}}
-@media(max-width:430px){.feature-grid{grid-template-columns:1fr}.hero-actions .btn{width:100%}.output-grid{gap:8px}.output{padding:11px}.chat-message{max-width:96%}.head-actions .btn{flex:1}}
+@media(max-width:900px){.nav{gap:17px}.hero{gap:25px}.workspace-body{grid-template-columns:205px 1fr}.model-select{max-width:160px}.subject-levels-grid{grid-template-columns:1fr}}
+@media(max-width:700px){.shell{width:min(100% - 28px,560px)}.topbar{height:70px}.nav{display:none;position:absolute;top:65px;left:15px;right:15px;background:var(--white);border:1px solid var(--line);border-radius:16px;padding:15px;box-shadow:var(--shadow);z-index:10;flex-direction:column;align-items:flex-start}.nav.open{display:flex}.menu-btn{display:block}.hero{padding:36px 0 48px;grid-template-columns:1fr;gap:20px}.hero-art{min-height:auto;display:flex;flex-direction:column;gap:12px}.blob{width:260px;height:260px}.study-card{width:min(100%,440px);transform:none}h1{font-size:clamp(36px,11vw,52px);letter-spacing:-2px}.hero-copy{font-size:15px}.section{padding:48px 0}.section-head{display:block}.section-desc{margin-top:12px}.workspace-wrap{padding:42px 0;overflow-x:hidden}.workspace{padding:14px;overflow-x:hidden}.workspace-head{align-items:flex-start;flex-direction:column}.head-actions{width:100%}.ai-status{white-space:normal}.model-select{max-width:none;flex:1}.workspace-body{grid-template-columns:1fr}.side-panel{order:2}.content-panel{order:1;padding:13px;overflow-x:hidden}.ai-setup{align-items:flex-start;flex-direction:column}.ai-setup .btn{width:100%}.feature-grid{grid-template-columns:1fr 1fr}.feature{padding:17px;min-height:165px}.cta{padding:26px;display:block}.cta .btn{margin-top:20px}.footer-inner{flex-wrap:wrap}.floating-note{position:static;transform:none;width:min(100%,440px)}.subject-meta-grid{grid-template-columns:1fr}.fc-controls-bar,.quiz-actions-row{flex-direction:column;align-items:stretch}.fc-nav-group,.fc-assess-group{width:100%;justify-content:space-between}.fc-nav-group .tool-action,.fc-assess-group .tool-action{flex:1;text-align:center}.cmap-branches{margin-left:4px;padding-left:10px}}
+@media(max-width:430px){.feature-grid{grid-template-columns:1fr}.hero-actions .btn{width:100%}.output-grid{gap:8px}.output{padding:11px}.chat-message{max-width:96%}.head-actions .btn{flex:1}.quiz-card,.fc-face{padding:15px}}
 </style>
 </head>
 <body>
@@ -38,13 +163,56 @@
  <div class="workspace">
   <div class="workspace-head"><div><h3>Ruang belajarmu</h3><p id="materialLabel">Belum ada materi · Mulai dengan pertanyaan bebas</p></div><div class="head-actions"><span class="ai-status" id="aiStatus">● Memeriksa Gemini Cloud…</span><input class="upload-input" id="materialFile" type="file" accept=".pdf,.docx,.pptx,.txt"><button class="btn btn-soft" id="uploadButton" type="button">＋ Tambah materi</button></div></div>
   <div class="workspace-body">
-   <aside class="side-panel"><div class="side-label">Materi kamu</div><div id="materialList"><div class="lesson active"><span class="lesson-icon">💡</span>Pertanyaan bebas</div></div><div class="privacy-note">🔒 File diproses sementara di server untuk diekstrak. Teks dikirim ke Gemini saat kamu meminta bantuan AI. Jangan unggah dokumen rahasia.</div></aside>
+   <aside class="side-panel"><div class="side-label">Materi kamu</div><div id="materialList"><div class="lesson active"><span class="lesson-icon">💡</span>Pertanyaan bebas</div></div><div class="privacy-note">🔒 Riwayat chat terisolasi per sesi tab browser (sessionStorage) dan tidak dibagikan ke pengguna lain. Dokumen hanya diproses sementara di memori. Konten yang dikirim ke Tutor AI diproses oleh penyedia Gemini Cloud untuk menghasilkan jawaban.</div></aside>
    <div class="content-panel">
     <div class="ai-setup"><div><strong>Gemini Cloud · Tutor AI OmniLearn</strong><p>AI berjalan di server Node.js. Kunci API disimpan sebagai secret server-side dan tidak dikirim ke browser.</p></div><span class="status">Cloud AI</span></div>
-    <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Pilih atau jatuhkan dokumen"><strong>Tarik dokumen ke sini atau klik untuk memilih</strong><span>PDF, DOCX, PPTX, TXT · Maksimal 15 MB · PDF scan perlu OCR dulu</span></div>
+    <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Pilih atau jatuhkan dokumen"><strong>Tarik dokumen ke sini atau klik untuk memilih</strong><span>PDF (teks, scan, campuran & infografik · OCR otomatis), DOCX, PPTX, TXT · Maksimal 15 MB</span></div>
+    <div class="setup-progress" id="uploadProgress" role="status" aria-live="polite">
+      <div class="setup-progress-top"><span id="uploadProgressLabel">Mengunggah dokumen…</span><span id="uploadProgressStage">Tahap 1 dari 7</span></div>
+      <div class="progress"><span id="uploadProgressBar" style="width:14%"></span></div>
+    </div>
     <div class="tabs" role="tablist" aria-label="Alat belajar"><button class="tab active" data-tab="chat">Tutor AI</button><button class="tab" data-tab="summary">Ringkasan</button><button class="tab" data-tab="quiz">Kuis</button><button class="tab" data-tab="cards">Flashcard</button><button class="tab" data-tab="map">Peta konsep</button><button class="tab" data-tab="plan">Rencana 7 hari</button><button class="tab" data-tab="translate">Penerjemah</button><button class="tab" data-tab="research">Asisten riset</button></div>
-    <div class="task-options" id="taskOptions"><label for="targetLanguage">Terjemahkan ke</label><select id="targetLanguage"><option>Bahasa Inggris</option><option>Bahasa Indonesia</option><option>Bahasa Melayu</option><option>Bahasa Arab</option><option>Bahasa Jepang</option><option>Bahasa Korea</option><option>Bahasa Mandarin</option><option>Bahasa Spanyol</option><option>Bahasa Prancis</option><option>Bahasa Jerman</option></select><span>Gunakan materi yang diunggah atau teks di kolom pertanyaan.</span></div>
-    <div class="tool-output" id="toolOutput"><h4>Mulai dari rasa ingin tahu.</h4><p class="placeholder">Gemini Cloud siap membantu. Tanyakan apa saja atau unggah materi untuk dipelajari bersama.</p><div class="key-points"><span>Semua bidang ilmu</span><span>Gemini Cloud</span><span>API key aman di server</span></div></div>
+    <div class="task-options" id="summaryOptions">
+      <label for="summaryStyle">Gaya ringkasan</label>
+      <select id="summaryStyle">
+        <option value="ringkasan_lengkap">Ringkasan lengkap</option>
+        <option value="ringkasan_singkat">Ringkasan singkat</option>
+        <option value="catatan_kuliah">Catatan kuliah</option>
+        <option value="poin_ujian">Poin penting ujian</option>
+        <option value="per_bab">Penjelasan per bab</option>
+        <option value="konsep_mekanisme">Ringkasan konsep dan mekanisme</option>
+      </select>
+      <button class="tool-action" id="regenSummaryBtn" type="button">Buat Ringkasan</button>
+    </div>
+    <div class="task-options" id="quizOptions">
+      <label for="quizDifficulty">Kesulitan</label>
+      <select id="quizDifficulty">
+        <option value="campuran">Campuran</option>
+        <option value="mudah">Mudah</option>
+        <option value="sedang">Sedang</option>
+        <option value="sulit">Sulit</option>
+      </select>
+      <label for="quizCount">Jumlah soal</label>
+      <select id="quizCount">
+        <option value="5">5 Soal</option>
+        <option value="10" selected>10 Soal</option>
+        <option value="15">15 Soal</option>
+        <option value="20">20 Soal</option>
+      </select>
+      <button class="tool-action" id="regenQuizBtn" type="button">Buat Kuis Baru</button>
+    </div>
+    <div class="task-options" id="cardsOptions">
+      <label for="cardsCount">Jumlah kartu</label>
+      <select id="cardsCount">
+        <option value="10" selected>10 Kartu</option>
+        <option value="12">12 Kartu</option>
+        <option value="15">15 Kartu</option>
+      </select>
+      <button class="tool-action" id="regenCardsBtn" type="button">Buat Deck Baru</button>
+      <span>Klik kartu untuk membalik · Tandai "Sudah paham" atau "Perlu diulang".</span>
+    </div>
+    <div class="task-options" id="taskOptions"><label for="targetLanguage">Terjemahkan ke</label><select id="targetLanguage"><option>Bahasa Inggris</option><option>Bahasa Indonesia</option><option>Bahasa Melayu</option><option>Bahasa Arab</option><option>Bahasa Jepang</option><option>Bahasa Korea</option><option>Bahasa Mandarin</option><option>Bahasa Spanyol</option><option>Bahasa Prancis</option><option>Bahasa Jerman</option></select><button class="tool-action" id="regenTranslateBtn" type="button">Terjemahkan</button><span>Gunakan materi yang diunggah atau teks di kolom pertanyaan.</span></div>
+    <div class="tool-output" id="toolOutput"><h4>Mulai dari rasa ingin tahu.</h4><p class="placeholder">Gemini Cloud siap membantu. Tanyakan apa saja atau unggah materi untuk dipelajari bersama.</p><div class="key-points"><span>Semua bidang ilmu</span><span>Gemini Cloud</span><span>OCR PDF Otomatis</span></div></div>
     <div class="chat-messages" id="chatMessages" aria-live="polite"><div class="chat-message assistant">Hai! Aku tutor OmniLearn. Aku bisa menjelaskan topik, membantumu memahami dokumen, atau membuat latihan. Sekarang kamu bisa bertanya atau mengunggah materi untuk mulai belajar.</div></div>
     <form class="chat-row" id="chatForm"><input id="chatInput" placeholder="Tanyakan apa saja tentang materi atau topikmu…" aria-label="Tulis pertanyaan" autocomplete="off"><button id="sendButton" aria-label="Kirim pertanyaan">↑</button></form>
     <div class="tool-actions"><button class="tool-action" id="clearChat">Hapus chat</button><button class="tool-action" id="copyOutput">Salin hasil</button><span class="small-muted" id="chatFeedback">Memeriksa koneksi Gemini Cloud…</span></div>
@@ -62,7 +230,7 @@
  <article class="feature"><div class="feature-icon">🌐</div><h3>Penerjemah materi</h3><p>Terjemahkan materi belajar sambil menjaga istilah dan makna aslinya.</p></article>
  <article class="feature"><div class="feature-icon">🔎</div><h3>Asisten riset</h3><p>Bantu menyusun pertanyaan, kerangka, variabel, dan rancangan penelitian.</p></article>
  </div></div></section>
-<section class="section" id="jelajahi" style="padding-top:12px"><div class="shell"><div class="section-head"><div><div class="kicker">Tak ada batas bidang</div><h2>Hari ini mau belajar apa?</h2></div><p class="section-desc">Pilih topik untuk memulai percakapan dengan tutor.</p></div><div class="subjects" id="subjects"><button class="subject" data-name="Sains">🔬 Sains</button><button class="subject" data-name="Matematika">📐 Matematika</button><button class="subject" data-name="Sejarah">🏛️ Sejarah</button><button class="subject" data-name="Bahasa">🔤 Bahasa</button><button class="subject" data-name="Teknologi">💻 Teknologi</button><button class="subject" data-name="Ekonomi">📊 Ekonomi</button><button class="subject" data-name="Seni dan desain">🎨 Seni & desain</button><button class="subject" data-name="Filsafat">💭 Filsafat</button><button class="subject" data-name="Geografi">🌏 Geografi</button><button class="subject" data-name="Hukum">⚖️ Hukum</button><button class="subject" data-name="Kesehatan">🩺 Kesehatan</button><button class="subject" data-name="Teknik">⚙️ Teknik</button><button class="subject" data-name="Pemrograman">⌨️ Pemrograman</button><button class="subject" data-name="Astronomi">🪐 Astronomi</button></div><div class="subject-result" id="subjectResult">Pilih bidang. Rasa ingin tahu boleh ke mana saja.</div></div></section>
+<section class="section" id="jelajahi" style="padding-top:12px"><div class="shell"><div class="section-head"><div><div class="kicker">Tak ada batas bidang</div><h2>Hari ini mau belajar apa?</h2></div><p class="section-desc">Pilih bidang ilmu untuk melihat jalur belajar terstruktur (Pemula → Menengah → Lanjut) dan mulai berdiskusi bersama tutor.</p></div><div class="subjects" id="subjects"><button class="subject" data-name="Sains">🔬 Sains</button><button class="subject" data-name="Matematika">📐 Matematika</button><button class="subject" data-name="Sejarah">🏛️ Sejarah</button><button class="subject" data-name="Geografi">🌏 Geografi</button><button class="subject" data-name="Ekonomi">📊 Ekonomi</button><button class="subject" data-name="Teknologi">💻 Teknologi</button><button class="subject" data-name="Filsafat">💭 Filsafat</button><button class="subject" data-name="Bahasa">🔤 Bahasa</button><button class="subject" data-name="Ilmu Sosial">👥 Ilmu Sosial</button><button class="subject" data-name="Seni dan desain">🎨 Seni & desain</button><button class="subject" data-name="Hukum">⚖️ Hukum</button><button class="subject" data-name="Kesehatan">🩺 Kesehatan</button><button class="subject" data-name="Teknik">⚙️ Teknik</button><button class="subject" data-name="Pemrograman">⌨️ Pemrograman</button><button class="subject" data-name="Astronomi">🪐 Astronomi</button></div><div class="subject-result" id="subjectResult">Pilih bidang. Rasa ingin tahu boleh ke mana saja.</div><div class="subject-explorer-card" id="subjectExplorerCard" aria-live="polite"></div></div></section>
 <section class="shell section" id="cara-kerja" style="padding-top:10px"><div class="cta"><div><div class="kicker">Mulai dari rasa ingin tahu</div><h2>Belajar tidak harus langsung mengerti semuanya.</h2><p>Mulai dengan satu pertanyaan. Lanjutkan dengan satu langkah kecil.</p></div><a href="#ruang-belajar" class="btn btn-primary">Buka ruang belajar ↗</a></div></section>
 </main>
 <footer class="shell"><div class="footer-inner"><a class="brand" href="#home"><span class="brand-mark">✳</span>omni<span style="font-weight:500">learn</span></a><span>OmniLearn AI · 2026</span><span>Belajar dengan caramu.</span></div></footer>
@@ -76,12 +244,210 @@ const toolOutput = $('toolOutput');
 const chatInput = $('chatInput');
 const sendButton = $('sendButton');
 const taskOptions = $('taskOptions');
+const quizOptions = $('quizOptions');
+const uploadProgress = $('uploadProgress');
+const uploadProgressLabel = $('uploadProgressLabel');
+const uploadProgressStage = $('uploadProgressStage');
+const uploadProgressBar = $('uploadProgressBar');
+const dropzone = $('dropzone');
+
+// Remove any legacy shared localStorage chat so conversations are strictly isolated per tab session
+try { localStorage.removeItem('omnilearn-chat'); } catch (_) {}
+
+const SESSION_ID_KEY = 'omnilearn-session-id';
+const SESSION_CHAT_KEY = 'omnilearn-chat-session';
+const SESSION_MATERIAL_KEY = 'omnilearn-material-session';
+
+function getOrCreateSessionId() {
+  try {
+    let sid = sessionStorage.getItem(SESSION_ID_KEY);
+    if (!sid) {
+      sid = 'sess-' + (window.crypto?.randomUUID
+        ? window.crypto.randomUUID().replace(/-/g, '').slice(0, 16)
+        : Math.random().toString(36).slice(2, 12) + Date.now().toString(36));
+      sessionStorage.setItem(SESSION_ID_KEY, sid);
+    }
+    return sid;
+  } catch (_) {
+    return 'sess-ephemeral-' + Math.random().toString(36).slice(2, 10);
+  }
+}
+
+function generateClientRequestId(prefix = 'req') {
+  const rand = Math.random().toString(36).slice(2, 8);
+  const ts = Date.now().toString(36).slice(-4);
+  return `${prefix}-${ts}-${rand}`;
+}
+
+function formatFileSize(bytes) {
+  const num = Number(bytes) || 0;
+  if (num < 1024) return `${num} B`;
+  if (num < 1024 * 1024) return `${(num / 1024).toFixed(1).replace('.', ',')} KB`;
+  return `${(num / (1024 * 1024)).toFixed(2).replace('.', ',')} MB`;
+}
+
+const sessionId = getOrCreateSessionId();
 let materialText = '';
 let materialName = '';
+let materialId = '';
+let materialMeta = null;
 let chatHistory = [];
 let lastOutput = '';
+let lastOutputHtml = '';
 let activeTab = 'chat';
 let busy = false;
+let uploadInFlight = false;
+
+// Obtain an un-shimmed native fetch from a hidden about:blank iframe so _aistudio-iframe.js
+// does not stall on bootstrapChannel or consume FormData bodies in new Request()
+let cleanNativeFetch = null;
+function getCleanFetch() {
+  if (cleanNativeFetch) return cleanNativeFetch;
+  try {
+    const frame = document.createElement('iframe');
+    frame.style.display = 'none';
+    frame.src = 'about:blank';
+    document.body.appendChild(frame);
+    if (frame.contentWindow && typeof frame.contentWindow.fetch === 'function') {
+      cleanNativeFetch = frame.contentWindow.fetch.bind(window);
+      return cleanNativeFetch;
+    }
+  } catch (_) {}
+  return window.fetch.bind(window);
+}
+
+// Recover expired/cleared __SECURE-aistudio_auth_token cookie via a hidden navigation iframe
+function refreshAuthBridgeViaHiddenFrame(timeoutMs = 3500) {
+  return new Promise((resolve) => {
+    let settled = false;
+    const frame = document.createElement('iframe');
+    frame.style.display = 'none';
+    const done = () => {
+      if (settled) return;
+      settled = true;
+      window.setTimeout(() => {
+        try { frame.remove(); } catch (_) {}
+      }, 200);
+      resolve();
+    };
+    const timer = window.setTimeout(done, timeoutMs);
+    frame.onload = () => {
+      window.clearTimeout(timer);
+      done();
+    };
+    frame.onerror = () => {
+      window.clearTimeout(timer);
+      done();
+    };
+    frame.src = `/api/health?auth_warmup=${Date.now()}`;
+    document.body.appendChild(frame);
+  });
+}
+
+if (window.marked && typeof window.marked.setOptions === 'function') {
+  window.marked.setOptions({ gfm: true, breaks: true });
+}
+
+function renderMarkdownToSafeHtml(rawText) {
+  let source = String(rawText ?? '').trim();
+  if (!source) return '';
+
+  // Unwrap if the entire response was accidentally wrapped in a single ```markdown ... ``` fence
+  const outerFence = source.match(/^```(?:markdown|md|text)?\s*\n([\s\S]*?)\n```$/i);
+  if (outerFence && outerFence[1]) {
+    source = outerFence[1].trim();
+  }
+  // Unescape accidental double-escaped asterisks or dollar signs outside code blocks
+  source = source.replace(/\\\*/g, '*');
+
+  const codePlaceholders = [];
+  let protectedText = source.replace(/```[\s\S]*?```|`[^`\n]+`/g, (match) => {
+    const token = `@@OMNICODE_${codePlaceholders.length}@@`;
+    codePlaceholders.push(match);
+    return token;
+  });
+
+  const mathPlaceholders = [];
+  const storeMath = (tex, displayMode) => {
+    const token = `@@OMNIMATH_${mathPlaceholders.length}@@`;
+    if (window.katex && typeof window.katex.renderToString === 'function') {
+      try {
+        mathPlaceholders.push(window.katex.renderToString(tex.trim(), { displayMode, throwOnError: false }));
+        return token;
+      } catch (_) {}
+    }
+    mathPlaceholders.push(displayMode ? `$$${tex}$$` : `$${tex}$`);
+    return token;
+  };
+
+  protectedText = protectedText
+    .replace(/\$\$([\s\S]+?)\$\$/g, (_, tex) => storeMath(tex, true))
+    .replace(/\\\[([\s\S]+?)\\\]/g, (_, tex) => storeMath(tex, true))
+    .replace(/\\\(([\s\S]+?)\\\)/g, (_, tex) => storeMath(tex, false))
+    .replace(/\$(?!\s)((?:\\.|[^$\n])+?)(?<!\s)\$/g, (_, tex) => storeMath(tex, false));
+
+  protectedText = protectedText.replace(/@@OMNICODE_(\d+)@@/g, (_, idx) => codePlaceholders[Number(idx)] || '');
+
+  let rawHtml = protectedText;
+  if (window.marked && typeof window.marked.parse === 'function') {
+    rawHtml = window.marked.parse(protectedText);
+  } else {
+    rawHtml = protectedText
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/\n/g, '<br>');
+  }
+
+  rawHtml = rawHtml.replace(/@@OMNIMATH_(\d+)@@/g, (_, idx) => mathPlaceholders[Number(idx)] || '');
+
+  rawHtml = rawHtml
+    .replace(/<table>/g, '<div class="md-table-wrap"><table>')
+    .replace(/<\/table>/g, '</table></div>');
+
+  if (window.DOMPurify && typeof window.DOMPurify.sanitize === 'function') {
+    return window.DOMPurify.sanitize(rawHtml, {
+      ADD_TAGS: [
+        'math', 'semantics', 'mrow', 'mi', 'mo', 'mn', 'msup', 'msub', 'msubsup',
+        'mfrac', 'msqrt', 'mroot', 'mtable', 'mtr', 'mtd', 'mtext', 'mspace',
+        'annotation', 'svg', 'path', 'line', 'g', 'rect', 'circle'
+      ],
+      ADD_ATTR: [
+        'xmlns', 'encoding', 'mathvariant', 'stretchy', 'separator',
+        'accent', 'accentunder', 'columnalign', 'rowalign', 'columnspacing',
+        'rowspacing', 'frame', 'framespacing', 'equalrows', 'equalcolumns',
+        'displaystyle', 'scriptlevel', 'aria-hidden', 'focusable', 'viewBox',
+        'd', 'preserveAspectRatio', 'style', 'class', 'target', 'rel'
+      ]
+    });
+  }
+  return rawHtml;
+}
+
+function setRenderedContent(el, role, text) {
+  if (role === 'assistant') {
+    el.classList.add('md-rendered');
+    el.innerHTML = renderMarkdownToSafeHtml(text);
+    el.querySelectorAll('a').forEach(link => {
+      link.setAttribute('target', '_blank');
+      link.setAttribute('rel', 'noopener noreferrer');
+    });
+  } else {
+    el.classList.remove('md-rendered');
+    el.textContent = text;
+  }
+}
+
+function setToolOutputMarkdown(markdownText) {
+  lastOutput = String(markdownText || '');
+  lastOutputHtml = renderMarkdownToSafeHtml(lastOutput);
+  toolOutput.classList.add('md-rendered');
+  toolOutput.innerHTML = lastOutputHtml;
+  toolOutput.querySelectorAll('a').forEach(link => {
+    link.setAttribute('target', '_blank');
+    link.setAttribute('rel', 'noopener noreferrer');
+  });
+}
 
 function setStatus(state, label) {
   aiStatus.className = 'ai-status' + (state ? ' ' + state : '');
@@ -91,83 +457,351 @@ function toast(message) {
   const el = $('toast');
   el.textContent = message;
   el.classList.add('show');
-  window.setTimeout(() => el.classList.remove('show'), 2600);
+  window.setTimeout(() => el.classList.remove('show'), 3600);
 }
 function addMessage(role, text, extra = '') {
   const el = document.createElement('div');
   el.className = `chat-message ${role} ${extra}`.trim();
-  el.textContent = text;
+  if (extra.includes('pending') || role !== 'assistant') {
+    el.textContent = text;
+  } else {
+    setRenderedContent(el, 'assistant', text);
+  }
   chatMessages.appendChild(el);
   chatMessages.scrollTop = chatMessages.scrollHeight;
   return el;
 }
-function saveHistory() {
-  try { localStorage.setItem('omnilearn-chat', JSON.stringify(chatHistory.slice(-30))); } catch (_) {}
-}
-function restoreHistory() {
+
+function saveSessionState() {
   try {
-    const saved = JSON.parse(localStorage.getItem('omnilearn-chat') || '[]');
-    if (!Array.isArray(saved)) return;
-    chatHistory = saved.slice(-30).filter(x => x && ['user', 'assistant'].includes(x.role) && typeof x.content === 'string');
-    for (const item of chatHistory) addMessage(item.role, item.content);
-  } catch (_) { chatHistory = []; }
+    sessionStorage.setItem(SESSION_CHAT_KEY, JSON.stringify(chatHistory.slice(-24)));
+    if (materialName && materialText) {
+      sessionStorage.setItem(SESSION_MATERIAL_KEY, JSON.stringify({
+        materialText,
+        materialName,
+        materialId,
+        materialMeta
+      }));
+    } else {
+      sessionStorage.removeItem(SESSION_MATERIAL_KEY);
+    }
+  } catch (_) {}
 }
+
+function renderMaterialBadgeAndSidebar() {
+  const list = $('materialList');
+  list.innerHTML = '';
+  if (!materialName || !materialText) {
+    $('materialLabel').textContent = 'Belum ada materi · Mulai dengan pertanyaan bebas';
+    const freeItem = document.createElement('div');
+    freeItem.className = 'lesson active';
+    const icon = document.createElement('span');
+    icon.className = 'lesson-icon';
+    icon.textContent = '💡';
+    freeItem.append(icon, document.createTextNode('Pertanyaan bebas'));
+    list.append(freeItem);
+    return;
+  }
+
+  const meta = materialMeta || {};
+  const sizePart = meta.fileSize ? ` · ${formatFileSize(meta.fileSize)}` : '';
+  const pagePart = meta.pageCount ? ` · ${meta.pageCount} halaman` : '';
+  const charPart = ` · ${Number(meta.characters || materialText.length).toLocaleString('id-ID')} karakter`;
+  const ocrPart = meta.ocrUsed ? ' · OCR: Digunakan' : ' · OCR: Tidak diperlukan';
+  const truncPart = meta.truncated ? ' · teks dipotong' : '';
+  $('materialLabel').textContent = `${materialName}${sizePart}${pagePart}${charPart}${ocrPart}${truncPart}`;
+
+  const item = document.createElement('div');
+  item.className = 'lesson active';
+  const icon = document.createElement('span');
+  icon.className = 'lesson-icon';
+  icon.textContent = meta.ocrUsed ? '🔍' : '📄';
+  const name = document.createElement('span');
+  name.textContent = materialName;
+  item.append(icon, name);
+  list.append(item);
+}
+
+function restoreSessionState() {
+  try {
+    const savedMaterial = JSON.parse(sessionStorage.getItem(SESSION_MATERIAL_KEY) || 'null');
+    if (savedMaterial && typeof savedMaterial.materialText === 'string' && savedMaterial.materialName) {
+      materialText = savedMaterial.materialText;
+      materialName = savedMaterial.materialName;
+      materialId = savedMaterial.materialId || '';
+      materialMeta = savedMaterial.materialMeta || null;
+      renderMaterialBadgeAndSidebar();
+    }
+  } catch (_) {}
+
+  try {
+    const savedChat = JSON.parse(sessionStorage.getItem(SESSION_CHAT_KEY) || '[]');
+    if (!Array.isArray(savedChat) || !savedChat.length) return;
+    chatHistory = savedChat.slice(-24).filter(x => x && ['user', 'assistant'].includes(x.role) && typeof x.content === 'string');
+    if (chatHistory.length) {
+      chatMessages.innerHTML = '';
+      for (const item of chatHistory) addMessage(item.role, item.content);
+    }
+  } catch (_) {
+    chatHistory = [];
+  }
+}
+
 function setBusy(value) {
   busy = value;
   sendButton.disabled = value;
-  $('uploadButton').disabled = value;
-  document.querySelectorAll('.tab').forEach(button => { button.disabled = value; });
+  $('uploadButton').disabled = value || uploadInFlight;
+  $('materialFile').disabled = value || uploadInFlight;
+  dropzone.classList.toggle('disabled', Boolean(value || uploadInFlight));
+  dropzone.setAttribute('aria-disabled', (value || uploadInFlight) ? 'true' : 'false');
+  document.querySelectorAll('.tab').forEach(button => { button.disabled = value || uploadInFlight; });
 }
-async function checkAI() {
-  try {
-    const response = await fetch('/api/health', { headers: { 'Accept': 'application/json' } });
-    const data = await response.json();
-    if (response.ok && data.ready) {
-      setStatus('ready', 'Gemini Cloud siap');
-      chatFeedback.textContent = `Terhubung ke ${data.provider || 'Gemini Cloud'} · ${data.model || 'model AI'}.`;
-    } else {
-      setStatus('error', 'Secret Gemini belum tersedia');
-      chatFeedback.textContent = 'Tambahkan GEMINI_API_KEY melalui Settings → Secrets di Google AI Studio Build Mode.';
+
+// 7-Stage Upload Progress Indicator (no fake percentages)
+function setUploadStage(stageNum, labelText, visible = true) {
+  const clampedStage = Math.max(1, Math.min(7, Number(stageNum) || 1));
+  uploadProgress.classList.toggle('show', visible);
+  uploadProgressLabel.textContent = labelText;
+  uploadProgressStage.textContent = `Tahap ${clampedStage} dari 7`;
+  const stepWidth = Math.round((clampedStage / 7) * 100);
+  uploadProgressBar.style.width = `${stepWidth}%`;
+}
+
+// Pre-flight GET health check keeps container auth bridge token cache warm before POST requests
+async function warmAuthAndHealthCheck(allowIframeRecovery = false) {
+  const doCheck = async () => {
+    try {
+      const f = getCleanFetch();
+      const res = await f(`/api/health?t=${Date.now()}`, {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' },
+        cache: 'no-store',
+        credentials: 'same-origin'
+      });
+      if (!res.ok) return null;
+      const ct = res.headers.get('content-type') || '';
+      if (!ct.includes('application/json')) return null;
+      return await res.json().catch(() => null);
+    } catch (_) {
+      return null;
     }
-  } catch (_) {
+  };
+
+  let health = await doCheck();
+  if (!health && allowIframeRecovery) {
+    await refreshAuthBridgeViaHiddenFrame(3500);
+    health = await doCheck();
+  }
+  return health;
+}
+
+async function checkAI() {
+  const data = await warmAuthAndHealthCheck(true);
+  if (data && data.ready) {
+    setStatus('ready', 'Gemini Cloud siap');
+    chatFeedback.textContent = `Terhubung ke ${data.provider || 'Gemini Cloud'} · ${data.model || 'gemini-3.8-flash'}.`;
+  } else if (data && !data.ready) {
+    setStatus('error', 'Secret Gemini belum tersedia');
+    chatFeedback.textContent = 'Tambahkan GEMINI_API_KEY melalui Settings → Secrets di Google AI Studio Build Mode.';
+  } else {
     setStatus('error', 'Backend belum berjalan');
-    chatFeedback.textContent = 'Backend Node.js belum berjalan atau belum selesai dimuat.';
+    chatFeedback.textContent = 'Backend Node.js belum merespons atau sedang dimuat ulang.';
   }
 }
-async function readJson(response) {
-  const data = await response.json().catch(() => ({ error: 'Respons server tidak valid.' }));
-  if (!response.ok) throw new Error(data.error || 'Permintaan gagal diproses.');
-  return data;
+
+// Keep auth token cache warm every 25 seconds (under the 60s Lua public token TTL)
+window.setInterval(() => {
+  warmAuthAndHealthCheck(false);
+}, 25000);
+
+// XMLHttpRequest fallback immune to _aistudio-iframe.js window.fetch override
+function requestViaXhr(url, { method = 'GET', headers = {}, body = null, timeoutMs = 45000, reqId = '' } = {}) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open(method, url, true);
+    xhr.withCredentials = true;
+    xhr.timeout = timeoutMs;
+    xhr.setRequestHeader('Accept', 'application/json');
+    if (reqId) xhr.setRequestHeader('X-Request-Id', reqId);
+    xhr.setRequestHeader('X-Session-Id', sessionId);
+
+    Object.entries(headers || {}).forEach(([k, v]) => {
+      if (k.toLowerCase() !== 'content-type' || !(body instanceof FormData)) {
+        xhr.setRequestHeader(k, v);
+      }
+    });
+
+    xhr.onload = () => {
+      const serverReqId = xhr.getResponseHeader('X-Request-Id') || reqId;
+      const contentType = xhr.getResponseHeader('content-type') || '';
+      const rawText = xhr.responseText || '';
+
+      if (!contentType.includes('application/json')) {
+        if (xhr.status === 413) {
+          return reject(new Error(`Ukuran file melebihi batas maksimal 15 MB. (ID: ${serverReqId})`));
+        }
+        return reject(new Error(`Server mengembalikan respons non-JSON (Status ${xhr.status}). Silakan coba lagi. (ID: ${serverReqId})`));
+      }
+
+      let data = null;
+      try { data = JSON.parse(rawText); } catch (_) {}
+      if (!data) {
+        return reject(new Error(`Gagal membaca respons JSON dari server (Status ${xhr.status}). (ID: ${serverReqId})`));
+      }
+      if (xhr.status < 200 || xhr.status >= 300) {
+        const idSuffix = data.requestId || serverReqId;
+        const err = new Error(`${data.error || 'Permintaan gagal diproses.'} (ID: ${idSuffix})`);
+        err.isHttpError = true;
+        err.status = xhr.status;
+        return reject(err);
+      }
+      resolve(data);
+    };
+
+    xhr.ontimeout = () => {
+      const err = new Error(`Waktu koneksi habis setelah ${Math.round(timeoutMs / 1000)} detik. (ID: ${reqId})`);
+      err.isTimeout = true;
+      reject(err);
+    };
+
+    xhr.onerror = () => {
+      const err = new Error(`NetworkError saat menghubungi ${url}`);
+      err.isNetworkError = true;
+      reject(err);
+    };
+
+    xhr.send(body);
+  });
 }
+
+async function safeRequestJson(url, options = {}, { timeoutMs = 45000, stageContext = 'request' } = {}) {
+  const reqId = generateClientRequestId(stageContext);
+  const method = (options.method || 'GET').toUpperCase();
+
+  if (method === 'POST') {
+    await warmAuthAndHealthCheck(true);
+  }
+
+  const controller = new AbortController();
+  const timeoutTimer = window.setTimeout(() => controller.abort(), timeoutMs);
+
+  const headers = new Headers(options.headers || {});
+  headers.set('Accept', 'application/json');
+  headers.set('X-Request-Id', reqId);
+  headers.set('X-Session-Id', sessionId);
+
+  try {
+    const f = getCleanFetch();
+    const response = await f(url, {
+      ...options,
+      headers,
+      cache: 'no-store',
+      credentials: 'same-origin',
+      signal: controller.signal
+    });
+
+    const serverReqId = response.headers.get('X-Request-Id') || reqId;
+    const contentType = response.headers.get('content-type') || '';
+
+    if (!contentType.includes('application/json')) {
+      const textBody = await response.text().catch(() => '');
+      if (response.status === 413) {
+        const err413 = new Error(`Ukuran file melebihi batas maksimal 15 MB. (ID: ${serverReqId})`);
+        err413.isHttpError = true;
+        throw err413;
+      }
+      if (response.status === 502 || response.status === 503 || response.status === 504 || textBody.includes('warmup')) {
+        throw new Error(`Server sedang memulai ulang atau sibuk (Status ${response.status}). Silakan coba lagi beberapa detik. (ID: ${serverReqId})`);
+      }
+      throw new Error(`Respons server tidak berformat JSON (Status ${response.status}). (ID: ${serverReqId})`);
+    }
+
+    const data = await response.json().catch(() => null);
+    if (!data) {
+      throw new Error(`Gagal membaca respons JSON dari server (Status ${response.status}). (ID: ${serverReqId})`);
+    }
+
+    if (!response.ok) {
+      const idSuffix = data.requestId || serverReqId;
+      const httpErr = new Error(`${data.error || 'Permintaan gagal diproses.'} (ID: ${idSuffix})`);
+      httpErr.isHttpError = true;
+      httpErr.status = response.status;
+      throw httpErr;
+    }
+
+    return data;
+  } catch (err) {
+    window.clearTimeout(timeoutTimer);
+
+    // Separate HTTP errors from network/timeout errors
+    if (err.isHttpError) {
+      throw err;
+    }
+
+    if (err.name === 'AbortError' || err.isTimeout) {
+      throw new Error(`Waktu pemrosesan habis (Timeout setelah ${Math.round(timeoutMs / 1000)} detik). (ID: ${reqId})`);
+    }
+
+    // If fetch failed due to iframe shim or expired auth bridge cookie, recover and retry via XMLHttpRequest
+    await warmAuthAndHealthCheck(true);
+    try {
+      const plainHeaders = {};
+      if (options.headers && typeof options.headers === 'object' && !(options.headers instanceof Headers)) {
+        Object.assign(plainHeaders, options.headers);
+      }
+      return await requestViaXhr(url, {
+        method,
+        headers: plainHeaders,
+        body: options.body || null,
+        timeoutMs,
+        reqId
+      });
+    } catch (xhrErr) {
+      if (xhrErr.isHttpError || xhrErr.isTimeout) throw xhrErr;
+      const health = await warmAuthAndHealthCheck(false);
+      if (!health) {
+        throw new Error(`Layanan backend sedang tidak dapat dijangkau. Periksa koneksi jaringan Anda lalu coba lagi. (ID: ${reqId})`);
+      }
+      throw new Error(`Gagal terhubung ke server pada tahap ${stageContext}. Silakan muat ulang halaman dan coba lagi. (ID: ${reqId})`);
+    }
+  } finally {
+    window.clearTimeout(timeoutTimer);
+  }
+}
+
 async function askAI(message) {
-  const response = await fetch('/api/chat', {
+  const data = await safeRequestJson('/api/chat', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       message,
-      history: chatHistory.slice(-12),
+      sessionId,
+      history: chatHistory.slice(-8),
       material: materialText,
+      materialId,
       materialName
     })
-  });
-  const data = await readJson(response);
+  }, { timeoutMs: 45000, stageContext: 'chat' });
   return data.answer;
 }
+
 async function sendChat(event) {
   event?.preventDefault();
   const message = chatInput.value.trim();
-  if (!message || busy) return;
+  if (!message || busy || uploadInFlight) return;
   chatInput.value = '';
   addMessage('user', message);
   const pending = addMessage('assistant', 'Gemini sedang berpikir…', 'pending');
   setBusy(true);
-  chatFeedback.textContent = 'Tutor sedang menyusun jawaban.';
+  chatFeedback.textContent = 'Tutor sedang menyusun penjelasan.';
   try {
     const answer = await askAI(message);
     pending.classList.remove('pending');
-    pending.textContent = answer;
+    setRenderedContent(pending, 'assistant', answer);
+    lastOutput = answer;
+    lastOutputHtml = pending.innerHTML;
     chatHistory.push({ role: 'user', content: message }, { role: 'assistant', content: answer });
-    saveHistory();
+    saveSessionState();
     setStatus('ready', 'Gemini Cloud tersambung');
     chatFeedback.textContent = 'Jawaban dibuat oleh OmniLearn AI. Periksa fakta penting dari sumber tepercaya.';
   } catch (error) {
@@ -180,12 +814,479 @@ async function sendChat(event) {
     chatInput.focus();
   }
 }
+
 const taskNames = {
-  summary: 'Ringkasan materi', quiz: 'Kuis latihan', cards: 'Flashcard', map: 'Peta konsep',
-  plan: 'Rencana belajar 7 hari', translate: 'Terjemahan materi', research: 'Asisten riset'
+  summary: 'Ringkasan materi',
+  quiz: 'Kuis latihan interaktif',
+  cards: 'Flashcard interaktif',
+  map: 'Peta konsep hierarkis',
+  plan: 'Rencana belajar 7 hari',
+  translate: 'Terjemahan materi',
+  research: 'Asisten riset akademik',
+  explore: 'Eksplorasi bidang ilmu'
 };
-async function runTool(task) {
-  if (busy || !taskNames[task]) return;
+
+// Interactive Quiz State Machine
+let quizState = {
+  questions: [],
+  difficulty: 'campuran',
+  currentIndex: 0,
+  selectedOption: null,
+  submittedCurrent: false,
+  answers: {}, // { [questionIdx]: { selected: 'A', isCorrect: true } }
+  completed: false
+};
+
+// Interactive Flashcard State Machine (Active Recall & Spaced Repetition)
+let flashcardState = {
+  allCards: [], // [{ id, category, front, back, status: 'unseen'|'easy'|'hard', difficultCount: 0 }]
+  deckOrder: [], // indices into allCards
+  currentIndex: 0,
+  isFlipped: false,
+  reviewHardOnly: false
+};
+
+// Interactive Hierarchical Concept Map State
+let conceptMapState = null;
+
+function renderInteractiveQuiz() {
+  const qs = quizState.questions;
+  if (!Array.isArray(qs) || !qs.length) return;
+
+  toolOutput.classList.remove('md-rendered');
+  const total = qs.length;
+  const answeredCount = Object.keys(quizState.answers).length;
+  const correctSoFar = Object.values(quizState.answers).filter(a => a.isCorrect).length;
+
+  if (quizState.completed) {
+    const accuracy = Math.round((correctSoFar / total) * 100);
+    const wrongItems = qs
+      .map((q, idx) => ({ q, idx, ans: quizState.answers[idx] }))
+      .filter(item => !item.ans || !item.ans.isCorrect);
+
+    const feedbackHeadline = accuracy >= 85
+      ? 'Penguasaan Sangat Baik! Kamu memahami konsep inti hingga penerapan analitisnya.'
+      : accuracy >= 65
+        ? 'Pemahaman Cukup Kuat! Tinjau kembali beberapa konsep yang masih keliru di bawah ini.'
+        : 'Mari Perkuat Fondasi! Pelajari pembahasan jawaban yang belum tepat lalu ulangi kuis.';
+
+    let reviewHtml = '';
+    if (wrongItems.length === 0) {
+      reviewHtml = `<div class="quiz-feedback-box is-correct"><span class="quiz-feedback-title">🎉 Sempurna! Seluruh ${total} soal dijawab dengan benar.</span>Kamu dapat mencoba tingkat kesulitan yang lebih tinggi atau membuat soal baru.</div>`;
+    } else {
+      reviewHtml = `<h4 style="margin:16px 0 8px;font-size:15px">Tinjauan Jawaban yang Perlu Diperbaiki (${wrongItems.length} Soal)</h4><div class="quiz-review-list">` +
+        wrongItems.map(({ q, idx, ans }) => {
+          const picked = ans?.selected || '-';
+          const pickedText = picked !== '-' && q.options[picked] ? q.options[picked] : 'Tidak dijawab';
+          const wrongWhy = picked !== '-' && q.optionExplanations?.[picked]
+            ? q.optionExplanations[picked]
+            : 'Pilihan ini kurang sesuai dengan konsep materi.';
+          return `<div class="quiz-review-item">
+            <div style="font-weight:800;margin-bottom:6px">Soal ${idx + 1} [${q.difficulty}]: <span class="md-rendered">${renderMarkdownToSafeHtml(q.question)}</span></div>
+            <div style="color:#9a4432;margin-bottom:4px"><strong>Jawaban kamu (${picked}):</strong> ${renderMarkdownToSafeHtml(pickedText)}<br><em>Mengapa kurang tepat:</em> ${renderMarkdownToSafeHtml(wrongWhy)}</div>
+            <div style="color:#3b6944;margin-top:6px"><strong>Jawaban benar (${q.correctAnswer}):</strong> ${renderMarkdownToSafeHtml(q.options[q.correctAnswer] || '')}<br><em>Pembahasan:</em> ${renderMarkdownToSafeHtml(q.correctExplanation)}</div>
+          </div>`;
+        }).join('') +
+      `</div>`;
+    }
+
+    toolOutput.innerHTML = `<div class="quiz-widget" data-testid="quiz-results">
+      <div class="quiz-results-card">
+        <div class="quiz-score-banner">
+          <div>
+            <div class="small-muted" style="text-transform:uppercase;font-weight:800;letter-spacing:.8px">Hasil Evaluasi Kuis</div>
+            <div class="quiz-score-big">${correctSoFar} / ${total} Benar (${accuracy}%)</div>
+            <div style="font-size:12.5px;margin-top:4px">${feedbackHeadline}</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button type="button" class="btn btn-soft" id="retryQuizBtn">🔄 Ulangi Kuis Ini</button>
+            <button type="button" class="btn btn-primary" id="newQuizFromResultBtn">✨ Buat Soal Baru</button>
+          </div>
+        </div>
+        ${reviewHtml}
+      </div>
+    </div>`;
+
+    $('retryQuizBtn')?.addEventListener('click', () => {
+      quizState.currentIndex = 0;
+      quizState.selectedOption = null;
+      quizState.submittedCurrent = false;
+      quizState.answers = {};
+      quizState.completed = false;
+      renderInteractiveQuiz();
+    });
+    $('newQuizFromResultBtn')?.addEventListener('click', () => runTool('quiz'));
+    return;
+  }
+
+  const idx = quizState.currentIndex;
+  const currentQ = qs[idx];
+  const progressPct = Math.round(((idx + 1) / total) * 100);
+  const diffClass = currentQ.difficulty.toLowerCase() === 'mudah'
+    ? 'easy'
+    : currentQ.difficulty.toLowerCase() === 'sulit'
+      ? 'hard'
+      : 'medium';
+
+  const existingAns = quizState.answers[idx];
+  const isSubmitted = Boolean(quizState.submittedCurrent || existingAns);
+  const chosen = isSubmitted ? existingAns?.selected : quizState.selectedOption;
+
+  const optionsHtml = ['A', 'B', 'C', 'D'].map(letter => {
+    const optText = currentQ.options[letter] || '';
+    let stateClass = '';
+    if (!isSubmitted && chosen === letter) stateClass = 'selected';
+    if (isSubmitted) {
+      if (letter === currentQ.correctAnswer) stateClass = 'correct';
+      else if (chosen === letter) stateClass = 'wrong';
+    }
+    return `<button type="button" class="quiz-opt-btn ${stateClass}" data-opt="${letter}" ${isSubmitted ? 'disabled' : ''} aria-label="Pilihan ${letter}">
+      <span class="quiz-opt-letter">${letter}</span>
+      <span class="quiz-opt-body md-rendered">${renderMarkdownToSafeHtml(optText)}</span>
+    </button>`;
+  }).join('');
+
+  let feedbackHtml = '';
+  if (isSubmitted) {
+    const isRight = chosen === currentQ.correctAnswer;
+    const chosenWrongReason = !isRight && chosen && currentQ.optionExplanations?.[chosen]
+      ? `<div class="quiz-exp-block"><strong>Mengapa pilihan ${chosen} kurang tepat:</strong><div class="md-rendered">${renderMarkdownToSafeHtml(currentQ.optionExplanations[chosen])}</div></div>`
+      : '';
+    feedbackHtml = `<div class="quiz-feedback-box ${isRight ? 'is-correct' : 'is-wrong'}" role="region" aria-label="Pembahasan jawaban">
+      <span class="quiz-feedback-title">${isRight ? `✓ Tepat sekali! Jawaban benar adalah ${currentQ.correctAnswer}.` : `✗ Belum tepat. Jawaban yang benar adalah ${currentQ.correctAnswer}.`}</span>
+      <div><strong>Pembahasan Jawaban Benar (${currentQ.correctAnswer}):</strong><div class="md-rendered">${renderMarkdownToSafeHtml(currentQ.correctExplanation)}</div></div>
+      ${chosenWrongReason}
+    </div>`;
+  }
+
+  toolOutput.innerHTML = `<div class="quiz-widget" data-testid="quiz-interactive">
+    <div class="quiz-topbar">
+      <div class="quiz-meta">
+        <span class="badge-pill">Soal ${idx + 1} dari ${total}</span>
+        <span class="badge-pill ${diffClass}">Tingkat: ${currentQ.difficulty}</span>
+        <span class="badge-pill">Skor Sementara: ${correctSoFar}/${answeredCount}</span>
+      </div>
+      <span class="small-muted">${progressPct}% selesai</span>
+    </div>
+    <div class="quiz-progress-track" aria-hidden="true"><div class="quiz-progress-fill" style="width:${progressPct}%"></div></div>
+    <div class="quiz-card">
+      <div class="quiz-question-title md-rendered">${renderMarkdownToSafeHtml(currentQ.question)}</div>
+      <div class="quiz-options-grid">${optionsHtml}</div>
+      ${feedbackHtml}
+      <div class="quiz-actions-row">
+        <button type="button" class="tool-action" id="quizPrevBtn" ${idx === 0 ? 'disabled' : ''}>← Soal Sebelumnya</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          ${!isSubmitted
+            ? `<button type="button" class="btn btn-primary" id="quizSubmitBtn" ${!chosen ? 'disabled' : ''}>Periksa Jawaban ✓</button>`
+            : `<button type="button" class="btn btn-primary" id="quizNextBtn">${idx + 1 < total ? 'Soal Berikutnya →' : 'Lihat Hasil Akhir →'}</button>`
+          }
+        </div>
+      </div>
+    </div>
+  </div>`;
+
+  toolOutput.querySelectorAll('.quiz-opt-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (isSubmitted) return;
+      quizState.selectedOption = btn.dataset.opt;
+      renderInteractiveQuiz();
+    });
+  });
+
+  $('quizPrevBtn')?.addEventListener('click', () => {
+    if (quizState.currentIndex > 0) {
+      quizState.currentIndex--;
+      quizState.selectedOption = quizState.answers[quizState.currentIndex]?.selected || null;
+      quizState.submittedCurrent = Boolean(quizState.answers[quizState.currentIndex]);
+      renderInteractiveQuiz();
+    }
+  });
+
+  $('quizSubmitBtn')?.addEventListener('click', () => {
+    if (!quizState.selectedOption) return;
+    const isCorrect = quizState.selectedOption === currentQ.correctAnswer;
+    quizState.answers[idx] = {
+      selected: quizState.selectedOption,
+      isCorrect
+    };
+    quizState.submittedCurrent = true;
+    renderInteractiveQuiz();
+  });
+
+  $('quizNextBtn')?.addEventListener('click', () => {
+    if (idx + 1 < total) {
+      quizState.currentIndex++;
+      quizState.selectedOption = quizState.answers[quizState.currentIndex]?.selected || null;
+      quizState.submittedCurrent = Boolean(quizState.answers[quizState.currentIndex]);
+      renderInteractiveQuiz();
+    } else {
+      quizState.completed = true;
+      renderInteractiveQuiz();
+    }
+  });
+}
+
+function renderInteractiveFlashcards() {
+  const all = flashcardState.allCards;
+  if (!Array.isArray(all) || !all.length) return;
+
+  toolOutput.classList.remove('md-rendered');
+
+  const easyCount = all.filter(c => c.status === 'easy').length;
+  const hardCount = all.filter(c => c.status === 'hard').length;
+  const unseenCount = all.length - easyCount - hardCount;
+
+  let activeIndices = flashcardState.deckOrder;
+  if (flashcardState.reviewHardOnly) {
+    activeIndices = flashcardState.deckOrder
+      .filter(i => all[i]?.status === 'hard')
+      .sort((a, b) => (all[b].difficultCount || 0) - (all[a].difficultCount || 0));
+    if (!activeIndices.length) {
+      flashcardState.reviewHardOnly = false;
+      activeIndices = flashcardState.deckOrder;
+    }
+  }
+
+  if (flashcardState.currentIndex >= activeIndices.length) {
+    flashcardState.currentIndex = 0;
+  }
+  const cardIdx = activeIndices[flashcardState.currentIndex] ?? 0;
+  const card = all[cardIdx];
+  const pos = flashcardState.currentIndex + 1;
+  const totalInView = activeIndices.length;
+  const progressPct = Math.round((pos / totalInView) * 100);
+
+  const statusBadge = card.status === 'easy'
+    ? '<span class="badge-pill ok">✓ Sudah paham</span>'
+    : card.status === 'hard'
+      ? `<span class="badge-pill warn">↺ Perlu diulang (${card.difficultCount}x)</span>`
+      : '<span class="badge-pill">Belum dinilai</span>';
+
+  toolOutput.innerHTML = `<div class="fc-widget" data-testid="flashcard-interactive">
+    <div class="fc-topbar">
+      <div class="fc-stats-row">
+        <span class="badge-pill">Kartu ${pos} dari ${totalInView}</span>
+        <span class="badge-pill ok">Sudah paham: ${easyCount}</span>
+        <span class="badge-pill warn">Perlu diulang: ${hardCount}</span>
+        <span class="badge-pill">Belum dinilai: ${unseenCount}</span>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button type="button" class="tool-action" id="fcReviewHardBtn" ${hardCount === 0 && !flashcardState.reviewHardOnly ? 'disabled' : ''}>
+          ${flashcardState.reviewHardOnly ? `Tampilkan Semua (${all.length})` : `Tinjau Kartu Sulit (${hardCount})`}
+        </button>
+        <button type="button" class="tool-action" id="fcShuffleBtn">🔀 Acak Kartu</button>
+        <button type="button" class="tool-action" id="fcRestartBtn">🔄 Mulai Ulang Deck</button>
+      </div>
+    </div>
+    <div class="fc-progress-track" aria-hidden="true"><div class="fc-progress-fill" style="width:${progressPct}%"></div></div>
+    <div class="fc-stage">
+      <button type="button" class="fc-card-btn" id="fcFlipCardArea" aria-label="Klik untuk membalik kartu flashcard">
+        <div class="fc-card-inner ${flashcardState.isFlipped ? 'is-flipped' : ''}" id="fcCardInner">
+          <div class="fc-face fc-front">
+            <div class="fc-face-top">
+              <span>DEPAN · ${card.category || 'Konsep Inti'}</span>
+              ${statusBadge}
+            </div>
+            <div class="fc-face-content md-rendered">${renderMarkdownToSafeHtml(card.front)}</div>
+            <div class="fc-face-hint">
+              <span>Coba ingat jawabannya sebelum membalik kartu (Active Recall)</span>
+              <strong>Klik untuk balik ↻</strong>
+            </div>
+          </div>
+          <div class="fc-face fc-back">
+            <div class="fc-face-top">
+              <span>BELAKANG · Jawaban & Penjelasan Inti</span>
+              ${statusBadge}
+            </div>
+            <div class="fc-face-content md-rendered">${renderMarkdownToSafeHtml(card.back)}</div>
+            <div class="fc-face-hint">
+              <span>Nilai pemahamanmu di bawah untuk menjadwalkan pengulangan</span>
+              <strong>Klik untuk kembali ke depan ↺</strong>
+            </div>
+          </div>
+        </div>
+      </button>
+    </div>
+    <div class="fc-controls-bar">
+      <div class="fc-nav-group">
+        <button type="button" class="tool-action" id="fcPrevBtn" ${pos <= 1 ? 'disabled' : ''}>← Sebelumnya</button>
+        <button type="button" class="tool-action" id="fcFlipBtn">Balik Kartu ↻</button>
+        <button type="button" class="tool-action" id="fcNextBtn" ${pos >= totalInView ? 'disabled' : ''}>Berikutnya →</button>
+      </div>
+      <div class="fc-assess-group">
+        <button type="button" class="tool-action" id="fcMarkHardBtn" style="border-color:#e2bfb3;background:var(--peach)">↺ Perlu diulang</button>
+        <button type="button" class="tool-action" id="fcMarkEasyBtn" style="border-color:#c2dbc4;background:var(--green)">✓ Sudah paham</button>
+      </div>
+    </div>
+  </div>`;
+
+  const toggleFlip = () => {
+    flashcardState.isFlipped = !flashcardState.isFlipped;
+    renderInteractiveFlashcards();
+  };
+
+  $('fcFlipCardArea')?.addEventListener('click', toggleFlip);
+  $('fcFlipBtn')?.addEventListener('click', toggleFlip);
+
+  $('fcPrevBtn')?.addEventListener('click', () => {
+    if (flashcardState.currentIndex > 0) {
+      flashcardState.currentIndex--;
+      flashcardState.isFlipped = false;
+      renderInteractiveFlashcards();
+    }
+  });
+
+  $('fcNextBtn')?.addEventListener('click', () => {
+    if (flashcardState.currentIndex + 1 < totalInView) {
+      flashcardState.currentIndex++;
+      flashcardState.isFlipped = false;
+      renderInteractiveFlashcards();
+    }
+  });
+
+  $('fcMarkEasyBtn')?.addEventListener('click', () => {
+    card.status = 'easy';
+    flashcardState.isFlipped = false;
+    if (flashcardState.currentIndex + 1 < totalInView) {
+      flashcardState.currentIndex++;
+    }
+    renderInteractiveFlashcards();
+  });
+
+  $('fcMarkHardBtn')?.addEventListener('click', () => {
+    card.status = 'hard';
+    card.difficultCount = (card.difficultCount || 0) + 1;
+    // Spaced repetition: re-queue difficult card toward the end of the active deck if not already at end
+    if (!flashcardState.reviewHardOnly && flashcardState.deckOrder.length > 2) {
+      const currentGlobalIdx = cardIdx;
+      const insertPos = Math.min(flashcardState.deckOrder.length, flashcardState.currentIndex + 3);
+      if (flashcardState.deckOrder[insertPos - 1] !== currentGlobalIdx) {
+        flashcardState.deckOrder.splice(insertPos, 0, currentGlobalIdx);
+      }
+    }
+    flashcardState.isFlipped = false;
+    if (flashcardState.currentIndex + 1 < activeIndices.length) {
+      flashcardState.currentIndex++;
+    }
+    renderInteractiveFlashcards();
+  });
+
+  $('fcShuffleBtn')?.addEventListener('click', () => {
+    const indices = [...flashcardState.deckOrder];
+    for (let i = indices.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [indices[i], indices[j]] = [indices[j], indices[i]];
+    }
+    flashcardState.deckOrder = indices;
+    flashcardState.currentIndex = 0;
+    flashcardState.isFlipped = false;
+    renderInteractiveFlashcards();
+    toast('Urutan flashcard telah diacak.');
+  });
+
+  $('fcReviewHardBtn')?.addEventListener('click', () => {
+    flashcardState.reviewHardOnly = !flashcardState.reviewHardOnly;
+    flashcardState.currentIndex = 0;
+    flashcardState.isFlipped = false;
+    renderInteractiveFlashcards();
+  });
+
+  $('fcRestartBtn')?.addEventListener('click', () => {
+    flashcardState.allCards.forEach(c => {
+      c.status = 'unseen';
+      c.difficultCount = 0;
+    });
+    flashcardState.deckOrder = flashcardState.allCards.map((_, i) => i);
+    flashcardState.currentIndex = 0;
+    flashcardState.isFlipped = false;
+    flashcardState.reviewHardOnly = false;
+    renderInteractiveFlashcards();
+    toast('Deck flashcard dimulai ulang.');
+  });
+}
+
+function renderInteractiveConceptMap() {
+  if (!conceptMapState || !conceptMapState.centralTopic) return;
+  toolOutput.classList.remove('md-rendered');
+
+  const branchesHtml = (conceptMapState.branches || []).map((branch, bIdx) => {
+    const isCollapsed = Boolean(branch.collapsed);
+    const subsHtml = (branch.subconcepts || []).map(sub => `<div class="cmap-sub-node">
+      <div class="cmap-sub-title">
+        <span class="cmap-rel-badge">→ ${sub.relation || 'meliputi'}</span>
+        <span>${sub.title}</span>
+      </div>
+      <div class="md-rendered">${renderMarkdownToSafeHtml(sub.detail)}</div>
+      ${sub.causeEffect ? `<div class="cmap-sub-meta"><strong>Sebab–Akibat:</strong> ${renderMarkdownToSafeHtml(sub.causeEffect)}</div>` : ''}
+      ${sub.example ? `<div class="cmap-sub-meta"><strong>Contoh:</strong> ${renderMarkdownToSafeHtml(sub.example)}</div>` : ''}
+    </div>`).join('');
+
+    return `<div class="cmap-branch">
+      <div class="cmap-branch-head">
+        <div>
+          <span class="cmap-rel-badge">── ${branch.relationToCenter || 'mencakup'} ──►</span>
+          <h4 class="cmap-branch-title" style="display:inline">${branch.title}</h4>
+        </div>
+        ${branch.subconcepts?.length ? `<button type="button" class="cmap-toggle-btn" data-branch-idx="${bIdx}">${isCollapsed ? `▸ Buka (${branch.subconcepts.length})` : `▾ Tutup (${branch.subconcepts.length})`}</button>` : ''}
+      </div>
+      <div class="cmap-branch-desc md-rendered">${renderMarkdownToSafeHtml(branch.explanation)}</div>
+      ${branch.example ? `<div class="cmap-sub-meta"><strong>Contoh Nyata:</strong> ${renderMarkdownToSafeHtml(branch.example)}</div>` : ''}
+      ${branch.subconcepts?.length ? `<div class="cmap-sub-list ${isCollapsed ? 'collapsed' : ''}">${subsHtml}</div>` : ''}
+    </div>`;
+  }).join('');
+
+  const relTableMd = conceptMapState.relationships?.length
+    ? [
+      '### Matriks Hubungan & Sebab-Akibat Antarkonsep',
+      '| Konsep Asal | Hubungan / Pengaruh | Konsep Tujuan | Penjelasan Mekanisme |',
+      '| :--- | :--- | :--- | :--- |',
+      ...conceptMapState.relationships.map(r => `| **${r.from}** | ${r.relation} | **${r.to}** | ${r.explanation} |`)
+    ].join('\n')
+    : '';
+
+  toolOutput.innerHTML = `<div class="cmap-widget" data-testid="concept-map-interactive">
+    <div class="cmap-topbar">
+      <div class="quiz-meta">
+        <span class="badge-pill">Peta Konsep Hierarkis</span>
+        <span class="badge-pill">${conceptMapState.branches?.length || 0} Cabang Utama</span>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button type="button" class="tool-action" id="cmapExpandAllBtn">Buka Semua Cabang</button>
+        <button type="button" class="tool-action" id="cmapCollapseAllBtn">Ringkas Cabang</button>
+      </div>
+    </div>
+    <div class="cmap-root-node">
+      <div class="cmap-root-kicker">TOPIK PUSAT (CENTRAL TOPIC)</div>
+      <div class="cmap-root-title">${conceptMapState.centralTopic}</div>
+      ${conceptMapState.summary ? `<p class="cmap-root-summary">${conceptMapState.summary}</p>` : ''}
+    </div>
+    <div class="cmap-branches">${branchesHtml}</div>
+    ${relTableMd ? `<div class="md-rendered" style="margin-top:8px">${renderMarkdownToSafeHtml(relTableMd)}</div>` : ''}
+  </div>`;
+
+  toolOutput.querySelectorAll('.cmap-toggle-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = Number(btn.dataset.branchIdx);
+      if (conceptMapState.branches[idx]) {
+        conceptMapState.branches[idx].collapsed = !conceptMapState.branches[idx].collapsed;
+        renderInteractiveConceptMap();
+      }
+    });
+  });
+
+  $('cmapExpandAllBtn')?.addEventListener('click', () => {
+    conceptMapState.branches.forEach(b => { b.collapsed = false; });
+    renderInteractiveConceptMap();
+  });
+
+  $('cmapCollapseAllBtn')?.addEventListener('click', () => {
+    conceptMapState.branches.forEach(b => { b.collapsed = true; });
+    renderInteractiveConceptMap();
+  });
+}
+
+async function runTool(task, customTopic = '') {
+  if (busy || uploadInFlight || !taskNames[task]) return;
   const typedText = chatInput.value.trim();
   if (task === 'translate' && !materialText.trim() && !typedText) {
     chatFeedback.textContent = 'Unggah materi atau tulis teks yang ingin diterjemahkan di kolom pertanyaan.';
@@ -193,125 +1294,638 @@ async function runTool(task) {
     return;
   }
   const subjectText = $('subjectResult').textContent.startsWith('Bidang pilihan:') ? $('subjectResult').textContent.replace('Bidang pilihan:', '').trim() : '';
-  const topic = typedText || subjectText || 'dasar-dasar ilmu pengetahuan umum';
-  toolOutput.textContent = `${taskNames[task]} sedang dibuat oleh Gemini Cloud…`;
-  chatFeedback.textContent = 'AI sedang mengolah materi.';
+  const topic = customTopic || typedText || subjectText || 'dasar-dasar ilmu pengetahuan umum';
+
+  const summaryStyle = $('summaryStyle') ? $('summaryStyle').value : 'ringkasan_lengkap';
+  const quizDifficulty = $('quizDifficulty') ? $('quizDifficulty').value : 'campuran';
+  const quizCount = $('quizCount') ? Number($('quizCount').value) || 10 : 10;
+  const cardsCount = $('cardsCount') ? Number($('cardsCount').value) || 10 : 10;
+  const count = task === 'quiz' ? quizCount : (task === 'cards' ? cardsCount : 10);
+
+  toolOutput.classList.remove('md-rendered');
+  toolOutput.innerHTML = `<div class="study-loading"><span class="study-spinner" aria-hidden="true"></span><span>${taskNames[task]} sedang disusun oleh Gemini 3.8 Flash…</span></div>`;
+  chatFeedback.textContent = `AI sedang menyusun ${taskNames[task].toLowerCase()}…`;
   setBusy(true);
   try {
-    const response = await fetch('/api/study', {
+    const data = await safeRequestJson('/api/study', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         task,
+        sessionId,
         material: materialText,
+        materialId,
         topic,
+        subject: customTopic || subjectText,
         materialName,
-        count: 8,
+        count,
+        difficulty: quizDifficulty,
+        summaryStyle,
         targetLanguage: $('targetLanguage').value
       })
-    });
-    const data = await readJson(response);
+    }, { timeoutMs: 60000, stageContext: `study-${task}` });
+
     const result = data.result || 'Gemini tidak menghasilkan teks.';
-    lastOutput = `${taskNames[task]}\n\n${result}`;
-    toolOutput.textContent = lastOutput;
-    addMessage('assistant', `${taskNames[task]} selesai.\n\n${result}`);
-    chatHistory.push({ role: 'assistant', content: `${taskNames[task]}:\n${result}` });
-    saveHistory();
+    const formattedMarkdown = `## ${taskNames[task]}\n\n${result}`;
+    lastOutput = formattedMarkdown;
+    lastOutputHtml = renderMarkdownToSafeHtml(formattedMarkdown);
+
+    if (task === 'quiz' && data.structuredData?.questions?.length) {
+      quizState = {
+        questions: data.structuredData.questions,
+        difficulty: quizDifficulty,
+        currentIndex: 0,
+        selectedOption: null,
+        submittedCurrent: false,
+        answers: {},
+        completed: false
+      };
+      renderInteractiveQuiz();
+    } else if (task === 'cards' && data.structuredData?.cards?.length) {
+      flashcardState = {
+        allCards: data.structuredData.cards.map(c => ({
+          ...c,
+          status: 'unseen',
+          difficultCount: 0
+        })),
+        deckOrder: data.structuredData.cards.map((_, i) => i),
+        currentIndex: 0,
+        isFlipped: false,
+        reviewHardOnly: false
+      };
+      renderInteractiveFlashcards();
+    } else if (task === 'map' && data.structuredData?.centralTopic) {
+      conceptMapState = {
+        ...data.structuredData,
+        branches: (data.structuredData.branches || []).map(b => ({ ...b, collapsed: false }))
+      };
+      renderInteractiveConceptMap();
+    } else {
+      setToolOutputMarkdown(formattedMarkdown);
+    }
+
+    addMessage('assistant', formattedMarkdown);
+    chatHistory.push({ role: 'assistant', content: formattedMarkdown });
+    saveSessionState();
     chatFeedback.textContent = `${taskNames[task]} selesai dibuat.`;
   } catch (error) {
+    toolOutput.classList.remove('md-rendered');
     toolOutput.textContent = error.message;
     chatFeedback.textContent = error.message;
   } finally {
     setBusy(false);
   }
 }
+
 function selectTab(tab) {
   activeTab = tab;
   document.querySelectorAll('.tab').forEach(button => button.classList.toggle('active', button.dataset.tab === tab));
+  $('summaryOptions')?.classList.toggle('show', tab === 'summary');
+  quizOptions.classList.toggle('show', tab === 'quiz');
+  $('cardsOptions')?.classList.toggle('show', tab === 'cards');
   taskOptions.classList.toggle('show', tab === 'translate');
   if (tab === 'chat') {
-    toolOutput.innerHTML = '<h4>Mulai dari rasa ingin tahu.</h4><p class="placeholder">Tanyakan apa saja pada tutor OmniLearn.</p>';
-    lastOutput = '';
+    if (!materialName) {
+      toolOutput.classList.remove('md-rendered');
+      toolOutput.innerHTML = '<h4>Mulai dari rasa ingin tahu.</h4><p class="placeholder">Tanyakan apa saja pada tutor OmniLearn.</p>';
+    }
     return;
   }
   runTool(tab);
 }
 document.querySelectorAll('.tab').forEach(button => button.addEventListener('click', () => selectTab(button.dataset.tab)));
+$('summaryStyle')?.addEventListener('change', () => {
+  if (activeTab === 'summary' && !busy && !uploadInFlight) runTool('summary');
+});
+$('regenSummaryBtn')?.addEventListener('click', () => {
+  if (!busy && !uploadInFlight) runTool('summary');
+});
+$('quizDifficulty').addEventListener('change', () => {
+  if (activeTab === 'quiz' && !busy && !uploadInFlight) runTool('quiz');
+});
+$('quizCount')?.addEventListener('change', () => {
+  if (activeTab === 'quiz' && !busy && !uploadInFlight) runTool('quiz');
+});
+$('regenQuizBtn')?.addEventListener('click', () => {
+  if (!busy && !uploadInFlight) runTool('quiz');
+});
+$('cardsCount')?.addEventListener('change', () => {
+  if (activeTab === 'cards' && !busy && !uploadInFlight) runTool('cards');
+});
+$('regenCardsBtn')?.addEventListener('click', () => {
+  if (!busy && !uploadInFlight) runTool('cards');
+});
+$('targetLanguage').addEventListener('change', () => {
+  if (activeTab === 'translate' && !busy && !uploadInFlight && (materialText.trim() || chatInput.value.trim())) runTool('translate');
+});
+$('regenTranslateBtn')?.addEventListener('click', () => {
+  if (!busy && !uploadInFlight) runTool('translate');
+});
+
+function arrayBufferToBase64(buffer) {
+  const bytes = new Uint8Array(buffer);
+  const chunkSize = 0x8000;
+  const chunks = [];
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    chunks.push(String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize)));
+  }
+  return btoa(chunks.join(''));
+}
+
+async function submitUploadInitialRequest(fileBuffer, fileName, mimeType, reqId) {
+  const makeFormData = () => {
+    const blob = new Blob([fileBuffer], { type: mimeType || 'application/octet-stream' });
+    const form = new FormData();
+    form.append('file', blob, fileName);
+    form.append('sessionId', sessionId);
+    return form;
+  };
+
+  await warmAuthAndHealthCheck(true);
+
+  // Layer 1: Relative POST /api/upload with FormData field 'file' and NO manual Content-Type header
+  try {
+    const f = getCleanFetch();
+    const res = await f('/api/upload', {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'X-Request-Id': reqId,
+        'X-Session-Id': sessionId,
+        'X-Upload-Mode': 'async'
+      },
+      body: makeFormData(),
+      cache: 'no-store',
+      credentials: 'same-origin'
+    });
+
+    const contentType = res.headers.get('content-type') || '';
+    if (contentType.includes('application/json')) {
+      const data = await res.json();
+      if (!res.ok) {
+        const err = new Error(`${data.error || 'Gagal memvalidasi dokumen.'} (ID: ${data.requestId || reqId})`);
+        err.isHttpError = true;
+        throw err;
+      }
+      return data;
+    }
+    if (res.status === 413) {
+      const err413 = new Error(`Ukuran file melebihi batas maksimal 15 MB. (ID: ${reqId})`);
+      err413.isHttpError = true;
+      throw err413;
+    }
+  } catch (err) {
+    if (err.isHttpError) throw err;
+  }
+
+  // Layer 2: Refresh auth cookie via hidden iframe and send FormData via XMLHttpRequest
+  await warmAuthAndHealthCheck(true);
+  try {
+    return await requestViaXhr('/api/upload', {
+      method: 'POST',
+      headers: { 'X-Upload-Mode': 'async' },
+      body: makeFormData(),
+      timeoutMs: 35000,
+      reqId
+    });
+  } catch (xhrErr) {
+    if (xhrErr.isHttpError) throw xhrErr;
+  }
+
+  // Layer 3: JSON base64 fallback to /api/upload if proxy blocks multipart/form-data
+  return await requestViaXhr('/api/upload', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Upload-Mode': 'async'
+    },
+    body: JSON.stringify({
+      filename: fileName,
+      mimeType: mimeType || 'application/octet-stream',
+      fileBase64: arrayBufferToBase64(fileBuffer),
+      sessionId
+    }),
+    timeoutMs: 45000,
+    reqId
+  });
+}
+
+async function pollUploadJobStatus(jobId, reqId) {
+  const maxPollDurationMs = 150000;
+  const pollIntervalMs = 950;
+  const startTime = Date.now();
+
+  while (Date.now() - startTime < maxPollDurationMs) {
+    await new Promise(resolve => window.setTimeout(resolve, pollIntervalMs));
+
+    const pollData = await safeRequestJson(
+      `/api/upload/status/${encodeURIComponent(jobId)}?sessionId=${encodeURIComponent(sessionId)}&t=${Date.now()}`,
+      { method: 'GET' },
+      { timeoutMs: 20000, stageContext: 'upload-poll' }
+    );
+
+    if (pollData.status === 'completed') {
+      return pollData;
+    }
+
+    if (pollData.status === 'failed') {
+      throw new Error(`${pollData.error || 'Gagal memproses dokumen.'} (ID: ${pollData.requestId || reqId})`);
+    }
+
+    // Update the 7-stage progress indicator from backend job state
+    const stageNum = Number(pollData.stageNumber) || 3;
+    const stageLabel = pollData.stageLabel || 'Memproses dokumen…';
+    setUploadStage(stageNum, stageLabel, true);
+    chatFeedback.textContent = `Tahap ${stageNum} dari 7 · ${stageLabel}`;
+  }
+
+  throw new Error(`Waktu pemrosesan OCR habis karena dokumen sangat kompleks. Silakan coba lagi. (ID: ${reqId})`);
+}
 
 async function uploadFile(file) {
-  if (!file || busy) return;
+  if (!file || busy || uploadInFlight) return;
+  const reqId = generateClientRequestId('upload');
   const allowed = ['.pdf', '.docx', '.pptx', '.txt'];
-  const ext = '.' + file.name.split('.').pop().toLowerCase();
-  if (!allowed.includes(ext)) { toast('Gunakan PDF, DOCX, PPTX, atau TXT.'); return; }
-  if (file.size > 15 * 1024 * 1024) { toast('Ukuran file maksimal 15 MB.'); return; }
-  const form = new FormData();
-  form.append('file', file);
-  chatFeedback.textContent = `Mengunggah ${file.name} untuk ekstraksi teks sementara…`;
+  const fileName = String(file.name || 'dokumen');
+  const dotIdx = fileName.lastIndexOf('.');
+  const ext = dotIdx >= 0 ? fileName.slice(dotIdx).toLowerCase() : '';
+
+  setUploadStage(2, 'Memvalidasi file…', true);
+  if (!allowed.includes(ext)) {
+    const msg = `Format file "${ext || 'tidak dikenal'}" tidak didukung. Gunakan PDF, DOCX, PPTX, atau TXT. (ID: ${reqId})`;
+    updateUploadError(msg);
+    return;
+  }
+  if (file.size === 0) {
+    const msg = `File "${fileName}" kosong (0 byte). Pilih dokumen yang berisi materi. (ID: ${reqId})`;
+    updateUploadError(msg);
+    return;
+  }
+  if (file.size > 15 * 1024 * 1024) {
+    const msg = `Ukuran file (${formatFileSize(file.size)}) melebihi batas maksimal 15 MB. (ID: ${reqId})`;
+    updateUploadError(msg);
+    return;
+  }
+
+  uploadInFlight = true;
   setBusy(true);
+  setUploadStage(1, `Mengunggah dokumen (${fileName} · ${formatFileSize(file.size)})…`, true);
+  chatFeedback.textContent = 'Tahap 1 dari 7 · Mengunggah dokumen ke server…';
+
   try {
-    const response = await fetch('/api/upload', { method: 'POST', body: form });
-    const data = await readJson(response);
-    materialText = String(data.text || '').slice(0, 50000);
-    materialName = data.filename || file.name;
-    if (!materialText.trim()) throw new Error('Tidak ada teks yang dapat dibaca. PDF hasil scan perlu OCR terlebih dahulu.');
+    const fileBuffer = await file.arrayBuffer();
+    setUploadStage(2, 'Memvalidasi file…', true);
+    chatFeedback.textContent = 'Tahap 2 dari 7 · Memvalidasi file…';
+
+    const initData = await submitUploadInitialRequest(fileBuffer, fileName, file.type, reqId);
+
+    let finalData = initData;
+    if (initData.jobId && initData.status !== 'completed') {
+      const currentStage = Number(initData.stageNumber) || 3;
+      const currentLabel = initData.stageLabel || 'Membaca halaman…';
+      setUploadStage(currentStage, currentLabel, true);
+      chatFeedback.textContent = `Tahap ${currentStage} dari 7 · ${currentLabel}`;
+      finalData = await pollUploadJobStatus(initData.jobId, initData.requestId || reqId);
+    }
+
+    setUploadStage(6, 'Menyiapkan materi…', true);
+    chatFeedback.textContent = 'Tahap 6 dari 7 · Menyiapkan materi…';
+
+    materialText = String(finalData.text || '').slice(0, 50000);
+    materialName = finalData.filename || fileName;
+    materialId = finalData.materialId || '';
+    materialMeta = {
+      fileSize: Number(finalData.fileSize || file.size || 0),
+      pageCount: Number(finalData.pageCount) || 1,
+      characters: Number(finalData.characters || materialText.length),
+      ocrUsed: Boolean(finalData.ocrUsed),
+      extractionMode: finalData.extractionMode || 'text',
+      truncated: Boolean(finalData.truncated)
+    };
+
+    if (!materialText.trim()) {
+      throw new Error(`Tidak ada teks yang dapat diekstrak dari dokumen "${materialName}". (ID: ${finalData.requestId || reqId})`);
+    }
+
+    setUploadStage(7, 'Selesai', true);
+    window.setTimeout(() => {
+      uploadProgress.classList.remove('show');
+    }, 2400);
+
     chatHistory = [];
-    saveHistory();
     chatMessages.innerHTML = '';
-    $('materialLabel').textContent = `${materialName} · ${Number(data.characters || materialText.length).toLocaleString('id-ID')} karakter${data.truncated ? ' · teks dipotong' : ''}`;
-    const list = $('materialList');
-    list.innerHTML = '';
-    const item = document.createElement('div');
-    item.className = 'lesson active';
-    const icon = document.createElement('span');
-    icon.className = 'lesson-icon';
-    icon.textContent = '📄';
-    const name = document.createElement('span');
-    name.textContent = materialName;
-    item.append(icon, name);
-    list.append(item);
-    toolOutput.textContent = 'Materi berhasil dibaca. Pilih Ringkasan, Kuis, Flashcard, Peta konsep, Rencana 7 hari, Penerjemah, atau tanyakan isi dokumen ke tutor.';
-    addMessage('assistant', `Materi “${materialName}” berhasil dibaca. Sekarang kamu bisa bertanya berdasarkan isi dokumen itu.`);
-    chatFeedback.textContent = 'Teks berhasil diekstrak sementara. Teks akan dikirim ke Gemini hanya saat kamu meminta AI mengolahnya.';
-    toast('Materi berhasil ditambahkan.');
+    renderMaterialBadgeAndSidebar();
+    saveSessionState();
+
+    const ocrStatusLabel = materialMeta.ocrUsed
+      ? (materialMeta.extractionMode === 'pdf-hybrid-ocr' ? 'Digunakan (PDF Campuran: Text Layer + OCR)' : 'Digunakan (OCR Multimodal Gemini 3.8 Flash)')
+      : 'Tidak diperlukan (Text Layer Terbaca)';
+
+    const summaryCardMd = [
+      `### Dokumen Siap Dipelajari: ${materialName}`,
+      `- **Nama File:** ${materialName}`,
+      `- **Ukuran File:** ${formatFileSize(materialMeta.fileSize)}`,
+      `- **Jumlah Halaman:** ${materialMeta.pageCount} halaman`,
+      `- **Jumlah Karakter:** ${materialMeta.characters.toLocaleString('id-ID')} karakter${materialMeta.truncated ? ' *(dipotong ke batas 50.000 karakter)*' : ''}`,
+      `- **Status OCR:** ${ocrStatusLabel}`,
+      ``,
+      `Pilih alat belajar di atas (**Ringkasan**, **Kuis**, **Flashcard**, **Peta konsep**, **Rencana 7 hari**, **Penerjemah**, **Asisten riset**) atau langsung tanyakan isi dokumen kepada Tutor AI di bawah.`
+    ].join('\n');
+
+    setToolOutputMarkdown(summaryCardMd);
+    addMessage(
+      'assistant',
+      `Dokumen **${materialName}** (${formatFileSize(materialMeta.fileSize)}, ${materialMeta.pageCount} halaman, ${materialMeta.characters.toLocaleString('id-ID')} karakter · Status OCR: **${ocrStatusLabel}**) sudah siap dipelajari di sesi ini. Silakan ajukan pertanyaan atau pilih fitur belajar di atas.`
+    );
+    chatFeedback.textContent = `Tahap 7 dari 7 · Selesai (${materialMeta.characters.toLocaleString('id-ID')} karakter diekstrak).`;
+    toast(materialMeta.ocrUsed ? 'Dokumen berhasil dibaca dengan OCR otomatis.' : 'Dokumen berhasil ditambahkan.');
   } catch (error) {
-    chatFeedback.textContent = error.message;
-    toast(error.message);
+    updateUploadError(error.message || `Gagal mengunggah dokumen. (ID: ${reqId})`);
   } finally {
+    uploadInFlight = false;
     setBusy(false);
     $('materialFile').value = '';
   }
 }
-$('uploadButton').addEventListener('click', () => $('materialFile').click());
-$('materialFile').addEventListener('change', event => uploadFile(event.target.files[0]));
-const dropzone = $('dropzone');
-dropzone.addEventListener('click', () => $('materialFile').click());
+
+function updateUploadError(message) {
+  uploadProgress.classList.remove('show');
+  chatFeedback.textContent = message;
+  toolOutput.classList.remove('md-rendered');
+  toolOutput.textContent = message;
+  toast(message);
+}
+
+$('uploadButton').addEventListener('click', () => {
+  if (!busy && !uploadInFlight) $('materialFile').click();
+});
+$('materialFile').addEventListener('change', event => {
+  const selected = event.target.files && event.target.files[0];
+  if (selected) uploadFile(selected);
+});
+dropzone.addEventListener('click', () => {
+  if (!busy && !uploadInFlight) $('materialFile').click();
+});
 dropzone.addEventListener('keydown', event => {
-  if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); $('materialFile').click(); }
+  if ((event.key === 'Enter' || event.key === ' ') && !busy && !uploadInFlight) {
+    event.preventDefault();
+    $('materialFile').click();
+  }
 });
-for (const name of ['dragenter', 'dragover']) dropzone.addEventListener(name, event => { event.preventDefault(); dropzone.classList.add('dragover'); });
-for (const name of ['dragleave', 'drop']) dropzone.addEventListener(name, event => { event.preventDefault(); dropzone.classList.remove('dragover'); });
-dropzone.addEventListener('drop', event => uploadFile(event.dataTransfer.files[0]));
+for (const name of ['dragenter', 'dragover']) {
+  dropzone.addEventListener(name, event => {
+    event.preventDefault();
+    if (!busy && !uploadInFlight) dropzone.classList.add('dragover');
+  });
+}
+for (const name of ['dragleave', 'drop']) {
+  dropzone.addEventListener(name, event => {
+    event.preventDefault();
+    dropzone.classList.remove('dragover');
+  });
+}
+dropzone.addEventListener('drop', event => {
+  if (!busy && !uploadInFlight && event.dataTransfer?.files?.[0]) {
+    uploadFile(event.dataTransfer.files[0]);
+  }
+});
 $('chatForm').addEventListener('submit', sendChat);
-$('clearChat').addEventListener('click', () => {
+
+$('clearChat').addEventListener('click', async () => {
+  if (uploadInFlight) return;
   chatHistory = [];
+  materialText = '';
+  materialName = '';
+  materialId = '';
+  materialMeta = null;
+  lastOutput = '';
+  lastOutputHtml = '';
+  try {
+    sessionStorage.removeItem(SESSION_CHAT_KEY);
+    sessionStorage.removeItem(SESSION_MATERIAL_KEY);
+    localStorage.removeItem('omnilearn-chat');
+  } catch (_) {}
+
   chatMessages.innerHTML = '';
-  localStorage.removeItem('omnilearn-chat');
-  addMessage('assistant', 'Chat dibersihkan. Mulai percakapan baru kapan saja.');
-  chatFeedback.textContent = 'Riwayat chat lokal sudah dihapus.';
+  renderMaterialBadgeAndSidebar();
+  toolOutput.classList.remove('md-rendered');
+  toolOutput.innerHTML = '<h4>Mulai dari rasa ingin tahu.</h4><p class="placeholder">Riwayat chat dan konteks materi pada sesi tab ini telah direset.</p>';
+  addMessage('assistant', 'Percakapan dan konteks materi pada sesi tab ini telah dihapus. Kamu bisa memulai topik baru atau mengunggah dokumen baru kapan saja.');
+  chatFeedback.textContent = 'Sesi percakapan dan konteks materi tab ini telah dibersihkan.';
+
+  try {
+    const f = getCleanFetch();
+    await f('/api/session/clear', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Session-Id': sessionId },
+      body: JSON.stringify({ sessionId }),
+      credentials: 'same-origin'
+    });
+  } catch (_) {}
 });
+
 $('copyOutput').addEventListener('click', async () => {
   if (!lastOutput) { toast('Belum ada hasil untuk disalin.'); return; }
-  try { await navigator.clipboard.writeText(lastOutput); toast('Hasil berhasil disalin.'); }
-  catch (_) { toast('Browser tidak mengizinkan salin otomatis.'); }
+  try {
+    if (window.ClipboardItem && navigator.clipboard?.write && lastOutputHtml) {
+      const htmlBlob = new Blob([lastOutputHtml], { type: 'text/html' });
+      const textBlob = new Blob([lastOutput], { type: 'text/plain' });
+      await navigator.clipboard.write([new ClipboardItem({ 'text/html': htmlBlob, 'text/plain': textBlob })]);
+    } else {
+      await navigator.clipboard.writeText(lastOutput);
+    }
+    toast('Hasil berhasil disalin.');
+  } catch (_) {
+    try {
+      await navigator.clipboard.writeText(lastOutput);
+      toast('Hasil berhasil disalin.');
+    } catch (__) {
+      toast('Browser tidak mengizinkan salin otomatis.');
+    }
+  }
 });
+
+const SUBJECT_BLUEPRINTS = {
+  'Sains': {
+    intro: 'Mempelajari mekanisme kerja alam semesta melalui observasi, eksperimen terukur, serta hukum fisika, kimia, dan biologi.',
+    prereq: 'Rasa ingin tahu terhadap fenomena alam, aritmetika dasar, dan logika sebab-akibat.',
+    concepts: 'Metode Ilmiah, Konservasi Energi & Materi, Struktur Atom & Ikatan Kimia, Biologi Sel & Genetika, Sistem Ekologi.',
+    beginner: 'Memahami metode ilmiah, wujud zat, gaya dan gerak sehari-hari, serta struktur dasar sel makhluk hidup.',
+    intermediate: 'Menganalisis termodinamika, reaksi kimia & stoikiometri, gelombang elektromagnetik, serta metabolisme seluler.',
+    advanced: 'Mengintegrasikan mekanika kuantum, relativitas, biologi molekuler lanjut, dan pemodelan sistem iklim kompleks.',
+    example: 'Hamburan Rayleigh yang membuat langit berwarna biru di siang hari dan kemerahan saat matahari terbenam.',
+    exercise: 'Jelaskan perubahan energi dari cahaya matahari hingga menjadi gerak otot manusia melalui rantai makanan.',
+    further: 'Astrobiologi, Fisika Kuantum, Bioteknologi CRISPR, dan Energi Terbarukan.'
+  },
+  'Matematika': {
+    intro: 'Ilmu tentang pola, struktur, kuantitas, ruang, dan penalaran deduktif yang menjadi bahasa universal sains dan teknologi.',
+    prereq: 'Operasi bilangan dasar, pemahaman proporsi/pecahan, dan ketelitian logika.',
+    concepts: 'Aljabar & Fungsi, Geometri & Ruang, Kalkulus (Laju Perubahan & Akumulasi), Probabilitas & Statistika, Logika Diskrit.',
+    beginner: 'Menguasai konsep bilangan, perbandingan, persamaan linear satu variabel, serta geometri bangun datar dan ruang.',
+    intermediate: 'Memahami fungsi kuadrat, trigonometri, matriks, peluang bersyarat, serta konsep limit dan turunan dasar.',
+    advanced: 'Menganalisis persamaan diferensial, aljabar linear ruang vektor, analisis real/kompleks, dan optimasi matematis.',
+    example: 'Penggunaan teorema Pythagoras dan trigonometri dalam navigasi GPS serta arsitektur jembatan.',
+    exercise: 'Buktikan mengapa jumlah sudut dalam segitiga pada bidang datar selalu 180° dan hitung diagonal ruang balok.',
+    further: 'Teori Graf, Kriptografi Matematika, Kalkulus Multivariabel, dan Pemodelan Stokastik.'
+  },
+  'Sejarah': {
+    intro: 'Kajian kritis tentang peristiwa masa lalu, perubahan peradaban manusia, serta rangkaian sebab-akibat yang membentuk dunia modern.',
+    prereq: 'Kemampuan membaca kronologi waktu, membedakan fakta dari opini, dan memahami konteks geografis.',
+    concepts: 'Kronologi & Periodisasi, Kausalitas Sejarah, Sumber Primer vs Sekunder, Historiografi, Perubahan Sosial-Politik.',
+    beginner: 'Mengenal garis waktu peradaban kuno, sejarah Nusantara, dan peristiwa kunci yang mengubah tatanan masyarakat.',
+    intermediate: 'Menganalisis faktor ekonomi, teknologi, dan ideologi di balik revolusi industri, kolonialisme, dan kemerdekaan bangsa.',
+    advanced: 'Melakukan kritik sumber primer, membandingkan perspektif historiografi, dan menganalisis pola geopolitik jangka panjang.',
+    example: 'Bagaimana penemuan mesin cetak dan jalur perdagangan rempah mengubah peta ekonomi dan ilmu pengetahuan global.',
+    exercise: 'Bandingkan faktor internal dan eksternal yang mendorong lahirnya pergerakan nasional di awal abad ke-20.',
+    further: 'Sejarah Ekonomi Global, Arkeologi Maritim, Sejarah Sains, dan Studi Peradaban Kuno.'
+  },
+  'Geografi': {
+    intro: 'Ilmu yang mempelajari interaksi antara sistem fisik bumi (litosfer, atmosfer, hidrosfer) dengan aktivitas ruang manusia.',
+    prereq: 'Membaca peta dasar, memahami arah mata angin, dan mengenal siklus air serta cuaca.',
+    concepts: 'Lempeng Tektonik, Dinamika Atmosfer & Iklim, Hidrologi, Demografi & Urbanisasi, Sistem Informasi Geografis (SIG).',
+    beginner: 'Memahami peta, zona iklim bumi, siklus hidrologi, dan bentuk muka bumi daratan serta lautan.',
+    intermediate: 'Menganalisis pergerakan lempeng tektonik, pola cuaca ekstrem, daya dukung lingkungan, dan tata ruang wilayah.',
+    advanced: 'Pemodelan spasial berbasis penginderaan jauh, mitigasi bencana geologi, dan geopolitik sumber daya alam.',
+    example: 'Cincin Api Pasifik (Ring of Fire) yang menyebabkan tingginya aktivitas vulkanik sekaligus kesuburan tanah di Indonesia.',
+    exercise: 'Analisis bagaimana topografi pegunungan memengaruhi curah hujan orografis dan pola pertanian penduduk.',
+    further: 'Klimatologi Terapan, Oseanografi, Kartografi Digital (GIS), dan Perencanaan Wilayah Berkelanjutan.'
+  },
+  'Ekonomi': {
+    intro: 'Ilmu sosial yang menganalisis bagaimana individu, perusahaan, dan negara mengelola sumber daya terbatas untuk memenuhi kebutuhan.',
+    prereq: 'Aritmetika dasar, membaca grafik sederhana, dan memahami konsep transaksi serta nilai tukar.',
+    concepts: 'Kelangkaan & Biaya Peluang, Permintaan & Penawaran, Struktur Pasar, Inflasi & Kebijakan Moneter, Perdagangan Internasional.',
+    beginner: 'Memahami kelangkaan (scarcity), biaya peluang (opportunity cost), serta mekanisme harga pasar.',
+    intermediate: 'Menganalisis elastisitas, perilaku konsumen-produsen, PDB, inflasi, suku bunga bank sentral, dan kebijakan fiskal.',
+    advanced: 'Mengevaluasi model ekonometrika, teori permainan (game theory), siklus bisnis makro, dan ekonomi pembangunan.',
+    example: 'Bagaimana kenaikan suku bunga acuan memengaruhi cicilan kredit, investasi bisnis, dan laju inflasi harga barang.',
+    exercise: 'Gambarkan pergeseran kurva permintaan dan penawaran ketika terjadi inovasi teknologi produksi.',
+    further: 'Ekonomi Perilaku (Behavioral Economics), Ekonometrika, Ekonomi Hijau, dan Keuangan Internasional.'
+  },
+  'Teknologi': {
+    intro: 'Penerapan ilmu pengetahuan dan rekayasa sistem untuk memecahkan masalah manusia melalui perangkat keras, jaringan, dan komputasi.',
+    prereq: 'Logika berpikir sistematis dan pemahaman dasar penggunaan perangkat digital.',
+    concepts: 'Arsitektur Komputer, Jaringan & Internet, Algoritma & Data, Keamanan Siber, Sistem Terdistribusi & Cloud.',
+    beginner: 'Memahami cara kerja komputer (CPU, memori, penyimpanan), cara paket data mengalir di internet, dan keamanan akun.',
+    intermediate: 'Mempelajari protokol HTTP/TCP-IP, basis data, komputasi awan, serta alur pengembangan perangkat lunak.',
+    advanced: 'Merancang arsitektur sistem berskala besar, kriptografi modern, kecerdasan buatan, dan sistem tertanam (IoT).',
+    example: 'Proses yang terjadi dalam hitungan milidetik sejak kamu mengetik alamat situs web hingga halaman tampil di layar.',
+    exercise: 'Susun diagram alur bagaimana sistem autentikasi mengamankan kata sandi pengguna menggunakan fungsi hash.',
+    further: 'Keamanan Siber (Cybersecurity), Komputasi Awan, Arsitektur Sistem, dan Robotika.'
+  },
+  'Filsafat': {
+    intro: 'Penyelidikan rasional dan kritis mengenai hakikat keberadaan (ontologi), pengetahuan (epistemologi), logika, dan nilai moral (etika).',
+    prereq: 'Keterbukaan pikiran, kebiasaan membaca reflektif, dan kemauan menguji asumsi sendiri.',
+    concepts: 'Logika & Penalaran Valid, Epistemologi, Etika & Filsafat Moral, Metafisika, Filsafat Ilmu.',
+    beginner: 'Mengenal struktur argumen logis (premis dan kesimpulan), sesat pikir (logical fallacies), serta pertanyaan dasar etika.',
+    intermediate: 'Membandingkan rasionalisme vs empirisme, etika deontologi vs utilitarianisme, dan metode falsifikasi ilmiah.',
+    advanced: 'Menganalisis filsafat pikiran (kesadaran), epistemologi kontemporer, serta dilema etika teknologi modern.',
+    example: 'Mengidentifikasi sesat pikir *ad hominem* atau *straw man* dalam perdebatan publik sehari-hari.',
+    exercise: 'Analisis sebuah dilema pengambilan keputusan menggunakan sudut pandang utilitarianisme dan deontologi.',
+    further: 'Filsafat Sains, Etika Kecerdasan Buatan, Logika Formal, dan Fenomenologi.'
+  },
+  'Bahasa': {
+    intro: 'Kajian sistematis tentang struktur bahasa (linguistik), makna, retorika, dan seni berkomunikasi efektif lintas budaya.',
+    prereq: 'Kemampuan membaca aktif dan kepekaan terhadap konteks kalimat.',
+    concepts: 'Fonologi & Morfologi, Sintaksis (Struktur Kalimat), Semantik & Pragmatik, Retorika & Penulisan Akademik.',
+    beginner: 'Memahami kelas kata, struktur kalimat efektif (S-P-O-K), ejaan baku, dan koherensi paragraf.',
+    intermediate: 'Menganalisis makna kontekstual (pragmatik), gaya bahasa, struktur esai argumentatif, dan penerjemahan.',
+    advanced: 'Mengkaji linguistik komparatif, sosiolinguistik, analisis wacana kritis, dan pemrosesan bahasa alami.',
+    example: 'Bagaimana perubahan intonasi dan konteks sosial mengubah makna kalimat yang secara harfiah sama.',
+    exercise: 'Sunting satu paragraf yang bertele-tele menjadi paragraf akademik yang padat, logis, dan efektif.',
+    further: 'Sosiolinguistik, Penulisan Ilmiah, Neurolinguistik, dan Sastra Bandingan.'
+  },
+  'Ilmu Sosial': {
+    intro: 'Kajian ilmiah tentang struktur masyarakat, interaksi antarmanusia, institusi sosial, budaya, dan perilaku kolektif.',
+    prereq: 'Empati sosial, kemampuan mengamati pola perilaku masyarakat, dan berpikir objektif.',
+    concepts: 'Struktur & Stratifikasi Sosial, Norma & Institusi, Perubahan Sosial, Psikologi Sosial, Metode Riset Sosial.',
+    beginner: 'Memahami proses sosialisasi, nilai dan norma masyarakat, kelompok sosial, serta dinamika budaya.',
+    intermediate: 'Menganalisis mobilitas sosial, konflik dan integrasi, opini publik, serta dampak media terhadap perilaku.',
+    advanced: 'Merancang penelitian sosial kuantitatif/kualitatif, analisis jaringan sosial, dan evaluasi kebijakan publik.',
+    example: 'Bagaimana algoritma media sosial membentuk ruang gema (echo chamber) dan memengaruhi polarisasi opini.',
+    exercise: 'Identifikasi variabel independen dan dependen untuk meneliti dampak kerja jarak jauh terhadap kohesi tim.',
+    further: 'Sosiologi Digital, Antropologi Budaya, Psikologi Kognitif, dan Kebijakan Publik.'
+  },
+  'Seni dan desain': {
+    intro: 'Eksplorasi ekspresi visual, estetika, komposisi, dan perancangan solusi yang memadukan fungsi dengan pengalaman manusia.',
+    prereq: 'Kepekaan visual, pengamatan proporsi, dan empati terhadap pengguna.',
+    concepts: 'Elemen & Prinsip Desain, Teori Warna, Tipografi & Hierarki Visual, Desain Berpusat pada Pengguna (UI/UX).',
+    beginner: 'Menguasai keseimbangan (balance), kontras, ritme, ruang kosong (whitespace), dan roda warna dasar.',
+    intermediate: 'Menerapkan sistem grid, tipografi fungsional, psikologi warna, dan alur interaksi pengguna.',
+    advanced: 'Merancang Design System berskala produk, aksesibilitas inklusif, dan kritik sejarah seni visual.',
+    example: 'Mengapa tata letak dengan ruang kosong yang tepat dan kontras tipografi yang jelas membuat pembaca tidak cepat lelah.',
+    exercise: 'Evaluasi satu halaman aplikasi sehari-hari dan temukan 3 perbaikan pada hierarki visualnya.',
+    further: 'Desain Interaksi (IxD), Sejarah Seni Modern, Arsitektur Informasi, dan Tipografi Eksperimental.'
+  }
+};
+
+function renderSubjectExplorerCard(subject) {
+  const cardEl = $('subjectExplorerCard');
+  if (!cardEl) return;
+
+  const info = SUBJECT_BLUEPRINTS[subject] || {
+    intro: `Bidang ilmu ${subject} mempelajari prinsip fundamental, metode analisis, dan penerapan praktis untuk memecahkan persoalan nyata.`,
+    prereq: 'Pemahaman konsep dasar, penalaran logis, dan ketekunan berlatih secara bertahap.',
+    concepts: `Prinsip Dasar ${subject}, Metodologi & Kerangka Analisis, Terminologi Inti, Studi Kasus & Aplikasi.`,
+    beginner: `Mengenal definisi inti, ruang lingkup, dan intuisi dasar dalam bidang ${subject}.`,
+    intermediate: `Memahami mekanisme kerja, hubungan antarkonsep, serta penerapan metode ${subject} pada persoalan standar.`,
+    advanced: `Menganalisis kasus kompleks, mengevaluasi batasan teori, dan merancang solusi inovatif di bidang ${subject}.`,
+    example: `Penerapan langsung prinsip ${subject} dalam teknologi, profesi, dan pengambilan keputusan sehari-hari.`,
+    exercise: `Pilih satu subtopik utama dalam ${subject}, jelaskan cara kerjanya dengan bahasamu sendiri, lalu uji dengan 5 soal latihan.`,
+    further: `Riset mutakhir, aplikasi lintas-disiplin, dan studi kasus lanjutan dalam ${subject}.`
+  };
+
+  cardEl.classList.add('show');
+  cardEl.innerHTML = `<div class="subject-explorer-head">
+      <div>
+        <div class="kicker">Jalur Eksplorasi Bidang Ilmu</div>
+        <h3 style="margin:4px 0 0;font-size:21px">${subject}</h3>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button type="button" class="btn btn-soft" id="exploreWithAiBtn">✨ Buat Jalur Belajar Lengkap (AI)</button>
+        <button type="button" class="btn btn-primary" id="askTutorSubjectBtn">💬 Belajar Bersama Tutor AI ↗</button>
+      </div>
+    </div>
+    <p style="margin:0 0 12px;font-size:13.5px;color:var(--ink)"><strong>Pengantar:</strong> ${info.intro}</p>
+    <div class="subject-levels-grid">
+      <div class="subject-level-box lvl-1">
+        <strong>1. Tingkat Pemula (Beginner)</strong>
+        <span>${info.beginner}</span>
+      </div>
+      <div class="subject-level-box lvl-2">
+        <strong>2. Tingkat Menengah (Intermediate)</strong>
+        <span>${info.intermediate}</span>
+      </div>
+      <div class="subject-level-box lvl-3">
+        <strong>3. Tingkat Lanjut (Advanced)</strong>
+        <span>${info.advanced}</span>
+      </div>
+    </div>
+    <div class="subject-meta-grid">
+      <div class="subject-meta-item"><strong>Pengetahuan Prasyarat</strong>${info.prereq}</div>
+      <div class="subject-meta-item"><strong>Konsep-Konsep Utama</strong>${info.concepts}</div>
+      <div class="subject-meta-item"><strong>Contoh Praktis Nyata</strong>${info.example}</div>
+      <div class="subject-meta-item"><strong>Latihan & Eksplorasi Lanjutan</strong><em>Latihan:</em> ${info.exercise}<br><em>Topik Lanjutan:</em> ${info.further}</div>
+    </div>`;
+
+  $('askTutorSubjectBtn')?.addEventListener('click', () => {
+    chatInput.value = `Ajari aku bidang ${subject} secara bertahap mulai dari tingkat Pemula (Beginner) hingga Menengah dengan contoh nyata.`;
+    document.querySelector('#ruang-belajar').scrollIntoView({ behavior: 'smooth' });
+    chatInput.focus();
+  });
+
+  $('exploreWithAiBtn')?.addEventListener('click', () => {
+    document.querySelector('#ruang-belajar').scrollIntoView({ behavior: 'smooth' });
+    runTool('explore', subject);
+  });
+}
+
 document.querySelectorAll('.subject').forEach(button => button.addEventListener('click', () => {
   document.querySelectorAll('.subject').forEach(item => item.classList.remove('selected'));
   button.classList.add('selected');
   const subject = button.dataset.name;
-  $('subjectResult').textContent = `Bidang pilihan: ${subject}`;
+  $('subjectResult').textContent = `Bidang pilihan: ${subject} · Lihat jalur belajar Pemula → Menengah → Lanjut di bawah.`;
   chatInput.value = `Ajari aku dasar-dasar ${subject} dari awal dengan contoh sederhana.`;
-  document.querySelector('#ruang-belajar').scrollIntoView({ behavior: 'smooth' });
-  chatInput.focus();
+  renderSubjectExplorerCard(subject);
 }));
 $('menuBtn').addEventListener('click', () => $('nav').classList.toggle('open'));
 document.querySelectorAll('.nav a').forEach(link => link.addEventListener('click', () => $('nav').classList.remove('open')));
@@ -322,7 +1936,7 @@ $('themeToggle').addEventListener('click', () => {
   $('themeToggle').textContent = dark ? '☀' : '☾';
 });
 if (localStorage.getItem('omnilearn-theme') === 'dark') $('themeToggle').click();
-restoreHistory();
+restoreSessionState();
 checkAI();
 </script>
 </body>
