@@ -11,7 +11,7 @@ if (found.length || missing.length) {
   process.exit(1);
 }
 for (const feature of ['summary', 'quiz', 'cards', 'map', 'plan', 'translate', 'research']) {
-  if (!fs.readFileSync('study-policy.js', 'utf8').includes(`${feature}:`)) {
+  if (!server.includes(`${feature}:`)) {
     console.error(`Missing study task: ${feature}`);
     process.exit(1);
   }

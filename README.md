@@ -81,3 +81,13 @@ omnilearn-gemini-cloud/
 ├── AI_STUDIO_PROMPT.md
 └── README.md
 ```
+
+## AI request reliability
+
+Chat uses a 40-second total provider deadline; study tools use 42 or 55 seconds depending on the task. At most two configured candidates are attempted within that deadline. Browser timeouts include a margin for server responses. Failed POST responses are not automatically replayed.
+
+The default model is `gemini-3-flash-preview`, with `gemini-3.1-flash-lite` as a fallback for eligible errors; `GEMINI_MODEL` overrides the primary model. Responses identify the actual model used. Provider availability and quota still affect requests.
+
+Commands such as “bikin peta konsep” open the existing interactive map workflow. The output-language selector now reaches the backend. Automatic English/Indonesian detection is heuristic; uncertain material is left for model detection and the user can override it.
+
+Run `npm test`, `npm run build`, and `node tests/readiness.test.mjs` (starts a local server on an ephemeral port). Live Gemini validation additionally requires a configured key. `/api/health` includes `version: bounded-ai-v3`; `ready` only indicates key presence. Pushing GitHub changes does not automatically update an existing AI Studio preview: sync or import the revision into that project and restart its backend before checking the version.

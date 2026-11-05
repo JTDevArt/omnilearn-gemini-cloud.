@@ -369,6 +369,10 @@ if (window.marked && typeof window.marked.setOptions === 'function') {
   window.marked.setOptions({ gfm: true, breaks: true });
 }
 
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
+}
+
 function renderMarkdownToSafeHtml(rawText) {
   let source = String(rawText ?? '').trim();
   if (!source) return '';
@@ -442,7 +446,7 @@ function renderMarkdownToSafeHtml(rawText) {
       ]
     });
   }
-  return rawHtml;
+  return escapeHtml(rawText);
 }
 
 function setRenderedContent(el, role, text) {
@@ -798,6 +802,9 @@ async function safeRequestJson(url, options = {}, { timeoutMs = 45000, stageCont
       throw new Error(`Waktu pemrosesan habis (Timeout setelah ${Math.round(timeoutMs / 1000)} detik). (ID: ${reqId})`);
     }
 
+    // A failed response does not mean the server did not process a POST.
+    if (method !== 'GET' && method !== 'HEAD') throw err;
+
     // If fetch failed due to iframe shim or expired auth bridge cookie, recover and retry via XMLHttpRequest
     await warmAuthAndHealthCheck(true);
     try {
@@ -828,7 +835,7 @@ async function safeRequestJson(url, options = {}, { timeoutMs = 45000, stageCont
   }
 }
 
-async function askAI(message) {
+async function askAI(message, externalSignal) {
   const outputLanguage = $('outputLanguage') ? $('outputLanguage').value : 'auto';
   const data = await safeRequestJson('/api/chat', {
     method: 'POST',
@@ -842,21 +849,36 @@ async function askAI(message) {
       materialName,
       outputLanguage
     })
-  }, { timeoutMs: 45000, stageContext: 'chat' });
+  }, { timeoutMs: 55000, stageContext: 'chat', externalSignal });
   return data.answer;
+}
+
+function isConceptMapCommand(message) {
+  return /^(?:(?:tolong|please|bisa(?:kah)?|boleh|can you|could you)\s+)*(?:bikin(?:kan)?|buat(?:kan)?|create|make|generate)\s+(?:(?:aku|saya|me|a|an|sebuah)\s+)*(?:peta\s+konsep|concept\s+map)\b/i.test(message.trim());
 }
 
 async function sendChat(event) {
   event?.preventDefault();
   const message = chatInput.value.trim();
   if (!message || busy || uploadInFlight) return;
+  if (isConceptMapCommand(message)) {
+    chatInput.value = '';
+    addMessage('user', message);
+    selectTab('map', message);
+    return;
+  }
+  cancelActiveStudyRequest();
+  const abortController = new AbortController();
+  activeStudyAbortController = abortController;
+  const capturedVersion = materialVersion;
   chatInput.value = '';
   addMessage('user', message);
   const pending = addMessage('assistant', 'Gemini sedang berpikir…', 'pending');
   setBusy(true);
   chatFeedback.textContent = 'Tutor sedang menyusun penjelasan.';
   try {
-    const answer = await askAI(message);
+    const answer = await askAI(message, abortController.signal);
+    if (abortController.signal.aborted || capturedVersion !== materialVersion) return;
     pending.classList.remove('pending');
     setRenderedContent(pending, 'assistant', answer);
     lastOutput = answer;
@@ -867,10 +889,13 @@ async function sendChat(event) {
     chatFeedback.textContent = 'Jawaban dibuat oleh OmniLearn AI. Periksa fakta penting dari sumber tepercaya.';
   } catch (error) {
     pending.classList.remove('pending');
+    if (error.isCancelled || capturedVersion !== materialVersion) return;
+    if (!chatInput.value) chatInput.value = message;
     pending.textContent = error.message;
     chatFeedback.textContent = error.message;
     if (/secret|API key|backend/i.test(error.message)) setStatus('error', 'Perlu pemeriksaan');
   } finally {
+    if (activeStudyAbortController === abortController) activeStudyAbortController = null;
     setBusy(false);
     chatInput.focus();
   }
@@ -1145,7 +1170,7 @@ function renderInteractiveFlashcards() {
         <div class="fc-card-inner ${flashcardState.isFlipped ? 'is-flipped' : ''}" id="fcCardInner">
           <div class="fc-face fc-front">
             <div class="fc-face-top">
-              <span>DEPAN · ${card.category || 'Konsep Inti'}</span>
+              <span>DEPAN · ${escapeHtml(card.category || 'Konsep Inti')}</span>
               ${statusBadge}
             </div>
             <div class="fc-face-content md-rendered">${renderMarkdownToSafeHtml(card.front)}</div>
@@ -1274,8 +1299,8 @@ function renderInteractiveConceptMap() {
     const isCollapsed = Boolean(branch.collapsed);
     const subsHtml = (branch.subconcepts || []).map(sub => `<div class="cmap-sub-node">
       <div class="cmap-sub-title">
-        <span class="cmap-rel-badge">→ ${sub.relation || 'meliputi'}</span>
-        <span>${sub.title}</span>
+        <span class="cmap-rel-badge">→ ${escapeHtml(sub.relation || 'meliputi')}</span>
+        <span>${escapeHtml(sub.title)}</span>
       </div>
       <div class="md-rendered">${renderMarkdownToSafeHtml(sub.detail)}</div>
       ${sub.causeEffect ? `<div class="cmap-sub-meta"><strong>Sebab–Akibat:</strong> ${renderMarkdownToSafeHtml(sub.causeEffect)}</div>` : ''}
@@ -1285,8 +1310,8 @@ function renderInteractiveConceptMap() {
     return `<div class="cmap-branch">
       <div class="cmap-branch-head">
         <div>
-          <span class="cmap-rel-badge">── ${branch.relationToCenter || 'mencakup'} ──►</span>
-          <h4 class="cmap-branch-title" style="display:inline">${branch.title}</h4>
+          <span class="cmap-rel-badge">── ${escapeHtml(branch.relationToCenter || 'mencakup')} ──►</span>
+          <h4 class="cmap-branch-title" style="display:inline">${escapeHtml(branch.title)}</h4>
         </div>
         ${branch.subconcepts?.length ? `<button type="button" class="cmap-toggle-btn" data-branch-idx="${bIdx}">${isCollapsed ? `▸ Buka (${branch.subconcepts.length})` : `▾ Tutup (${branch.subconcepts.length})`}</button>` : ''}
       </div>
@@ -1318,8 +1343,8 @@ function renderInteractiveConceptMap() {
     </div>
     <div class="cmap-root-node">
       <div class="cmap-root-kicker">TOPIK PUSAT (CENTRAL TOPIC)</div>
-      <div class="cmap-root-title">${conceptMapState.centralTopic}</div>
-      ${conceptMapState.summary ? `<p class="cmap-root-summary">${conceptMapState.summary}</p>` : ''}
+      <div class="cmap-root-title">${escapeHtml(conceptMapState.centralTopic)}</div>
+      ${conceptMapState.summary ? `<p class="cmap-root-summary">${escapeHtml(conceptMapState.summary)}</p>` : ''}
     </div>
     <div class="cmap-branches">${branchesHtml}</div>
     ${relTableMd ? `<div class="md-rendered" style="margin-top:8px">${renderMarkdownToSafeHtml(relTableMd)}</div>` : ''}
@@ -1418,7 +1443,7 @@ async function runTool(task, customTopic = '', forceRegenerate = false) {
   const capturedMaterialVersion = materialVersion;
 
   toolOutput.classList.remove('md-rendered');
-  toolOutput.innerHTML = `<div class="study-loading"><span class="study-spinner" aria-hidden="true"></span><span>${taskNames[task]} sedang disusun oleh Gemini 3.8 Flash…</span></div>`;
+  toolOutput.innerHTML = `<div class="study-loading"><span class="study-spinner" aria-hidden="true"></span><span>${taskNames[task]} sedang disusun…</span></div>`;
   chatFeedback.textContent = `AI sedang menyusun ${taskNames[task].toLowerCase()}…`;
   setBusy(true);
   try {
@@ -1440,7 +1465,7 @@ async function runTool(task, customTopic = '', forceRegenerate = false) {
         outputLanguage,
         forceRegenerate: Boolean(forceRegenerate)
       })
-    }, { timeoutMs: 60000, stageContext: `study-${task}`, externalSignal: abortController.signal });
+    }, { timeoutMs: 65000, stageContext: `study-${task}`, externalSignal: abortController.signal });
 
     // Ignore stale response if document or request changed while in-flight
     if (requestToken !== activeRequestToken || capturedMaterialVersion !== materialVersion) {
@@ -1453,7 +1478,7 @@ async function runTool(task, customTopic = '', forceRegenerate = false) {
     }
 
     const result = data.result || 'Gemini tidak menghasilkan teks.';
-    const formattedMarkdown = task === 'summary' ? result.trim() : `## ${taskNames[task]}\n\n${result}`;
+    const formattedMarkdown = result.trim();
     lastOutput = formattedMarkdown;
     lastOutputHtml = renderMarkdownToSafeHtml(formattedMarkdown);
 
@@ -1521,7 +1546,8 @@ async function runTool(task, customTopic = '', forceRegenerate = false) {
   }
 }
 
-function selectTab(tab) {
+function selectTab(tab, customTopic = '') {
+  if (busy || uploadInFlight) return;
   activeTab = tab;
   document.querySelectorAll('.tab').forEach(button => button.classList.toggle('active', button.dataset.tab === tab));
   $('summaryOptions')?.classList.toggle('show', tab === 'summary');
@@ -1535,12 +1561,12 @@ function selectTab(tab) {
     }
     return;
   }
-  const cacheKey = getTabCacheKey(tab);
+  const cacheKey = getTabCacheKey(tab, customTopic);
   if (tabViewCache.has(cacheKey)) {
     restoreCachedTabView(tabViewCache.get(cacheKey), tab);
     return;
   }
-  runTool(tab, '', false);
+  runTool(tab, customTopic, false);
 }
 document.querySelectorAll('.tab').forEach(button => button.addEventListener('click', () => selectTab(button.dataset.tab)));
 $('outputLanguage')?.addEventListener('change', () => {
@@ -1781,7 +1807,7 @@ async function uploadFile(file) {
     saveSessionState();
 
     const ocrStatusLabel = materialMeta.ocrUsed
-      ? (materialMeta.extractionMode === 'pdf-hybrid-ocr' ? 'Digunakan (PDF Campuran: Text Layer + OCR)' : 'Digunakan (OCR Multimodal Gemini 3.8 Flash)')
+      ? (materialMeta.extractionMode === 'pdf-hybrid-ocr' ? 'Digunakan (PDF Campuran: Text Layer + OCR)' : 'Digunakan (OCR Gemini)')
       : 'Tidak diperlukan (Text Layer Terbaca)';
     const detectedLangLabel = materialMeta.detectedLanguage?.name || 'Otomatis';
 
