@@ -124,7 +124,7 @@ async function checkAI() {
     const data = await response.json();
     if (response.ok && data.ready) {
       setStatus('ready', 'Gemini Cloud siap');
-      chatFeedback.textContent = `Terhubung ke ${data.provider || 'Gemini Cloud'} · ${data.model || 'model AI'}.`;
+      chatFeedback.textContent = `Terhubung ke ${data.provider || 'Gemini Cloud'} · ${data.model || 'model AI'} · ${data.version || 'versi lama'}.`;
     } else {
       setStatus('error', 'Secret Gemini belum tersedia');
       chatFeedback.textContent = 'Tambahkan GEMINI_API_KEY melalui Settings → Secrets di Google AI Studio Build Mode.';
@@ -195,7 +195,7 @@ async function runTool(task) {
   const subjectText = $('subjectResult').textContent.startsWith('Bidang pilihan:') ? $('subjectResult').textContent.replace('Bidang pilihan:', '').trim() : '';
   const topic = typedText || subjectText || 'dasar-dasar ilmu pengetahuan umum';
   toolOutput.textContent = `${taskNames[task]} sedang dibuat oleh Gemini Cloud…`;
-  chatFeedback.textContent = 'AI sedang mengolah materi.';
+  chatFeedback.textContent = 'AI merangkum secara ringkas dalam bahasa materi.';
   setBusy(true);
   try {
     const response = await fetch('/api/study', {
@@ -212,11 +212,10 @@ async function runTool(task) {
     });
     const data = await readJson(response);
     const result = data.result || 'Gemini tidak menghasilkan teks.';
-    lastOutput = `${taskNames[task]}\n\n${result}`;
+    lastOutput = result;
     toolOutput.textContent = lastOutput;
-    addMessage('assistant', `${taskNames[task]} selesai.\n\n${result}`);
-    chatHistory.push({ role: 'assistant', content: `${taskNames[task]}:\n${result}` });
-    saveHistory();
+    // Keep study output out of tutor history to avoid duplicate, stale context.
+
     chatFeedback.textContent = `${taskNames[task]} selesai dibuat.`;
   } catch (error) {
     toolOutput.textContent = error.message;
@@ -226,6 +225,7 @@ async function runTool(task) {
   }
 }
 function selectTab(tab) {
+  if (busy) return;
   activeTab = tab;
   document.querySelectorAll('.tab').forEach(button => button.classList.toggle('active', button.dataset.tab === tab));
   taskOptions.classList.toggle('show', tab === 'translate');
@@ -269,6 +269,7 @@ async function uploadFile(file) {
     name.textContent = materialName;
     item.append(icon, name);
     list.append(item);
+    lastOutput = '';
     toolOutput.textContent = 'Materi berhasil dibaca. Pilih Ringkasan, Kuis, Flashcard, Peta konsep, Rencana 7 hari, Penerjemah, atau tanyakan isi dokumen ke tutor.';
     addMessage('assistant', `Materi “${materialName}” berhasil dibaca. Sekarang kamu bisa bertanya berdasarkan isi dokumen itu.`);
     chatFeedback.textContent = 'Teks berhasil diekstrak sementara. Teks akan dikirim ke Gemini hanya saat kamu meminta AI mengolahnya.';
