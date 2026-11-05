@@ -1,0 +1,8 @@
+{
+  "name": "OmniLearn AI",
+  "description": "Ruang belajar personal bertenaga Gemini Cloud untuk ringkasan materi, kuis latihan, flashcard, peta konsep, dan tutor AI interaktif.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

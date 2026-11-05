@@ -10,18 +10,19 @@ OmniLearn is a universal learning workspace. This migration replaces browser-loc
 - Google AI Studio Build Mode can provision `GEMINI_API_KEY` as a server-side secret.
 - Document uploads are extracted in server memory and are not written to disk.
 
-## Learning features retained and included
+## Learning features retained and upgraded (Phase 2)
 
-- Universal tutor chat with conversation history.
-- Upload and text extraction for PDF, DOCX, PPTX, and TXT (15 MB maximum).
-- Automatic summaries.
-- Multiple-choice quizzes with answer keys and explanations.
-- Flashcards.
-- Hierarchical concept maps.
-- Seven-day study plans / learning path.
-- Material translation to several target languages.
-- Research planning assistant for questions, objectives, concepts, methods, data needs, and literature-search keywords. It does not claim to verify live references.
-- Subject exploration, dark mode, local chat history, clear chat, copy output, and drag-and-drop upload.
+- **Humanized & Document-Aware AI Tutor**: Adaptive explanation depth (`BASIC`, `INTERMEDIATE`, `ADVANCED`), direct answers without robotic filler, and explicit `[Halaman X]` page citations when answering from uploaded documents.
+- **Hybrid Document & OCR Engine**: Asynchronous upload (`POST /api/upload` + `GET /api/upload/status/:jobId`) supporting normal PDFs, scanned PDFs (automatic Gemini Vision OCR), hybrid PDFs, DOCX, PPTX, and TXT (up to 15 MB).
+- **Smart Summary Engine**: 6 configurable styles (*Ringkasan singkat*, *Ringkasan lengkap*, *Catatan kuliah*, *Poin penting ujian*, *Penjelasan per bab*, *Ringkasan konsep dan mekanisme*).
+- **Interactive Quiz Engine**: Configurable difficulty (*Mudah*, *Sedang*, *Sulit*, *Campuran*) and question count (*5, 10, 15, 20*), one-question-at-a-time interactive UI, immediate dual feedback (why the right answer is correct and why the chosen wrong option is incorrect), score breakdown, and retry support.
+- **Interactive 3D Flashcards**: Front/Back cards with 3D flip animation, shuffle, mastery tracking (*Sudah paham* / *Perlu diulang*), and a *Tinjau Kartu Sulit* filter.
+- **Hierarchical Concept Map**: Interactive tree visualization with expandable/collapsible branches, cause-and-effect chains, and a cross-concept relationship matrix.
+- **Seven-Day Learning Path**: Progressive 7-day study curriculum with 7 structured daily components.
+- **Academic Translation Engine**: Preserves technical terminology, headings, tables, and mathematical formulas across target languages.
+- **12-Point Research Assistant**: Structured academic research blueprint with variable operationalization tables and honest methodological labels without fabricated citations.
+- **Subject Explorer**: Instant `Pemula → Menengah → Lanjut` roadmaps across 15 disciplines plus deep-dive generation.
+- **Rich Markdown & KaTeX Math Rendering**: Full support for tables, blockquotes, code blocks, inline math (`$...$`), and display math (`$$...$$`) sanitized with DOMPurify.
 
 ## Google AI Studio Build Mode
 
@@ -30,60 +31,51 @@ OmniLearn is a universal learning workspace. This migration replaces browser-loc
 3. Use **Add files (+) → Import from GitHub** and select the repository.
 4. Open `AI_STUDIO_PROMPT.md` and paste its prompt into the Build agent.
 5. Let the agent install dependencies and verify the preview.
-6. Open **Settings → Secrets**. Confirm that `GEMINI_API_KEY` exists as a server-side secret. New Gemini web apps in AI Studio may provision this automatically; if it is missing, add it there. Never put it in `public/index.html` or any client-side variable.
+6. Open **Settings → Secrets**. Confirm that `GEMINI_API_KEY` exists as a server-side secret. Never put it in `public/index.html` or any client-side variable.
 7. Test chat, all learning tabs, and each supported upload format before sharing or deploying.
-8. When ready, deploy from AI Studio to Cloud Run.
+8. When ready, sync changes back to GitHub using the **GitHub** button in the AI Studio top bar or deploy to Cloud Run.
 
-AI Studio's Build Mode supports a Node.js server runtime, npm packages, GitHub import, and server-side secrets. Deployment to Cloud Run may incur costs. Gemini usage is charged or quota-limited according to the selected model and account.
-
-## Local development (optional)
-
-Local development needs the project owner's Gemini API key. This is separate from any ChatGPT subscription.
+## Local development
 
 ```bash
 npm install
 cp .env.example .env
 # Edit .env and set GEMINI_API_KEY for local testing only
+npm test
 npm run check
 npm start
 ```
 
-Open `http://localhost:8080`.
-
-On Windows PowerShell, copy the example with:
-
-```powershell
-Copy-Item .env.example .env
-```
-
-Do not commit `.env`. In AI Studio, use the Secrets panel instead of a local `.env` file.
+Open `http://localhost:3000`.
 
 ## Server routes
 
 - `GET /api/health` — reports whether the server-side Gemini secret is available.
-- `POST /api/chat` — tutor chat with short conversation history and optional extracted material.
-- `POST /api/study` — summary, quiz, flashcards, concept map, seven-day plan, translation, and research planning.
-- `POST /api/upload` — in-memory extraction for PDF, DOCX, PPTX, and TXT.
+- `POST /api/chat` — adaptive tutor chat with conversation history and page-indexed document context.
+- `POST /api/study` — structured & Markdown generation for `summary`, `quiz`, `cards`, `map`, `plan`, `translate`, `research`, and `explore`.
+- `POST /api/upload` — asynchronous in-memory extraction & automatic OCR for PDF, DOCX, PPTX, and TXT.
+- `GET /api/upload/status/:jobId` — real-time progress and result polling for document extraction/OCR jobs.
 
 ## Security and privacy notes
 
 - The Gemini API key is read only from `process.env.GEMINI_API_KEY` in `server.js`.
-- Uploaded file bytes are held in memory for extraction; they are not persisted to disk by this app.
-- Extracted text is returned to the browser and sent to Gemini only when the learner requests AI processing.
-- The browser stores chat history and theme preference in its own `localStorage`.
-- Basic per-IP rate limits and a 15 MB upload cap are enabled. For a public production service, add authentication, durable rate limiting, abuse monitoring, and a clear privacy/retention policy.
-- Scanned PDFs without a text layer need OCR before upload.
+- Uploaded file bytes are processed in memory and automatically purged after extraction.
+- Chat history and active materials are isolated per browser tab session (`sessionStorage`).
 
 ## Project structure
 
 ```text
 omnilearn-gemini-cloud/
+├── lib/
+│   ├── learning-engine.js
+│   └── learning-engine.test.js
 ├── public/
 │   └── index.html
 ├── scripts/
 │   └── verify-migration.mjs
 ├── server.js
 ├── package.json
+├── metadata.json
 ├── .env.example
 ├── .gitignore
 ├── AI_STUDIO_PROMPT.md
