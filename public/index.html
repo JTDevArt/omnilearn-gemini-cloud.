@@ -139,6 +139,183 @@
 @media(max-width:900px){.nav{gap:17px}.hero{gap:25px}.workspace-body{grid-template-columns:205px 1fr}.model-select{max-width:160px}.subject-levels-grid{grid-template-columns:1fr}}
 @media(max-width:700px){.shell{width:min(100% - 28px,560px)}.topbar{height:70px}.nav{display:none;position:absolute;top:65px;left:15px;right:15px;background:var(--white);border:1px solid var(--line);border-radius:16px;padding:15px;box-shadow:var(--shadow);z-index:10;flex-direction:column;align-items:flex-start}.nav.open{display:flex}.menu-btn{display:block}.hero{padding:36px 0 48px;grid-template-columns:1fr;gap:20px}.hero-art{min-height:auto;display:flex;flex-direction:column;gap:12px}.blob{width:260px;height:260px}.study-card{width:min(100%,440px);transform:none}h1{font-size:clamp(36px,11vw,52px);letter-spacing:-2px}.hero-copy{font-size:15px}.section{padding:48px 0}.section-head{display:block}.section-desc{margin-top:12px}.workspace-wrap{padding:42px 0;overflow-x:hidden}.workspace{padding:14px;overflow-x:hidden}.workspace-head{align-items:flex-start;flex-direction:column}.head-actions{width:100%}.ai-status{white-space:normal}.model-select{max-width:none;flex:1}.workspace-body{grid-template-columns:1fr}.side-panel{order:2}.content-panel{order:1;padding:13px;overflow-x:hidden}.ai-setup{align-items:flex-start;flex-direction:column}.ai-setup .btn{width:100%}.feature-grid{grid-template-columns:1fr 1fr}.feature{padding:17px;min-height:165px}.cta{padding:26px;display:block}.cta .btn{margin-top:20px}.footer-inner{flex-wrap:wrap}.floating-note{position:static;transform:none;width:min(100%,440px)}.subject-meta-grid{grid-template-columns:1fr}.fc-controls-bar,.quiz-actions-row{flex-direction:column;align-items:stretch}.fc-nav-group,.fc-assess-group{width:100%;justify-content:space-between}.fc-nav-group .tool-action,.fc-assess-group .tool-action{flex:1;text-align:center}.cmap-branches{margin-left:4px;padding-left:10px}}
 @media(max-width:430px){.feature-grid{grid-template-columns:1fr}.hero-actions .btn{width:100%}.output-grid{gap:8px}.output{padding:11px}.chat-message{max-width:96%}.head-actions .btn{flex:1}.quiz-card,.fc-face{padding:15px}}
+
+/* OmniLearn Humanized UI Refresh — inspired by clear, welcoming study flows */
+:root{
+  --ink:#25343b;--muted:#75838a;--paper:#f7f6f1;--white:#fffdf9;--line:#e8e4dc;
+  --blue:#5c8394;--blue-dark:#456d7d;--blue-soft:#e8f0f1;--green:#eaf1e9;
+  --peach:#f7eae1;--yellow:#f5f0dc;--lav:#efebf6;
+  --shadow:0 18px 48px rgba(39,55,61,.075);--radius:24px
+}
+body.dark{
+  --ink:#edf2f2;--muted:#aab8bc;--paper:#17272f;--white:#21343d;--line:#344850;
+  --blue:#91b9c9;--blue-dark:#b5d3dd;--blue-soft:#2a424c;--green:#293e37;
+  --peach:#493a34;--yellow:#49432f;--lav:#3b394b;
+  --shadow:0 18px 48px rgba(0,0,0,.24)
+}
+html,body{max-width:100%;overflow-x:hidden}
+*{scrollbar-width:thin;scrollbar-color:rgba(116,137,145,.48) transparent}
+*::-webkit-scrollbar{width:8px;height:8px}
+*::-webkit-scrollbar-track{background:transparent}
+*::-webkit-scrollbar-thumb{background:rgba(116,137,145,.48);border:2px solid transparent;border-radius:99px;background-clip:padding-box}
+*::-webkit-scrollbar-thumb:hover{background:rgba(92,131,148,.78);background-clip:padding-box}
+*::-webkit-scrollbar-corner{background:transparent}
+body.dark *{scrollbar-color:rgba(174,195,202,.38) transparent}
+body.dark *::-webkit-scrollbar-thumb{background:rgba(174,195,202,.38);background-clip:padding-box}
+.topbar{position:sticky;top:0;z-index:50;background:color-mix(in srgb,var(--paper) 88%,transparent);backdrop-filter:blur(16px);border-bottom:1px solid var(--line)}
+.brand-mark{border-radius:13px;transform:none;box-shadow:0 6px 14px rgba(70,109,125,.18)}
+.btn{border-radius:14px}
+.btn-primary{background:var(--blue);box-shadow:0 7px 18px rgba(70,109,125,.16)}
+.workspace-wrap{background:linear-gradient(180deg,var(--paper) 0%,var(--green) 100%);padding:58px 0 72px}
+.workspace{background:var(--white);border:1px solid var(--line);border-radius:30px;padding:24px;box-shadow:var(--shadow)}
+.workspace-head{align-items:center;margin-bottom:22px}
+.workspace-head h3{font-size:21px;letter-spacing:-.65px;font-weight:820}
+.workspace-head p{font-size:12.5px;margin-top:5px}
+.workspace-body{grid-template-columns:230px minmax(0,1fr);gap:20px}
+.side-panel{background:var(--paper);border:1px solid var(--line);border-radius:22px;padding:18px}
+.side-label{font-size:10px;letter-spacing:1.25px}
+.lesson{padding:11px 12px;border-radius:13px;transition:background .18s ease,color .18s ease}
+.lesson.active{background:var(--blue-soft);box-shadow:inset 3px 0 0 var(--blue)}
+.lesson-icon{border-radius:10px}
+.privacy-note{background:var(--blue-soft);padding:12px;border-radius:14px;margin:18px 0 0;line-height:1.65}
+.content-panel{border:0;padding:0;background:transparent}
+.ai-setup{padding:15px 17px;border-radius:18px;background:linear-gradient(120deg,var(--blue-soft),var(--lav));margin-bottom:15px}
+.ai-setup strong{font-size:13.5px;letter-spacing:-.15px}
+.ai-setup p{font-size:11.5px;line-height:1.6}
+.ai-setup .status{white-space:nowrap}
+.dropzone{min-height:160px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:22px 18px;background:var(--paper);border:1px dashed color-mix(in srgb,var(--blue) 48%,var(--line));border-radius:22px;margin-bottom:18px}
+.dropzone:hover,.dropzone.dragover{background:var(--blue-soft);border-color:var(--blue);transform:translateY(-1px)}
+.dropzone-icon{width:42px;height:42px;display:grid!important;place-items:center;background:var(--blue-soft);border-radius:14px;color:var(--blue-dark);font-size:23px;font-weight:600;margin:0 0 3px!important}
+.dropzone strong{font-size:13px;font-weight:800}
+.dropzone span{font-size:11px;line-height:1.55}
+.dropzone .dropzone-hint{color:var(--muted);opacity:.85}
+.tabs{display:flex;gap:5px;padding:7px;background:var(--paper);border:0;border-radius:16px;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{display:inline-flex;align-items:center;gap:7px;padding:10px 13px;border:1px solid transparent;border-radius:12px;color:var(--muted);font-size:12px;font-weight:750;transition:background .18s ease,color .18s ease,box-shadow .18s ease}
+.tab::before{font-size:14px;line-height:1;opacity:.82}
+.tab[data-tab="chat"]::before{content:"✳"}
+.tab[data-tab="summary"]::before{content:"▤"}
+.tab[data-tab="quiz"]::before{content:"◉"}
+.tab[data-tab="cards"]::before{content:"▱"}
+.tab[data-tab="map"]::before{content:"⌘"}
+.tab[data-tab="plan"]::before{content:"◷"}
+.tab[data-tab="translate"]::before{content:"文"}
+.tab[data-tab="research"]::before{content:"⌕"}
+.tab:hover{background:var(--white);color:var(--ink)}
+.tab.active{background:var(--white);color:var(--ink);border-color:var(--line);box-shadow:0 3px 12px rgba(34,54,62,.055)}
+.task-options{border:1px solid var(--line);background:var(--paper);border-radius:14px;padding:10px 13px}
+.task-options label{font-size:11.5px}
+.task-options select{border-radius:10px;background:var(--white);border-color:var(--line);padding:8px 10px}
+.tool-output{padding:22px 8px 16px;min-height:165px;line-height:1.8}
+.tool-output h4{font-size:20px;letter-spacing:-.45px;margin-bottom:8px}
+.tool-output p{font-size:13.5px;line-height:1.75}
+.tool-output .key-points span{border:0;background:var(--blue-soft);padding:8px 12px}
+.chat-messages{max-height:430px;padding:16px;background:var(--paper);border-radius:18px}
+.chat-message{padding:13px 16px;border-radius:17px;font-size:13.5px;line-height:1.75}
+.chat-message.assistant{background:var(--white);border:1px solid var(--line);box-shadow:0 4px 14px rgba(35,54,62,.035);border-bottom-left-radius:6px}
+.chat-message.user{background:var(--blue-soft);border-bottom-right-radius:6px}
+.chat-row{border:0;padding:8px;background:var(--paper);border-radius:17px;margin-top:12px}
+.chat-row input{background:var(--white);border:1px solid transparent;border-radius:12px;padding:13px 15px;font-size:13px}
+.chat-row input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(92,131,148,.12)}
+.chat-row button{width:46px;min-width:46px;border-radius:13px}
+.tool-actions{align-items:center;gap:8px;margin-top:13px}
+.tool-action{border:1px solid transparent;background:var(--blue-soft);border-radius:11px;padding:9px 12px}
+.tool-action:hover{background:var(--green);border-color:var(--line)}
+.chat-feedback{line-height:1.6}
+.hero{padding:52px 0 66px;gap:44px}
+.hero-art.hero-motion{min-height:430px;isolation:isolate}
+.motion-halo{position:absolute;width:390px;height:390px;right:4%;top:1%;border-radius:50%;background:radial-gradient(circle,rgba(190,214,204,.72) 0%,rgba(232,240,232,.34) 55%,transparent 72%);animation:halo-breathe 7s ease-in-out infinite;z-index:-1}
+body.dark .motion-halo{background:radial-gradient(circle,rgba(91,133,130,.3) 0%,rgba(72,94,105,.18) 55%,transparent 72%)}
+.motion-window{position:relative;width:min(100%,480px);padding:17px 19px 15px;border:1px solid rgba(128,151,150,.22);border-radius:28px;background:linear-gradient(145deg,#fffefa,#f1f2eb);box-shadow:0 24px 60px rgba(37,55,62,.12);transform:rotate(1deg);animation:window-float 7s ease-in-out infinite;overflow:hidden}
+body.dark .motion-window{background:linear-gradient(145deg,#263c45,#1e3039);border-color:rgba(174,195,202,.18);box-shadow:0 24px 60px rgba(0,0,0,.24)}
+.motion-window-top,.motion-window-footer{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.motion-brand{display:flex;align-items:center;gap:7px;font-size:9px;font-weight:850;letter-spacing:1px;color:var(--muted)}
+.motion-brand i{width:7px;height:7px;border-radius:50%;background:#83a88a;box-shadow:0 0 0 4px rgba(131,168,138,.13)}
+.motion-status{font-size:9px;font-weight:750;color:#64816a;background:rgba(132,169,137,.13);padding:6px 9px;border-radius:99px;white-space:nowrap}
+.motion-stage{height:265px;position:relative;overflow:hidden}
+.motion-person{position:absolute;left:50%;bottom:3px;width:190px;height:220px;transform:translateX(-50%);animation:person-bob 4.8s ease-in-out infinite}
+.person-hair{position:absolute;z-index:3;left:51px;top:12px;width:88px;height:61px;background:#303a4b;border-radius:52% 50% 36% 35%;transform:rotate(-7deg)}
+.person-hair:after{content:"";position:absolute;left:7px;bottom:-7px;width:40px;height:28px;background:#303a4b;border-radius:10px 3px 18px 4px;transform:rotate(12deg)}
+.person-head{position:absolute;z-index:2;left:57px;top:30px;width:76px;height:83px;background:#e8b58f;border-radius:47% 48% 43% 43%;box-shadow:inset -7px -5px 0 rgba(165,105,77,.08)}
+.person-eye{position:absolute;top:43px;width:5px;height:7px;border-radius:50%;background:#35424a}
+.person-eye.eye-one{left:20px}.person-eye.eye-two{right:20px}
+.person-smile{position:absolute;left:33px;top:58px;width:11px;height:6px;border-bottom:2px solid #a96e65;border-radius:0 0 10px 10px}
+.person-neck{position:absolute;z-index:1;left:83px;top:103px;width:25px;height:27px;background:#dfaa86}
+.person-body{position:absolute;z-index:1;left:27px;top:119px;width:136px;height:93px;background:#779b95;border-radius:42px 42px 19px 19px;box-shadow:inset -13px 0 rgba(47,93,89,.1)}
+.person-arm{position:absolute;z-index:2;top:137px;width:28px;height:70px;background:#e8b58f;border-radius:99px}
+.person-arm.arm-one{left:38px;transform:rotate(20deg);transform-origin:top center}
+.person-arm.arm-two{right:38px;transform:rotate(-20deg);transform-origin:top center}
+.person-desk{position:absolute;z-index:3;left:3px;right:3px;bottom:5px;height:19px;background:#d8c09b;border-radius:99px;box-shadow:0 7px 0 rgba(150,119,78,.12)}
+.person-book{position:absolute;z-index:4;left:62px;bottom:10px;width:69px;height:39px;background:#f5e3b7;border-radius:5px 8px 8px 5px;transform:rotate(-4deg);box-shadow:0 5px 12px rgba(70,64,48,.13);display:flex;overflow:hidden}
+.person-book i{display:block;flex:1;border-right:1px solid rgba(130,105,65,.25);background:linear-gradient(180deg,#fff5d9,#ead4a2)}
+.motion-note{position:absolute;z-index:5;width:132px;padding:13px 13px 12px;border:1px solid rgba(128,151,150,.2);border-radius:16px;background:var(--white);box-shadow:0 12px 28px rgba(42,59,64,.1);display:flex;flex-direction:column;gap:6px}
+.motion-note>span{font-size:8px;font-weight:850;letter-spacing:1px;color:var(--blue)}
+.motion-note strong{font-size:11px;color:var(--ink)}
+.motion-note.note-a{left:1px;top:62px;transform:rotate(-5deg);animation:note-float-a 6.2s ease-in-out infinite}
+.motion-note.note-b{right:0;top:126px;transform:rotate(4deg);animation:note-float-b 6.8s ease-in-out infinite}
+.note-line{height:4px;width:78%;border-radius:99px;background:var(--line);display:block}
+.note-line.long{width:94%;background:var(--blue-soft)}
+.note-line.short{width:54%}
+.note-dots{display:flex;gap:5px;margin-top:3px}
+.note-dots i{width:14px;height:14px;border-radius:50%;background:var(--green);display:block}
+.note-dots i:nth-child(2){background:var(--peach)}.note-dots i:nth-child(3){background:var(--lav)}
+.note-check{position:absolute;right:10px;bottom:9px;width:19px;height:19px;display:grid;place-items:center;border-radius:50%;background:var(--green);color:#557d60;font-size:11px;font-weight:900}
+.motion-spark{position:absolute;z-index:2;color:#d4a96e;animation:spark-pulse 3.2s ease-in-out infinite}
+.spark-one{left:45%;top:18px;font-size:25px}.spark-two{right:18%;top:48px;font-size:19px;animation-delay:1.2s}
+.motion-window-footer{padding-top:11px;border-top:1px solid rgba(128,151,150,.18);font-size:9px;font-weight:750;color:var(--muted)}
+.motion-window-footer b{color:var(--blue);padding:0 3px}
+.motion-progress{width:86px;height:5px;border-radius:99px;background:var(--line);overflow:hidden}
+.motion-progress i{display:block;width:45%;height:100%;border-radius:99px;background:#88a98c;animation:progress-sweep 4.8s ease-in-out infinite}
+.motion-float{position:absolute;z-index:6;display:flex;align-items:center;gap:7px;padding:9px 12px;border-radius:13px;background:var(--white);border:1px solid var(--line);box-shadow:0 9px 22px rgba(42,59,64,.09);font-size:10px;font-weight:750;color:var(--ink);animation:note-float-a 6s ease-in-out infinite}
+.motion-float span{color:var(--blue);font-size:14px}
+.motion-float.float-a{left:-7px;bottom:27px}
+.motion-float.float-b{right:-3px;top:37px;animation-delay:1.5s}
+@keyframes window-float{0%,100%{transform:translateY(0) rotate(1deg)}50%{transform:translateY(-8px) rotate(0deg)}}
+@keyframes person-bob{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-6px)}}
+@keyframes note-float-a{0%,100%{translate:0 0}50%{translate:0 -7px}}
+@keyframes note-float-b{0%,100%{translate:0 0}50%{translate:0 7px}}
+@keyframes halo-breathe{0%,100%{transform:scale(.96);opacity:.72}50%{transform:scale(1.04);opacity:1}}
+@keyframes spark-pulse{0%,100%{opacity:.55;transform:scale(.88) rotate(-8deg)}50%{opacity:1;transform:scale(1.12) rotate(8deg)}}
+@keyframes progress-sweep{0%{width:18%}55%{width:88%}100%{width:18%}}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid rgba(92,131,148,.25);outline-offset:2px}
+@media(max-width:900px){
+  .workspace-body{grid-template-columns:205px minmax(0,1fr)}
+  .hero{gap:25px}
+  .motion-note{width:116px;padding:11px}
+  .motion-float{font-size:9px}
+}
+@media(max-width:700px){
+  .workspace-wrap{padding:38px 0 50px}
+  .workspace{padding:15px;border-radius:23px}
+  .workspace-head{align-items:flex-start;flex-direction:column}
+  .workspace-body{grid-template-columns:1fr}
+  .side-panel{order:2}
+  .content-panel{order:1;padding:0}
+  .ai-setup{align-items:flex-start}
+  .hero-art.hero-motion{min-height:350px}
+  .motion-window{width:min(100%,440px);padding:14px 14px 12px}
+  .motion-stage{height:235px}
+  .motion-person{transform:translateX(-50%) scale(.88);transform-origin:bottom center}
+  .motion-note.note-a{left:-2px;top:57px}
+  .motion-note.note-b{right:-2px;top:119px}
+  .motion-float.float-a{left:0;bottom:9px}
+  .motion-float.float-b{right:0;top:14px}
+  .tabs{margin-top:3px}
+}
+@media(max-width:430px){
+  .motion-note{width:102px;padding:9px;border-radius:13px}
+  .motion-note strong{font-size:10px}
+  .motion-stage{height:215px}
+  .motion-person{transform:translateX(-50%) scale(.78);transform-origin:bottom center}
+  .motion-float{font-size:8px;padding:7px 9px}
+  .workspace-head h3{font-size:19px}
+  .dropzone{min-height:145px}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
+/* End OmniLearn Humanized UI Refresh */
+
 </style>
 </head>
 <body>
@@ -156,17 +333,48 @@
   <div class="hero-actions"><a href="#ruang-belajar" class="btn btn-primary">Coba tutor AI ↗</a><a href="#fitur" class="btn btn-soft">Lihat fitur</a></div>
   <div class="tiny-note">Gemini Cloud di server · API key aman di backend · Tanpa unduhan model</div>
  </div>
- <div class="hero-art" aria-hidden="true"><div class="blob"></div><div class="study-card"><div class="card-top"><div class="card-title">Ruang belajarmu</div><div class="status">● Siap digunakan</div></div><div class="upload-mini"><div class="file-icon">📄</div><div style="flex:1"><div class="file-name">Pengantar astronomi.pdf</div><div class="file-sub">24 halaman · Materi baru</div><div class="progress"><span></span></div></div><span style="color:#7f9b84;font-size:18px">✓</span></div><div class="mini-label">Mulai dari sini</div><div class="output-grid"><div class="output"><span class="ico">✍️</span><b>Ringkasan inti</b><small>Ambil ide penting</small></div><div class="output"><span class="ico">🧩</span><b>Latihan soal</b><small>Cek pemahamanmu</small></div><div class="output"><span class="ico">💬</span><b>Tanya tutor</b><small>Bahas bagian sulit</small></div><div class="output"><span class="ico">🗂️</span><b>Kartu belajar</b><small>Ulangi kapan saja</small></div></div></div><div class="floating-note"><span style="font-size:21px">🌱</span><div><strong>Belajar sesuai ritmemu</strong><span>Satu langkah kecil setiap hari.</span></div></div></div>
+  <div class="hero-art hero-motion" aria-hidden="true">
+    <div class="motion-halo"></div>
+    <div class="motion-window">
+      <div class="motion-window-top">
+        <span class="motion-brand"><i></i> OMNILEARN · STUDY ROOM</span>
+        <span class="motion-status">● Teman belajarmu siap</span>
+      </div>
+      <div class="motion-stage">
+        <span class="motion-spark spark-one">✦</span>
+        <span class="motion-spark spark-two">✧</span>
+        <div class="motion-note note-a">
+          <span>RINGKASAN</span>
+          <strong>3 ide utama</strong>
+          <i class="note-line long"></i><i class="note-line"></i><i class="note-line short"></i>
+        </div>
+        <div class="motion-person">
+          <div class="person-hair"></div>
+          <div class="person-head"><i class="person-eye eye-one"></i><i class="person-eye eye-two"></i><i class="person-smile"></i></div>
+          <div class="person-neck"></div><div class="person-body"></div>
+          <div class="person-arm arm-one"></div><div class="person-arm arm-two"></div>
+          <div class="person-desk"></div><div class="person-book"><i></i><i></i></div>
+        </div>
+        <div class="motion-note note-b">
+          <span>LATIHAN</span><strong>5 soal singkat</strong>
+          <div class="note-dots"><i></i><i></i><i></i></div><div class="note-check">✓</div>
+        </div>
+      </div>
+      <div class="motion-window-footer"><span>Materi <b>→</b> Paham <b>→</b> Ingat</span><div class="motion-progress"><i></i></div></div>
+    </div>
+    <div class="motion-float float-a"><span>✦</span> Belajar sesuai ritmemu</div>
+    <div class="motion-float float-b"><span>✓</span> Satu langkah kecil</div>
+  </div>
 </section>
 <section class="workspace-wrap" id="ruang-belajar"><div class="shell">
  <div class="section-head"><div><div class="kicker">Ruang belajar AI</div><h2>Satu materi. Banyak cara memahami.</h2></div><p class="section-desc">Unggah materi atau mulai dari pertanyaan. Tutor AI membantu menjelaskan, merangkum, dan membuat latihan melalui Gemini Cloud.</p></div>
  <div class="workspace">
-  <div class="workspace-head"><div><h3>Ruang belajarmu</h3><p id="materialLabel">Belum ada materi · Mulai dengan pertanyaan bebas</p></div><div class="head-actions"><span class="ai-status" id="aiStatus">● Memeriksa Gemini Cloud…</span><input class="upload-input" id="materialFile" type="file" accept=".pdf,.docx,.pptx,.txt"><button class="btn btn-soft" id="uploadButton" type="button">＋ Tambah materi</button></div></div>
+  <div class="workspace-head"><div><h3>Mau belajar apa hari ini?</h3><p id="materialLabel">Belum ada materi · Mulai dari pertanyaan atau unggah catatanmu</p></div><div class="head-actions"><span class="ai-status" id="aiStatus">● Memeriksa Gemini Cloud…</span><input class="upload-input" id="materialFile" type="file" accept=".pdf,.docx,.pptx,.txt"><button class="btn btn-soft" id="uploadButton" type="button">＋ Tambah materi</button></div></div>
   <div class="workspace-body">
    <aside class="side-panel"><div class="side-label">Materi kamu</div><div id="materialList"><div class="lesson active"><span class="lesson-icon">💡</span>Pertanyaan bebas</div></div><div class="privacy-note">🔒 Riwayat chat terisolasi per sesi tab browser (sessionStorage) dan tidak dibagikan ke pengguna lain. Dokumen hanya diproses sementara di memori. Konten yang dikirim ke Tutor AI diproses oleh penyedia Gemini Cloud untuk menghasilkan jawaban.</div></aside>
    <div class="content-panel">
-    <div class="ai-setup"><div><strong>Gemini Cloud · Tutor AI OmniLearn</strong><p>AI berjalan di server Node.js. Kunci API disimpan sebagai secret server-side dan tidak dikirim ke browser.</p></div><span class="status">Cloud AI</span></div>
-    <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Pilih atau jatuhkan dokumen"><strong>Tarik dokumen ke sini atau klik untuk memilih</strong><span>PDF (teks, scan, campuran & infografik · OCR otomatis), DOCX, PPTX, TXT · Maksimal 15 MB</span></div>
+    <div class="ai-setup"><div><strong>Teman belajar OmniLearn</strong><p>Mulai dari pertanyaan sederhana. Aku bantu menjelaskan, merangkum, dan menyusun latihan dari materimu.</p></div><span class="status">Gemini Cloud</span></div>
+    <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Pilih atau jatuhkan dokumen"><span class="dropzone-icon">↑</span><strong>Taruh materimu di sini. Kita pelajari bareng.</strong><span>PDF, DOCX, PPTX, atau TXT · OCR otomatis untuk PDF hasil scan · Maksimal 15 MB</span><span class="dropzone-hint">Klik untuk memilih file, atau seret dari perangkatmu</span></div>
     <div class="setup-progress" id="uploadProgress" role="status" aria-live="polite">
       <div class="setup-progress-top"><span id="uploadProgressLabel">Mengunggah dokumen…</span><span id="uploadProgressStage">Tahap 1 dari 7</span></div>
       <div class="progress"><span id="uploadProgressBar" style="width:14%"></span></div>
@@ -221,8 +429,8 @@
       <span>Klik kartu untuk membalik · Tandai "Sudah paham" atau "Perlu diulang".</span>
     </div>
     <div class="task-options" id="taskOptions"><label for="targetLanguage">Terjemahkan ke</label><select id="targetLanguage"><option>Bahasa Inggris</option><option>Bahasa Indonesia</option><option>Bahasa Melayu</option><option>Bahasa Arab</option><option>Bahasa Jepang</option><option>Bahasa Korea</option><option>Bahasa Mandarin</option><option>Bahasa Spanyol</option><option>Bahasa Prancis</option><option>Bahasa Jerman</option></select><button class="tool-action" id="regenTranslateBtn" type="button">Terjemahkan</button><span>Gunakan materi yang diunggah atau teks di kolom pertanyaan.</span></div>
-    <div class="tool-output" id="toolOutput"><h4>Mulai dari rasa ingin tahu.</h4><p class="placeholder">Gemini Cloud siap membantu. Tanyakan apa saja atau unggah materi untuk dipelajari bersama.</p><div class="key-points"><span>Semua bidang ilmu</span><span>Gemini Cloud</span><span>OCR PDF Otomatis</span></div></div>
-    <div class="chat-messages" id="chatMessages" aria-live="polite"><div class="chat-message assistant">Hai! Aku tutor OmniLearn. Aku bisa menjelaskan topik, membantumu memahami dokumen, atau membuat latihan. Sekarang kamu bisa bertanya atau mengunggah materi untuk mulai belajar.</div></div>
+    <div class="tool-output" id="toolOutput"><h4>Kita mulai dari yang kamu butuhkan.</h4><p class="placeholder">Tulis pertanyaan dengan bahasamu sendiri, atau unggah materi supaya kita bisa membahasnya bersama.</p><div class="key-points"><span>Tanya apa saja</span><span>Belajar bertahap</span><span>Latihan dari materi</span></div></div>
+    <div class="chat-messages" id="chatMessages" aria-live="polite"><div class="chat-message assistant">Hai! Aku teman belajar OmniLearn. Kamu bisa bertanya, mengunggah materi, atau minta penjelasan ulang dengan contoh yang lebih sederhana. Kita mulai dari bagian yang paling membingungkan.</div></div>
     <form class="chat-row" id="chatForm"><input id="chatInput" placeholder="Tanyakan apa saja tentang materi atau topikmu…" aria-label="Tulis pertanyaan" autocomplete="off"><button id="sendButton" aria-label="Kirim pertanyaan">↑</button></form>
     <div class="tool-actions"><button class="tool-action" id="clearChat">Hapus chat</button><button class="tool-action" id="copyOutput">Salin hasil</button><span class="small-muted" id="chatFeedback">Memeriksa koneksi Gemini Cloud…</span></div>
    </div>
@@ -1911,7 +2119,7 @@ $('clearChat').addEventListener('click', async () => {
   chatMessages.innerHTML = '';
   renderMaterialBadgeAndSidebar();
   toolOutput.classList.remove('md-rendered');
-  toolOutput.innerHTML = '<h4>Mulai dari rasa ingin tahu.</h4><p class="placeholder">Riwayat chat dan konteks materi pada sesi tab ini telah direset.</p>';
+  toolOutput.innerHTML = '<h4>Kita mulai dari yang kamu butuhkan.</h4><p class="placeholder">Tulis pertanyaanmu atau unggah materi untuk memulai sesi baru.</p>';
   addMessage('assistant', 'Percakapan dan konteks materi pada sesi tab ini telah dihapus. Kamu bisa memulai topik baru atau mengunggah dokumen baru kapan saja.');
   chatFeedback.textContent = 'Sesi percakapan dan konteks materi tab ini telah dibersihkan.';
 
