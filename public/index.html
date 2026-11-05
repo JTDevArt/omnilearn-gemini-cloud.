@@ -23,7 +23,7 @@
 .md-rendered p:last-child{margin-bottom:0}
 .md-rendered h1,.md-rendered h2,.md-rendered h3,.md-rendered h4{color:var(--ink);font-weight:800;line-height:1.28;letter-spacing:-.3px;margin:1.15em 0 .45em}
 .md-rendered h1:first-child,.md-rendered h2:first-child,.md-rendered h3:first-child,.md-rendered h4:first-child{margin-top:0}
-.md-rendered h1{font-size:1.32em;border-bottom:1px solid var(--line);padding-bottom:.3em}
+.md-rendered h1{font-size:1.32em;border-bottom:1px solid var(--line);padding-bottom:.3em;max-width:none}
 .md-rendered h2{font-size:1.18em}
 .md-rendered h3{font-size:1.06em}
 .md-rendered h4{font-size:1em}
@@ -172,6 +172,15 @@
       <div class="progress"><span id="uploadProgressBar" style="width:14%"></span></div>
     </div>
     <div class="tabs" role="tablist" aria-label="Alat belajar"><button class="tab active" data-tab="chat">Tutor AI</button><button class="tab" data-tab="summary">Ringkasan</button><button class="tab" data-tab="quiz">Kuis</button><button class="tab" data-tab="cards">Flashcard</button><button class="tab" data-tab="map">Peta konsep</button><button class="tab" data-tab="plan">Rencana 7 hari</button><button class="tab" data-tab="translate">Penerjemah</button><button class="tab" data-tab="research">Asisten riset</button></div>
+    <div class="task-options show" id="languageToolbar" style="margin-bottom:8px">
+      <label for="outputLanguage">Bahasa hasil</label>
+      <select id="outputLanguage" aria-label="Pilih bahasa hasil belajar">
+        <option value="auto" selected>Otomatis (Sesuai bahasa dokumen)</option>
+        <option value="id">Bahasa Indonesia</option>
+        <option value="en">Bahasa Inggris (English)</option>
+      </select>
+      <span id="detectedLangBadge">Bahasa materi: Mengikuti isi dokumen secara otomatis</span>
+    </div>
     <div class="task-options" id="summaryOptions">
       <label for="summaryStyle">Gaya ringkasan</label>
       <select id="summaryStyle">
@@ -297,6 +306,18 @@ let lastOutputHtml = '';
 let activeTab = 'chat';
 let busy = false;
 let uploadInFlight = false;
+let materialVersion = 1;
+let activeRequestToken = 0;
+let activeStudyAbortController = null;
+const tabViewCache = new Map();
+
+function cancelActiveStudyRequest() {
+  if (activeStudyAbortController) {
+    try { activeStudyAbortController.abort(); } catch (_) {}
+    activeStudyAbortController = null;
+  }
+  activeRequestToken++;
+}
 
 // Obtain an un-shimmed native fetch from a hidden about:blank iframe so _aistudio-iframe.js
 // does not stall on bootstrapChannel or consume FormData bodies in new Request()
@@ -490,9 +511,16 @@ function saveSessionState() {
 
 function renderMaterialBadgeAndSidebar() {
   const list = $('materialList');
+  const langBadge = $('detectedLangBadge');
   list.innerHTML = '';
   if (!materialName || !materialText) {
     $('materialLabel').textContent = 'Belum ada materi · Mulai dengan pertanyaan bebas';
+    if (langBadge) {
+      const sel = $('outputLanguage')?.value || 'auto';
+      langBadge.textContent = sel === 'auto'
+        ? 'Bahasa materi: Mengikuti isi dokumen secara otomatis'
+        : `Bahasa hasil dikunci ke: ${sel === 'en' ? 'Bahasa Inggris' : 'Bahasa Indonesia'}`;
+    }
     const freeItem = document.createElement('div');
     freeItem.className = 'lesson active';
     const icon = document.createElement('span');
@@ -509,7 +537,16 @@ function renderMaterialBadgeAndSidebar() {
   const charPart = ` · ${Number(meta.characters || materialText.length).toLocaleString('id-ID')} karakter`;
   const ocrPart = meta.ocrUsed ? ' · OCR: Digunakan' : ' · OCR: Tidak diperlukan';
   const truncPart = meta.truncated ? ' · teks dipotong' : '';
-  $('materialLabel').textContent = `${materialName}${sizePart}${pagePart}${charPart}${ocrPart}${truncPart}`;
+  const langPart = meta.detectedLanguage?.name ? ` · Bahasa: ${meta.detectedLanguage.name}` : '';
+  $('materialLabel').textContent = `${materialName}${sizePart}${pagePart}${charPart}${ocrPart}${langPart}${truncPart}`;
+
+  if (langBadge) {
+    const sel = $('outputLanguage')?.value || 'auto';
+    const detectedName = meta.detectedLanguage?.name || 'Otomatis';
+    langBadge.textContent = sel === 'auto'
+      ? `Bahasa dokumen terdeteksi: ${detectedName} (Digunakan otomatis)`
+      : `Bahasa dokumen: ${detectedName} · Bahasa hasil: ${sel === 'en' ? 'Bahasa Inggris' : 'Bahasa Indonesia'}`;
+  }
 
   const item = document.createElement('div');
   item.className = 'lesson active';
@@ -674,7 +711,7 @@ function requestViaXhr(url, { method = 'GET', headers = {}, body = null, timeout
   });
 }
 
-async function safeRequestJson(url, options = {}, { timeoutMs = 45000, stageContext = 'request' } = {}) {
+async function safeRequestJson(url, options = {}, { timeoutMs = 45000, stageContext = 'request', externalSignal = null } = {}) {
   const reqId = generateClientRequestId(stageContext);
   const method = (options.method || 'GET').toUpperCase();
 
@@ -683,6 +720,19 @@ async function safeRequestJson(url, options = {}, { timeoutMs = 45000, stageCont
   }
 
   const controller = new AbortController();
+  let abortedByCaller = false;
+  const onExternalAbort = () => {
+    abortedByCaller = true;
+    controller.abort();
+  };
+  if (externalSignal) {
+    if (externalSignal.aborted) {
+      const abortErr = new Error('Permintaan dibatalkan karena materi atau konteks berubah.');
+      abortErr.isCancelled = true;
+      throw abortErr;
+    }
+    externalSignal.addEventListener('abort', onExternalAbort, { once: true });
+  }
   const timeoutTimer = window.setTimeout(() => controller.abort(), timeoutMs);
 
   const headers = new Headers(options.headers || {});
@@ -733,6 +783,12 @@ async function safeRequestJson(url, options = {}, { timeoutMs = 45000, stageCont
   } catch (err) {
     window.clearTimeout(timeoutTimer);
 
+    if (abortedByCaller || err.isCancelled) {
+      const cancelErr = new Error('Permintaan dibatalkan karena materi berubah.');
+      cancelErr.isCancelled = true;
+      throw cancelErr;
+    }
+
     // Separate HTTP errors from network/timeout errors
     if (err.isHttpError) {
       throw err;
@@ -766,10 +822,14 @@ async function safeRequestJson(url, options = {}, { timeoutMs = 45000, stageCont
     }
   } finally {
     window.clearTimeout(timeoutTimer);
+    if (externalSignal) {
+      externalSignal.removeEventListener('abort', onExternalAbort);
+    }
   }
 }
 
 async function askAI(message) {
+  const outputLanguage = $('outputLanguage') ? $('outputLanguage').value : 'auto';
   const data = await safeRequestJson('/api/chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -779,7 +839,8 @@ async function askAI(message) {
       history: chatHistory.slice(-8),
       material: materialText,
       materialId,
-      materialName
+      materialName,
+      outputLanguage
     })
   }, { timeoutMs: 45000, stageContext: 'chat' });
   return data.answer;
@@ -915,7 +976,7 @@ function renderInteractiveQuiz() {
       quizState.completed = false;
       renderInteractiveQuiz();
     });
-    $('newQuizFromResultBtn')?.addEventListener('click', () => runTool('quiz'));
+    $('newQuizFromResultBtn')?.addEventListener('click', () => runTool('quiz', '', true));
     return;
   }
 
@@ -1285,7 +1346,47 @@ function renderInteractiveConceptMap() {
   });
 }
 
-async function runTool(task, customTopic = '') {
+function getTabCacheKey(task, customTopic = '') {
+  const summaryStyle = $('summaryStyle') ? $('summaryStyle').value : 'ringkasan_lengkap';
+  const quizDifficulty = $('quizDifficulty') ? $('quizDifficulty').value : 'campuran';
+  const quizCount = $('quizCount') ? Number($('quizCount').value) || 10 : 10;
+  const cardsCount = $('cardsCount') ? Number($('cardsCount').value) || 10 : 10;
+  const targetLang = $('targetLanguage') ? $('targetLanguage').value : 'Bahasa Inggris';
+  const outputLanguage = $('outputLanguage') ? $('outputLanguage').value : 'auto';
+  const subjectText = $('subjectResult').textContent.startsWith('Bidang pilihan:') ? $('subjectResult').textContent.replace('Bidang pilihan:', '').trim() : '';
+  const topicSig = materialText.trim() ? `mat:${materialId || materialName}:${materialText.length}` : `top:${customTopic || subjectText || 'default'}`;
+
+  let optSig = '';
+  if (task === 'summary') optSig = summaryStyle;
+  else if (task === 'quiz') optSig = `${quizDifficulty}:${quizCount}`;
+  else if (task === 'cards') optSig = `${cardsCount}`;
+  else if (task === 'translate') optSig = `${targetLang}:${chatInput.value.trim().slice(0, 80)}`;
+
+  return `v${materialVersion}|${task}|${topicSig}|${outputLanguage}|${optSig}`;
+}
+
+function restoreCachedTabView(cachedEntry, task) {
+  if (!cachedEntry) return false;
+  lastOutput = cachedEntry.markdown || '';
+  lastOutputHtml = renderMarkdownToSafeHtml(lastOutput);
+
+  if (task === 'quiz' && cachedEntry.quizState?.questions?.length) {
+    quizState = cachedEntry.quizState;
+    renderInteractiveQuiz();
+  } else if (task === 'cards' && cachedEntry.flashcardState?.allCards?.length) {
+    flashcardState = cachedEntry.flashcardState;
+    renderInteractiveFlashcards();
+  } else if (task === 'map' && cachedEntry.conceptMapState?.centralTopic) {
+    conceptMapState = cachedEntry.conceptMapState;
+    renderInteractiveConceptMap();
+  } else {
+    setToolOutputMarkdown(lastOutput);
+  }
+  chatFeedback.textContent = `${taskNames[task]} ditampilkan dari hasil sesi saat ini.`;
+  return true;
+}
+
+async function runTool(task, customTopic = '', forceRegenerate = false) {
   if (busy || uploadInFlight || !taskNames[task]) return;
   const typedText = chatInput.value.trim();
   if (task === 'translate' && !materialText.trim() && !typedText) {
@@ -1293,6 +1394,13 @@ async function runTool(task, customTopic = '') {
     toast('Masukkan teks untuk diterjemahkan.');
     return;
   }
+
+  const cacheKey = getTabCacheKey(task, customTopic);
+  if (!forceRegenerate && tabViewCache.has(cacheKey)) {
+    restoreCachedTabView(tabViewCache.get(cacheKey), task);
+    return;
+  }
+
   const subjectText = $('subjectResult').textContent.startsWith('Bidang pilihan:') ? $('subjectResult').textContent.replace('Bidang pilihan:', '').trim() : '';
   const topic = customTopic || typedText || subjectText || 'dasar-dasar ilmu pengetahuan umum';
 
@@ -1300,7 +1408,14 @@ async function runTool(task, customTopic = '') {
   const quizDifficulty = $('quizDifficulty') ? $('quizDifficulty').value : 'campuran';
   const quizCount = $('quizCount') ? Number($('quizCount').value) || 10 : 10;
   const cardsCount = $('cardsCount') ? Number($('cardsCount').value) || 10 : 10;
+  const outputLanguage = $('outputLanguage') ? $('outputLanguage').value : 'auto';
   const count = task === 'quiz' ? quizCount : (task === 'cards' ? cardsCount : 10);
+
+  cancelActiveStudyRequest();
+  const abortController = new AbortController();
+  activeStudyAbortController = abortController;
+  const requestToken = ++activeRequestToken;
+  const capturedMaterialVersion = materialVersion;
 
   toolOutput.classList.remove('md-rendered');
   toolOutput.innerHTML = `<div class="study-loading"><span class="study-spinner" aria-hidden="true"></span><span>${taskNames[task]} sedang disusun oleh Gemini 3.8 Flash…</span></div>`;
@@ -1321,14 +1436,28 @@ async function runTool(task, customTopic = '') {
         count,
         difficulty: quizDifficulty,
         summaryStyle,
-        targetLanguage: $('targetLanguage').value
+        targetLanguage: $('targetLanguage').value,
+        outputLanguage,
+        forceRegenerate: Boolean(forceRegenerate)
       })
-    }, { timeoutMs: 60000, stageContext: `study-${task}` });
+    }, { timeoutMs: 60000, stageContext: `study-${task}`, externalSignal: abortController.signal });
+
+    // Ignore stale response if document or request changed while in-flight
+    if (requestToken !== activeRequestToken || capturedMaterialVersion !== materialVersion) {
+      return;
+    }
+
+    if (data.outputLanguage && materialMeta && !materialMeta.detectedLanguage) {
+      materialMeta.detectedLanguage = data.outputLanguage;
+      renderMaterialBadgeAndSidebar();
+    }
 
     const result = data.result || 'Gemini tidak menghasilkan teks.';
-    const formattedMarkdown = `## ${taskNames[task]}\n\n${result}`;
+    const formattedMarkdown = task === 'summary' ? result.trim() : `## ${taskNames[task]}\n\n${result}`;
     lastOutput = formattedMarkdown;
     lastOutputHtml = renderMarkdownToSafeHtml(formattedMarkdown);
+
+    const cacheEntry = { markdown: formattedMarkdown };
 
     if (task === 'quiz' && data.structuredData?.questions?.length) {
       quizState = {
@@ -1340,6 +1469,7 @@ async function runTool(task, customTopic = '') {
         answers: {},
         completed: false
       };
+      cacheEntry.quizState = quizState;
       renderInteractiveQuiz();
     } else if (task === 'cards' && data.structuredData?.cards?.length) {
       flashcardState = {
@@ -1353,27 +1483,41 @@ async function runTool(task, customTopic = '') {
         isFlipped: false,
         reviewHardOnly: false
       };
+      cacheEntry.flashcardState = flashcardState;
       renderInteractiveFlashcards();
     } else if (task === 'map' && data.structuredData?.centralTopic) {
       conceptMapState = {
         ...data.structuredData,
         branches: (data.structuredData.branches || []).map(b => ({ ...b, collapsed: false }))
       };
+      cacheEntry.conceptMapState = conceptMapState;
       renderInteractiveConceptMap();
     } else {
       setToolOutputMarkdown(formattedMarkdown);
     }
 
-    addMessage('assistant', formattedMarkdown);
-    chatHistory.push({ role: 'assistant', content: formattedMarkdown });
-    saveSessionState();
-    chatFeedback.textContent = `${taskNames[task]} selesai dibuat.`;
+    tabViewCache.set(cacheKey, cacheEntry);
+
+    if (!data.cached) {
+      addMessage('assistant', formattedMarkdown);
+      chatHistory.push({ role: 'assistant', content: formattedMarkdown });
+      saveSessionState();
+    }
+    chatFeedback.textContent = `${taskNames[task]} selesai dibuat${data.outputLanguage?.name ? ` (${data.outputLanguage.name})` : ''}.`;
   } catch (error) {
+    if (error.isCancelled || requestToken !== activeRequestToken || capturedMaterialVersion !== materialVersion) {
+      return;
+    }
     toolOutput.classList.remove('md-rendered');
     toolOutput.textContent = error.message;
     chatFeedback.textContent = error.message;
   } finally {
-    setBusy(false);
+    if (activeStudyAbortController === abortController) {
+      activeStudyAbortController = null;
+    }
+    if (requestToken === activeRequestToken) {
+      setBusy(false);
+    }
   }
 }
 
@@ -1385,41 +1529,52 @@ function selectTab(tab) {
   $('cardsOptions')?.classList.toggle('show', tab === 'cards');
   taskOptions.classList.toggle('show', tab === 'translate');
   if (tab === 'chat') {
-    if (!materialName) {
+    if (!materialName && !lastOutput) {
       toolOutput.classList.remove('md-rendered');
       toolOutput.innerHTML = '<h4>Mulai dari rasa ingin tahu.</h4><p class="placeholder">Tanyakan apa saja pada tutor OmniLearn.</p>';
     }
     return;
   }
-  runTool(tab);
+  const cacheKey = getTabCacheKey(tab);
+  if (tabViewCache.has(cacheKey)) {
+    restoreCachedTabView(tabViewCache.get(cacheKey), tab);
+    return;
+  }
+  runTool(tab, '', false);
 }
 document.querySelectorAll('.tab').forEach(button => button.addEventListener('click', () => selectTab(button.dataset.tab)));
+$('outputLanguage')?.addEventListener('change', () => {
+  renderMaterialBadgeAndSidebar();
+  if (activeTab !== 'chat' && activeTab !== 'translate' && !busy && !uploadInFlight) {
+    runTool(activeTab, '', false);
+  }
+});
 $('summaryStyle')?.addEventListener('change', () => {
-  if (activeTab === 'summary' && !busy && !uploadInFlight) runTool('summary');
+  if (activeTab === 'summary' && !busy && !uploadInFlight) runTool('summary', '', false);
 });
 $('regenSummaryBtn')?.addEventListener('click', () => {
-  if (!busy && !uploadInFlight) runTool('summary');
+  if (!busy && !uploadInFlight) runTool('summary', '', true);
 });
 $('quizDifficulty').addEventListener('change', () => {
-  if (activeTab === 'quiz' && !busy && !uploadInFlight) runTool('quiz');
+  if (activeTab === 'quiz' && !busy && !uploadInFlight) runTool('quiz', '', false);
 });
 $('quizCount')?.addEventListener('change', () => {
-  if (activeTab === 'quiz' && !busy && !uploadInFlight) runTool('quiz');
+  if (activeTab === 'quiz' && !busy && !uploadInFlight) runTool('quiz', '', false);
 });
 $('regenQuizBtn')?.addEventListener('click', () => {
-  if (!busy && !uploadInFlight) runTool('quiz');
+  if (!busy && !uploadInFlight) runTool('quiz', '', true);
 });
 $('cardsCount')?.addEventListener('change', () => {
-  if (activeTab === 'cards' && !busy && !uploadInFlight) runTool('cards');
+  if (activeTab === 'cards' && !busy && !uploadInFlight) runTool('cards', '', false);
 });
 $('regenCardsBtn')?.addEventListener('click', () => {
-  if (!busy && !uploadInFlight) runTool('cards');
+  if (!busy && !uploadInFlight) runTool('cards', '', true);
 });
 $('targetLanguage').addEventListener('change', () => {
-  if (activeTab === 'translate' && !busy && !uploadInFlight && (materialText.trim() || chatInput.value.trim())) runTool('translate');
+  if (activeTab === 'translate' && !busy && !uploadInFlight && (materialText.trim() || chatInput.value.trim())) runTool('translate', '', false);
 });
 $('regenTranslateBtn')?.addEventListener('click', () => {
-  if (!busy && !uploadInFlight) runTool('translate');
+  if (!busy && !uploadInFlight) runTool('translate', '', true);
 });
 
 function arrayBufferToBase64(buffer) {
@@ -1591,16 +1746,24 @@ async function uploadFile(file) {
     setUploadStage(6, 'Menyiapkan materi…', true);
     chatFeedback.textContent = 'Tahap 6 dari 7 · Menyiapkan materi…';
 
+    cancelActiveStudyRequest();
+    materialVersion++;
+    tabViewCache.clear();
+
     materialText = String(finalData.text || '').slice(0, 50000);
     materialName = finalData.filename || fileName;
     materialId = finalData.materialId || '';
     materialMeta = {
       fileSize: Number(finalData.fileSize || file.size || 0),
       pageCount: Number(finalData.pageCount) || 1,
+      processedPages: Number(finalData.processedPages || finalData.pageCount || 1),
       characters: Number(finalData.characters || materialText.length),
       ocrUsed: Boolean(finalData.ocrUsed),
       extractionMode: finalData.extractionMode || 'text',
-      truncated: Boolean(finalData.truncated)
+      truncated: Boolean(finalData.truncated),
+      partialRead: Boolean(finalData.partialRead),
+      partialReadNotice: finalData.partialReadNotice || null,
+      detectedLanguage: finalData.detectedLanguage || null
     };
 
     if (!materialText.trim()) {
@@ -1620,22 +1783,30 @@ async function uploadFile(file) {
     const ocrStatusLabel = materialMeta.ocrUsed
       ? (materialMeta.extractionMode === 'pdf-hybrid-ocr' ? 'Digunakan (PDF Campuran: Text Layer + OCR)' : 'Digunakan (OCR Multimodal Gemini 3.8 Flash)')
       : 'Tidak diperlukan (Text Layer Terbaca)';
+    const detectedLangLabel = materialMeta.detectedLanguage?.name || 'Otomatis';
 
-    const summaryCardMd = [
+    const summaryCardLines = [
       `### Dokumen Siap Dipelajari: ${materialName}`,
       `- **Nama File:** ${materialName}`,
       `- **Ukuran File:** ${formatFileSize(materialMeta.fileSize)}`,
       `- **Jumlah Halaman:** ${materialMeta.pageCount} halaman`,
-      `- **Jumlah Karakter:** ${materialMeta.characters.toLocaleString('id-ID')} karakter${materialMeta.truncated ? ' *(dipotong ke batas 50.000 karakter)*' : ''}`,
-      `- **Status OCR:** ${ocrStatusLabel}`,
+      `- **Bahasa Dominan Materi:** ${detectedLangLabel}`,
+      `- **Jumlah Karakter:** ${materialMeta.characters.toLocaleString('id-ID')} karakter${materialMeta.truncated ? ' *(dipotong pada batas kalimat mendekati 50.000 karakter)*' : ''}`,
+      `- **Status OCR:** ${ocrStatusLabel}`
+    ];
+    if (materialMeta.partialReadNotice) {
+      summaryCardLines.push(`- **Catatan Pembacaan:** ⚠️ ${materialMeta.partialReadNotice}`);
+    }
+    summaryCardLines.push(
       ``,
       `Pilih alat belajar di atas (**Ringkasan**, **Kuis**, **Flashcard**, **Peta konsep**, **Rencana 7 hari**, **Penerjemah**, **Asisten riset**) atau langsung tanyakan isi dokumen kepada Tutor AI di bawah.`
-    ].join('\n');
+    );
+    const summaryCardMd = summaryCardLines.join('\n');
 
     setToolOutputMarkdown(summaryCardMd);
     addMessage(
       'assistant',
-      `Dokumen **${materialName}** (${formatFileSize(materialMeta.fileSize)}, ${materialMeta.pageCount} halaman, ${materialMeta.characters.toLocaleString('id-ID')} karakter · Status OCR: **${ocrStatusLabel}**) sudah siap dipelajari di sesi ini. Silakan ajukan pertanyaan atau pilih fitur belajar di atas.`
+      `Dokumen **${materialName}** (${formatFileSize(materialMeta.fileSize)}, ${materialMeta.pageCount} halaman, bahasa **${detectedLangLabel}**, ${materialMeta.characters.toLocaleString('id-ID')} karakter · Status OCR: **${ocrStatusLabel}**) sudah siap dipelajari di sesi ini.${materialMeta.partialReadNotice ? ` *(${materialMeta.partialReadNotice})*` : ''} Silakan ajukan pertanyaan atau pilih fitur belajar di atas.`
     );
     chatFeedback.textContent = `Tahap 7 dari 7 · Selesai (${materialMeta.characters.toLocaleString('id-ID')} karakter diekstrak).`;
     toast(materialMeta.ocrUsed ? 'Dokumen berhasil dibaca dengan OCR otomatis.' : 'Dokumen berhasil ditambahkan.');
@@ -1693,6 +1864,10 @@ $('chatForm').addEventListener('submit', sendChat);
 
 $('clearChat').addEventListener('click', async () => {
   if (uploadInFlight) return;
+  cancelActiveStudyRequest();
+  materialVersion++;
+  tabViewCache.clear();
+  setBusy(false);
   chatHistory = [];
   materialText = '';
   materialName = '';
