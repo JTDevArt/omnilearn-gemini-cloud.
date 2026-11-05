@@ -29,7 +29,7 @@ test('health reports missing credentials honestly', async () => {
   const r = await fetch(base + '/api/health');
   const health = await r.json();
   assert.equal(health.ready, false);
-  assert.equal(health.version, 'bounded-ai-v3');
+  assert.equal(health.version, 'concise-ai-v4');
   assert.match(r.headers.get('cache-control'), /no-store/);
 });
 test('invalid requests and missing provider credentials are rejected', async () => {

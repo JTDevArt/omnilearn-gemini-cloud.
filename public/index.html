@@ -1295,6 +1295,8 @@ function renderInteractiveConceptMap() {
   if (!conceptMapState || !conceptMapState.centralTopic) return;
   toolOutput.classList.remove('md-rendered');
 
+  const en = conceptMapState.language === 'en';
+  const labels = en ? { example: 'Example', expand: 'Expand', collapse: 'Collapse' } : { example: 'Contoh', expand: 'Buka', collapse: 'Tutup' };
   const branchesHtml = (conceptMapState.branches || []).map((branch, bIdx) => {
     const isCollapsed = Boolean(branch.collapsed);
     const subsHtml = (branch.subconcepts || []).map(sub => `<div class="cmap-sub-node">
@@ -1303,8 +1305,7 @@ function renderInteractiveConceptMap() {
         <span>${escapeHtml(sub.title)}</span>
       </div>
       <div class="md-rendered">${renderMarkdownToSafeHtml(sub.detail)}</div>
-      ${sub.causeEffect ? `<div class="cmap-sub-meta"><strong>Sebab–Akibat:</strong> ${renderMarkdownToSafeHtml(sub.causeEffect)}</div>` : ''}
-      ${sub.example ? `<div class="cmap-sub-meta"><strong>Contoh:</strong> ${renderMarkdownToSafeHtml(sub.example)}</div>` : ''}
+      ${sub.example ? `<div class="cmap-sub-meta"><strong>${labels.example}:</strong> ${renderMarkdownToSafeHtml(sub.example)}</div>` : ''}
     </div>`).join('');
 
     return `<div class="cmap-branch">
@@ -1313,18 +1314,18 @@ function renderInteractiveConceptMap() {
           <span class="cmap-rel-badge">── ${escapeHtml(branch.relationToCenter || 'mencakup')} ──►</span>
           <h4 class="cmap-branch-title" style="display:inline">${escapeHtml(branch.title)}</h4>
         </div>
-        ${branch.subconcepts?.length ? `<button type="button" class="cmap-toggle-btn" data-branch-idx="${bIdx}">${isCollapsed ? `▸ Buka (${branch.subconcepts.length})` : `▾ Tutup (${branch.subconcepts.length})`}</button>` : ''}
+        ${branch.subconcepts?.length ? `<button type="button" class="cmap-toggle-btn" data-branch-idx="${bIdx}">${isCollapsed ? `▸ ${labels.expand} (${branch.subconcepts.length})` : `▾ ${labels.collapse} (${branch.subconcepts.length})`}</button>` : ''}
       </div>
       <div class="cmap-branch-desc md-rendered">${renderMarkdownToSafeHtml(branch.explanation)}</div>
-      ${branch.example ? `<div class="cmap-sub-meta"><strong>Contoh Nyata:</strong> ${renderMarkdownToSafeHtml(branch.example)}</div>` : ''}
+      ${branch.example ? `<div class="cmap-sub-meta"><strong>${labels.example}:</strong> ${renderMarkdownToSafeHtml(branch.example)}</div>` : ''}
       ${branch.subconcepts?.length ? `<div class="cmap-sub-list ${isCollapsed ? 'collapsed' : ''}">${subsHtml}</div>` : ''}
     </div>`;
   }).join('');
 
   const relTableMd = conceptMapState.relationships?.length
     ? [
-      '### Matriks Hubungan & Sebab-Akibat Antarkonsep',
-      '| Konsep Asal | Hubungan / Pengaruh | Konsep Tujuan | Penjelasan Mekanisme |',
+      en ? '### Relationships' : '### Hubungan Antarkonsep',
+      en ? '| Concept | Relationship | Concept | Explanation |' : '| Konsep Asal | Hubungan | Konsep Tujuan | Penjelasan |',
       '| :--- | :--- | :--- | :--- |',
       ...conceptMapState.relationships.map(r => `| **${r.from}** | ${r.relation} | **${r.to}** | ${r.explanation} |`)
     ].join('\n')
@@ -1333,16 +1334,16 @@ function renderInteractiveConceptMap() {
   toolOutput.innerHTML = `<div class="cmap-widget" data-testid="concept-map-interactive">
     <div class="cmap-topbar">
       <div class="quiz-meta">
-        <span class="badge-pill">Peta Konsep Hierarkis</span>
-        <span class="badge-pill">${conceptMapState.branches?.length || 0} Cabang Utama</span>
+        <span class="badge-pill">${en ? 'Concept Map' : 'Peta Konsep'}</span>
+        <span class="badge-pill">${conceptMapState.branches?.length || 0} ${en ? 'Branches' : 'Cabang'}</span>
       </div>
       <div style="display:flex;gap:6px;flex-wrap:wrap">
-        <button type="button" class="tool-action" id="cmapExpandAllBtn">Buka Semua Cabang</button>
-        <button type="button" class="tool-action" id="cmapCollapseAllBtn">Ringkas Cabang</button>
+        <button type="button" class="tool-action" id="cmapExpandAllBtn">${en ? 'Expand All' : 'Buka Semua'}</button>
+        <button type="button" class="tool-action" id="cmapCollapseAllBtn">${en ? 'Collapse All' : 'Ringkas Cabang'}</button>
       </div>
     </div>
     <div class="cmap-root-node">
-      <div class="cmap-root-kicker">TOPIK PUSAT (CENTRAL TOPIC)</div>
+      <div class="cmap-root-kicker">${en ? 'CENTRAL TOPIC' : 'TOPIK PUSAT'}</div>
       <div class="cmap-root-title">${escapeHtml(conceptMapState.centralTopic)}</div>
       ${conceptMapState.summary ? `<p class="cmap-root-summary">${escapeHtml(conceptMapState.summary)}</p>` : ''}
     </div>
@@ -1387,7 +1388,7 @@ function getTabCacheKey(task, customTopic = '') {
   else if (task === 'cards') optSig = `${cardsCount}`;
   else if (task === 'translate') optSig = `${targetLang}:${chatInput.value.trim().slice(0, 80)}`;
 
-  return `v${materialVersion}|${task}|${topicSig}|${outputLanguage}|${optSig}`;
+  return `ai4-v${materialVersion}|${task}|${topicSig}|${outputLanguage}|${optSig}`;
 }
 
 function restoreCachedTabView(cachedEntry, task) {

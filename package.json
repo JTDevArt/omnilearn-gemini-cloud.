@@ -13,7 +13,7 @@
     "build": "node --check server.js && node scripts/verify-migration.mjs",
     "lint": "node --check server.js",
     "check": "node scripts/verify-migration.mjs",
-    "test": "node --test lib/learning-engine.test.js tests/provider-and-ui.test.mjs"
+    "test": "node --test lib/learning-engine.test.js tests/provider-and-ui.test.mjs tests/ai-policy.test.mjs"
   },
   "dependencies": {
     "@google/genai": "^2.32.0",

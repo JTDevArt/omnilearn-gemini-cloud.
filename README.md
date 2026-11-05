@@ -17,7 +17,7 @@ OmniLearn is a universal learning workspace. This migration replaces browser-loc
 - **Smart Summary Engine**: 6 configurable styles (*Ringkasan singkat*, *Ringkasan lengkap*, *Catatan kuliah*, *Poin penting ujian*, *Penjelasan per bab*, *Ringkasan konsep dan mekanisme*).
 - **Interactive Quiz Engine**: Configurable difficulty (*Mudah*, *Sedang*, *Sulit*, *Campuran*) and question count (*5, 10, 15, 20*), one-question-at-a-time interactive UI, immediate dual feedback (why the right answer is correct and why the chosen wrong option is incorrect), score breakdown, and retry support.
 - **Interactive 3D Flashcards**: Front/Back cards with 3D flip animation, shuffle, mastery tracking (*Sudah paham* / *Perlu diulang*), and a *Tinjau Kartu Sulit* filter.
-- **Hierarchical Concept Map**: Interactive tree visualization with expandable/collapsible branches, cause-and-effect chains, and a cross-concept relationship matrix.
+- **Hierarchical Concept Map**: Interactive tree visualization with expandable/collapsible branches, concise definitions and optional cross-concept relationships.
 - **Seven-Day Learning Path**: Progressive 7-day study curriculum with 7 structured daily components.
 - **Academic Translation Engine**: Preserves technical terminology, headings, tables, and mathematical formulas across target languages.
 - **12-Point Research Assistant**: Structured academic research blueprint with variable operationalization tables and honest methodological labels without fabricated citations.
@@ -90,4 +90,6 @@ The default model is `gemini-3-flash-preview`, with `gemini-3.1-flash-lite` as a
 
 Commands such as “bikin peta konsep” open the existing interactive map workflow. The output-language selector now reaches the backend. Automatic English/Indonesian detection is heuristic; uncertain material is left for model detection and the user can override it.
 
-Run `npm test`, `npm run build`, and `node tests/readiness.test.mjs` (starts a local server on an ephemeral port). Live Gemini validation additionally requires a configured key. `/api/health` includes `version: bounded-ai-v3`; `ready` only indicates key presence. Pushing GitHub changes does not automatically update an existing AI Studio preview: sync or import the revision into that project and restart its backend before checking the version.
+Run `npm test`, `npm run build`, and `node tests/readiness.test.mjs` (starts a local server on an ephemeral port). Live Gemini validation additionally requires a configured key. `/api/health` includes `version: concise-ai-v4`; `ready` only indicates key presence. Pushing GitHub changes does not automatically update an existing AI Studio preview: sync or import the revision into that project and restart its backend before checking the version.
+
+Concept maps omit separate cause-and-effect fields, including legacy fields returned by a model or held in the browser cache. Map labels follow the selected output language. Shared AI guidance prioritizes brief, grounded explanations; invalid or incomplete structured results return `INVALID_AI_OUTPUT` rather than raw JSON shown as a successful answer.
