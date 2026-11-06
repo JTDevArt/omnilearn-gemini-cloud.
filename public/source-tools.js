@@ -21,6 +21,11 @@
     const intro = document.createElement('p');
     intro.textContent = `Versi ${source.version || 1}. Pemeriksaan otomatis mencakup kutipan, bagian sumber, rumus literal, dan struktur konsep. Akurasi akademik serta hasil OCR tetap perlu diperiksa.`;
     root.append(intro);
+    for (const page of source.meta?.pageQuality || []) {
+      const row = document.createElement('p');
+      row.textContent = `Halaman ${page.page}: ${page.status}${page.flags?.length ? ' · ' + page.flags.join(', ') : ''}. Confidence OCR numerik tidak disediakan.`;
+      root.append(row);
+    }
     if (source.meta?.partialRead || source.meta?.truncated) {
       const label = document.createElement('label'),
         accept = document.createElement('input');
@@ -125,7 +130,7 @@
       }
     };
   }
-  function history(source) {
+  function history(source, api) {
     const root = dialog('Arsip versi · ' + source.name);
     const versions = source.versions || [];
     if (!versions.length) {
@@ -142,6 +147,32 @@
       download.onclick = () =>
         exportJson(version, `omnilearn-version-${version.version}.json`);
       row.append(download);
+      if (api) {
+        const restore = document.createElement('button');
+        restore.textContent = 'Pratinjau & pulihkan';
+        restore.onclick = () => {
+          const preview = dialog(`Pulihkan versi ${version.version}`),
+            text = document.createElement('pre'),
+            confirmButton = document.createElement('button'),
+            status = document.createElement('p');
+          text.textContent = version.text;
+          text.style.whiteSpace = 'pre-wrap';
+          confirmButton.textContent = 'Pulihkan sebagai versi baru';
+          confirmButton.onclick = async () => {
+            confirmButton.disabled = true;
+            try {
+              await api.restore(source, version);
+              preview.close();
+              root.close();
+            } catch (error) {
+              status.textContent = error.message;
+              confirmButton.disabled = false;
+            }
+          };
+          preview.append(text, confirmButton, status);
+        };
+        row.append(restore);
+      }
       root.append(row);
     }
   }

@@ -4,6 +4,7 @@
   const views = {
     learn: ['⌂', 'Belajar'],
     journey: ['↝', 'Jalur belajar'],
+    exams: ['◷', 'Simulasi ujian'],
     notes: ['☷', 'Catatan'],
     map: ['⌘', 'Mindmap'],
     quiz: ['✓', 'Kuis'],
@@ -14,8 +15,11 @@
     translate: ['文', 'Terjemahan'],
     chat: ['✧', 'Tanya AI'],
     podcast: ['♫', 'Podcast'],
+    video: ['▷', 'Video learning'],
     sticky: ['▧', 'Tempel'],
     settings: ['⚙', 'Pengaturan'],
+    account: ['♙', 'Akun & cloud'],
+    recovery: ['↻', 'Permintaan tersimpan'],
   };
   const tools = new Set([
     'map',
@@ -65,12 +69,64 @@
   if (!Array.isArray(activity?.events)) activity = { events: [] };
   if (!Array.isArray(stickyNotes)) stickyNotes = [];
   let durableAvailable = false;
+  let pendingTasks = [];
   let libraryEpoch = 0;
   try {
+    let owner = 'guest';
+    try {
+      const accountConfig = await safeRequestJson(
+        '/api/account/status',
+        {},
+        { timeoutMs: 10000, stageContext: 'account-config' }
+      );
+      if (accountConfig.configured) {
+        const account = await safeRequestJson(
+          '/api/account/me',
+          {},
+          { timeoutMs: 20000, stageContext: 'account-session' }
+        );
+        owner = account.user.uid;
+      }
+    } catch {}
+    const previousOwner =
+      sessionStorage.getItem('omnilearn-account-owner') || 'guest';
+    if (previousOwner !== owner) {
+      sources = [];
+      profile = {};
+      activity = { events: [] };
+      stickyNotes = [];
+      freeChat = [];
+      materialText = '';
+      materialName = '';
+      materialId = '';
+      materialMeta = null;
+      chatHistory = [];
+      chatMessages.replaceChildren();
+      for (const name of [
+        key,
+        SESSION_MATERIAL_KEY,
+        SESSION_CHAT_KEY,
+        'omnilearn-profile',
+        'omnilearn-activity',
+        'omnilearn-sticky',
+        'omnilearn-free-chat',
+        'omnilearn-free-note',
+        'omnilearn-library-epoch',
+        'omnilearn-tool-options',
+      ])
+        sessionStorage.removeItem(name);
+      window.OmniProductSourceChange?.();
+      renderMaterialBadgeAndSidebar();
+    }
+    sessionStorage.setItem('omnilearn-account-owner', owner);
+    await window.OmniLocalLibrary.setNamespace(owner);
     const saved = await window.OmniLocalLibrary.load();
     if (saved) {
       libraryEpoch = Number(saved.clearedAt) || 0;
       sources = saved.sources || [];
+      pendingTasks = Array.isArray(saved.pendingTasks)
+        ? saved.pendingTasks
+        : [];
       profile = saved.profile || profile;
       activity = saved.activity || activity;
       stickyNotes = saved.stickyNotes || stickyNotes;
@@ -120,6 +176,7 @@
   const snapshot = () => ({
     schemaVersion: 1,
     clearedAt: libraryEpoch,
+    pendingTasks,
     sources,
     profile,
     activity,
@@ -150,7 +207,7 @@
     )
     .join(
       ''
-    )}</nav><div class="sidebar-bottom">Pustaka di perangkat ini<br>Tanpa akun · tanpa sinkronisasi cloud</div>`;
+    )}</nav><div class="sidebar-bottom">Pustaka di perangkat ini<br>Cloud opsional melalui menu Akun</div>`;
   document.body.prepend(sidebar);
   const closeSidebar = document.createElement('button');
   closeSidebar.className = 'menu-product secondary';
@@ -225,6 +282,7 @@
   });
   const persist = () => {
     if (durableAvailable) saveDurable();
+    window.OmniAccounts?.changed();
     try {
       sessionStorage.setItem(key, JSON.stringify(sources));
       return true;
@@ -357,6 +415,176 @@
     persist,
     renderDeck,
     navigate,
+    snapshot: () => structuredClone(snapshot()),
+    pendingTasks: () => structuredClone(pendingTasks),
+    removeTask(id) {
+      pendingTasks = pendingTasks.filter((task) => task.id !== id);
+      persist();
+    },
+    deferTask(route, body, error) {
+      if (
+        error?.isCancelled ||
+        error?.status === 400 ||
+        error?.status === 413 ||
+        error?.status === 422 ||
+        !['/api/chat', '/api/study'].includes(route)
+      )
+        return;
+      const clean = { ...body };
+      delete clean.material;
+      delete clean.history;
+      delete clean.learningContext;
+      const key = JSON.stringify([route, clean]);
+      if (!pendingTasks.some((task) => task.key === key)) {
+        pendingTasks.push({
+          id: crypto.randomUUID(),
+          key,
+          route,
+          body: clean,
+          createdAt: Date.now(),
+          error: String(error?.message || 'Permintaan belum selesai').slice(
+            0,
+            1000
+          ),
+        });
+        persist();
+      }
+    },
+    async retryTask(id) {
+      const task = pendingTasks.find((task) => task.id === id);
+      if (!task) return;
+      const source = sources.find((s) => s.id === task.body.materialId);
+      if (
+        task.body.materialId &&
+        (!source || source.version !== (task.body.sourceVersion || 1))
+      )
+        throw new Error(
+          'Versi sumber berubah. Pulihkan versi yang sesuai atau buat permintaan baru.'
+        );
+      if (source) selectSource(source.id);
+      else {
+        capture();
+        materialText = '';
+        materialName = '';
+        materialId = '';
+        materialMeta = null;
+        chatHistory = freeChat;
+        chatMessages.replaceChildren();
+        chatHistory.forEach((m) => addMessage(m.role, m.content));
+        window.OmniProductSourceChange?.();
+        saveSessionState();
+      }
+      for (const [field, id] of [
+        ['summaryStyle', 'summaryStyle'],
+        ['difficulty', 'quizDifficulty'],
+        ['questionType', 'quizQuestionType'],
+        ['outputLanguage', 'outputLanguage'],
+        ['targetLanguage', 'targetLanguage'],
+      ])
+        if (task.body[field] && $(id)) $(id).value = task.body[field];
+      if (task.body.count)
+        $(task.body.task === 'cards' ? 'cardsCount' : 'quizCount').value =
+          task.body.count;
+      pendingTasks = pendingTasks.filter((t) => t.id !== id);
+      persist();
+      chatInput.value = task.body.message || task.body.topic || '';
+      if (task.route === '/api/chat') {
+        navigate('chat');
+        await sendChat();
+      } else {
+        navigate(task.body.task);
+      }
+    },
+    addSource(input) {
+      capture();
+      const source = {
+        id: crypto.randomUUID(),
+        name: input.name,
+        text: input.text,
+        meta: input.meta || {},
+        version: 1,
+        createdAt: Date.now(),
+        notes: '',
+        subject: profile.subject || '',
+        analysisSchema: 'forge-1',
+      };
+      sources.unshift(source);
+      selectSource(source.id);
+      persist();
+      return source;
+    },
+    async importLibrary(next, files) {
+      if (busy || uploadInFlight)
+        throw new Error('Tunggu proses saat ini sebelum mengubah pustaka.');
+      setBusy(true);
+      try {
+        await window.OmniLocalLibrary.importData(
+          { ...next, clearedAt: libraryEpoch },
+          files
+        );
+      } finally {
+        setBusy(false);
+      }
+      sources = next.sources;
+      profile = next.profile || profile;
+      activity = next.activity || activity;
+      stickyNotes = next.stickyNotes || stickyNotes;
+      freeChat = next.freeChat || [];
+      pendingTasks = next.pendingTasks || [];
+      if (typeof next.freeNote === 'string')
+        sessionStorage.setItem('omnilearn-free-note', next.freeNote);
+      if (sources.some((s) => s.id === materialId))
+        selectSource(materialId, true);
+      else {
+        materialText = '';
+        materialName = '';
+        materialId = '';
+        materialMeta = null;
+        chatHistory = freeChat;
+        chatMessages.replaceChildren();
+        for (const message of chatHistory)
+          addMessage(message.role, message.content);
+        window.OmniProductSourceChange?.();
+        saveSessionState();
+        renderMaterialBadgeAndSidebar();
+        persist();
+      }
+      sourcesView(current === 'learn');
+    },
+    canApplyCloud: () =>
+      ['learn', 'sources'].includes(current) &&
+      !busy &&
+      !uploadInFlight &&
+      !document.querySelector('dialog[open]') &&
+      !document.activeElement?.matches('input,textarea,select'),
+    saveMapGraph(graph) {
+      if (!conceptMapState.originalGenerated) {
+        const { originalGenerated, editorGraph, ...original } = conceptMapState;
+        conceptMapState.originalGenerated = structuredClone(original);
+      }
+      conceptMapState.editorGraph = graph;
+      const root = graph.nodes.find((n) => n.id === graph.rootId);
+      conceptMapState.centralTopic = root.title;
+      conceptMapState.summary = root.description;
+      const cacheKey = getTabCacheKey('map'),
+        entry = tabViewCache.get(cacheKey) || {};
+      entry.conceptMapState = conceptMapState;
+      entry.markdown = graph.nodes
+        .map(
+          (n) => `- **${n.title}**${n.description ? ': ' + n.description : ''}`
+        )
+        .join('\n');
+      tabViewCache.set(cacheKey, entry);
+      const persisted = window.OmniProduct.saveTool(cacheKey, entry);
+      if (persisted === false)
+        throw new Error(
+          'Mindmap belum tersimpan. Ekspor JSON untuk mencadangkannya.'
+        );
+      lastOutput = entry.markdown;
+      lastOutputHtml = renderMarkdownToSafeHtml(lastOutput);
+      renderInteractiveConceptMap();
+      return durableAvailable ? durableWrite : Promise.resolve();
+    },
     ensureAnalysis,
     sourceRequest,
     async saveOriginal(file) {
@@ -383,7 +611,7 @@
       if (source) {
         source.generated ||= {};
         source.generated[cacheKey.replace(/^ai4-v\d+\|/, '')] = entry;
-        persist();
+        return persist();
       }
     },
     setDeck(cards) {
@@ -488,6 +716,25 @@
     const api = {
       persist,
       ensureAnalysis,
+      async restore(source, version) {
+        if (busy || uploadInFlight) throw new Error('Tunggu proses saat ini.');
+        const next = window.OmniBackup.restoredSource(source, version),
+          current = snapshot(),
+          files = [];
+        if (next.hasOriginal) {
+          const file = await window.OmniLocalLibrary.readFile(
+            source.id,
+            version.version
+          );
+          if (file)
+            files.push({ sourceId: source.id, version: next.version, file });
+          else next.hasOriginal = false;
+        }
+        current.sources = current.sources.map((s) =>
+          s.id === source.id ? next : s
+        );
+        await window.OmniProduct.importLibrary(current, files);
+      },
       async revise(source, text) {
         if (busy || uploadInFlight)
           throw new Error('Tunggu proses yang sedang berlangsung.');
@@ -530,7 +777,7 @@
       add('Revisi teks sumber', () =>
         window.OmniSourceTools.editSource(active, api)
       );
-      add('Arsip versi', () => window.OmniSourceTools.history(active));
+      add('Arsip versi', () => window.OmniSourceTools.history(active, api));
       if (active.hasOriginal)
         add('Unduh file asli', async () => {
           const file = await window.OmniLocalLibrary.readFile(
@@ -552,6 +799,26 @@
     add('Ekspor cadangan JSON', () =>
       window.OmniSourceTools.exportJson(snapshot(), 'omnilearn-library.json')
     );
+    add('Cadangkan / impor ZIP', () =>
+      window.OmniBackup.open(window.OmniProduct)
+    );
+    if (active)
+      add('Mindmap manual', () => {
+        conceptMapState = structuredClone(
+          window.OmniProduct.getSavedTool(getTabCacheKey('map'))
+            ?.conceptMapState || {
+            centralTopic: active.name,
+            summary: '',
+            branches: [],
+            relationships: [],
+          }
+        );
+        window.OmniMapWorkspace.open(conceptMapState, (graph) => {
+          const saved = window.OmniProduct.saveMapGraph(graph);
+          navigate('map');
+          return saved;
+        });
+      });
     const privacy = document.createElement('p');
     privacy.textContent = durableAvailable
       ? 'Pustaka disimpan di browser perangkat ini, termasuk file asli yang berhasil disimpan. Ekspor cadangan secara berkala. File asli diunduh terpisah dari JSON. Hapus data melalui Pengaturan.'
@@ -702,8 +969,68 @@
     });
   }
   function transcriptView() {
+    let subtitleSegments = [],
+      subtitleText = '';
     panel.innerHTML =
       '<h1>Tambahkan transkrip</h1><p>Tempel transkrip milikmu atau caption yang boleh kamu gunakan. Tautan disimpan sebagai referensi; aplikasi tidak mengambil video atau caption otomatis.</p><form class="transcript-form"><label>Judul materi<input name="title" maxlength="180" required></label><label>Tautan YouTube (opsional)<input name="url" type="url" placeholder="https://www.youtube.com/watch?v=…"></label><label>Isi transkrip<textarea name="text" maxlength="50000" required></textarea></label><div class="panel-actions"><button class="primary" type="submit">Simpan sebagai sumber</button><button type="button" data-open="sources">Batal</button></div><p role="status" id="transcriptError"></p></form>';
+    const transcriptForm = panel.querySelector('form'),
+      status = panel.querySelector('#transcriptError'),
+      automatic = document.createElement('button'),
+      subtitle = document.createElement('input');
+    automatic.type = 'button';
+    automatic.textContent = 'Ambil caption dengan izin';
+    automatic.onclick = async () => {
+      automatic.disabled = true;
+      status.textContent = 'Memeriksa caption yang diizinkan…';
+      try {
+        const data = await safeRequestJson(
+          '/api/youtube/transcript',
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: transcriptForm.elements.url.value }),
+          },
+          { timeoutMs: 50000, stageContext: 'youtube-captions' }
+        );
+        window.OmniProduct.addSource({
+          name: data.title,
+          text: data.text.slice(0, 50000),
+          meta: {
+            sourceUrl: data.url,
+            extractionMode: 'authorized-youtube-captions',
+            transcriptSegments: data.segments,
+            truncated: data.text.length > 50000,
+            captionLanguage: data.language,
+          },
+        });
+        navigate('video');
+      } catch (error) {
+        status.textContent =
+          error.message + ' Tempel transkrip atau pilih subtitle di bawah.';
+      } finally {
+        automatic.disabled = false;
+      }
+    };
+    subtitle.type = 'file';
+    subtitle.accept = '.srt,.vtt';
+    subtitle.setAttribute('aria-label', 'Impor subtitle');
+    subtitle.onchange = async () => {
+      try {
+        if (!subtitle.files[0]) return;
+        const { parseSubtitles } = await import('/transcripts.js');
+        subtitleSegments = parseSubtitles(await subtitle.files[0].text());
+        subtitleText = subtitleSegments
+          .map((s) => `[${s.start.toFixed(3)}s] ${s.text}`)
+          .join('\n');
+        transcriptForm.elements.text.value = subtitleText.slice(0, 50000);
+        if (!transcriptForm.elements.title.value)
+          transcriptForm.elements.title.value = subtitle.files[0].name;
+        status.textContent = `${subtitleSegments.length} segmen dibaca dari subtitle.`;
+      } catch (error) {
+        status.textContent = error.message;
+      }
+    };
+    transcriptForm.prepend(automatic, subtitle);
     panel.querySelector('form').addEventListener('submit', (e) => {
       e.preventDefault();
       const data = new FormData(e.target);
@@ -735,9 +1062,12 @@
         meta: {
           extractionMode: 'user-transcript',
           sourceUrl: url,
+          transcriptSegments: text === subtitleText ? subtitleSegments : [],
           pageCount: 1,
         },
         createdAt: Date.now(),
+        version: 1,
+        analysisSchema: 'forge-1',
         notes: '',
       };
       sources.unshift(source);
@@ -751,7 +1081,7 @@
     const formats =
       capabilities?.extensions?.join(', ').toUpperCase() ||
       'PDF, DOCX, PPTX, XLSX, TXT, PNG, JPEG, MP3, M4A, WAV, WEBM, MP4';
-    panel.innerHTML = `<h1>Pengaturan sesi</h1><p>Sumber, catatan, dan riwayat disimpan di browser perangkat ini. Belum tersedia akun atau penyimpanan cloud.</p><div class="panel-actions"><button data-theme-setting>Ganti tema</button><button data-delete-session>Hapus data perangkat</button></div><h3>Privasi dan AI</h3><p>Isi materi dikirim ke Gemini ketika diproses. Periksa fakta penting dan jangan unggah materi yang tidak boleh dibagikan kepada penyedia AI.</p><h3>Format yang tersedia</h3><p>Upload ${formats} hingga 15 MB. Pengambilan caption YouTube otomatis belum tersedia.</p>`;
+    panel.innerHTML = `<h1>Pengaturan sesi</h1><p>Sumber, catatan, dan riwayat tersimpan di browser ini. Buka Akun & cloud untuk sinkronisasi jika penyedianya sudah dikonfigurasi.</p><div class="panel-actions"><button data-theme-setting>Ganti tema</button><button data-delete-session>Hapus data perangkat</button></div><h3>Privasi dan AI</h3><p>Materi dikirim ke Gemini saat diproses. Periksa fakta penting dan gunakan materi yang boleh dibagikan kepada penyedia AI.</p><h3>Format yang tersedia</h3><p>Upload ${formats} hingga 15 MB. Caption otomatis memerlukan izin resmi YouTube; transkrip manual dan SRT/VTT tetap tersedia.</p>`;
     const form = document.createElement('form');
     form.className = 'profile-form';
     form.innerHTML = `<h2>Preferensi belajar (opsional)</h2><p>Disimpan di perangkat; bukan akun atau profil psikologis.</p><label>Nama panggilan<input name="name" maxlength="50" value="${html(profile.name || '')}"></label><label>Jenjang pendidikan<input name="education" maxlength="100" value="${html(profile.education || '')}"></label><label>Mata pelajaran<input name="subject" maxlength="100" value="${html(profile.subject || '')}"></label><label>Target belajar<input name="goal" maxlength="200" value="${html(profile.goal || '')}"></label><label>Mode tutor<select name="teachingMode">${teaching.innerHTML}</select></label><label>Tema<select name="theme" data-theme-select><option value="system">Ikuti sistem</option><option value="light">Terang</option><option value="dark">Gelap</option></select></label><button class="primary">Simpan preferensi</button><p role="status" data-profile-status></p>`;
@@ -869,6 +1199,12 @@
     workspace.hidden = !tools.has(view);
     panel.hidden = tools.has(view);
     if (tools.has(view)) {
+      if (view === 'research')
+        window.OmniResearch?.mount(workspace, window.OmniProduct);
+      else
+        workspace
+          .querySelector('#externalResearch')
+          ?.setAttribute('hidden', '');
       selectTab(view);
       return;
     }
@@ -876,6 +1212,12 @@
     if (view === 'notes') notesView();
     if (view === 'settings') settingsView();
     if (view === 'podcast') podcastView();
+    if (view === 'exams') window.OmniExams.render(panel, window.OmniProduct);
+    if (view === 'video') window.OmniVideo.render(panel, window.OmniProduct);
+    if (view === 'account')
+      window.OmniAccounts.render(panel, window.OmniProduct);
+    if (view === 'recovery')
+      window.OmniRecovery.render(panel, window.OmniProduct);
     if (view === 'journey')
       window.OmniJarvis?.renderJourney(panel, window.OmniProduct);
     if (view === 'sticky')
@@ -989,7 +1331,7 @@
     const controls = document.createElement('div');
     controls.className = 'product-map-tools panel-actions';
     controls.innerHTML =
-      '<button data-zoom="-0.1" aria-label="Perkecil mindmap">−</button><button data-zoom="0" aria-label="Reset zoom">100%</button><button data-zoom="0.1" aria-label="Perbesar mindmap">＋</button><button data-fit-map>Pas layar</button><button data-edit-map>Edit node</button><button data-regenerate-map>Buat ulang</button><button data-export-map>Ekspor JSON</button>';
+      '<button data-zoom="-0.1" aria-label="Perkecil mindmap">−</button><button data-zoom="0" aria-label="Reset zoom">100%</button><button data-zoom="0.1" aria-label="Perbesar mindmap">＋</button><button data-fit-map>Pas layar</button><button data-edit-map>Edit node</button><button data-manage-map>Kelola node</button><button data-regenerate-map>Buat ulang</button><button data-export-map>Ekspor JSON</button>';
     const viewport = document.createElement('div');
     viewport.className = 'map-viewport';
     map.before(controls, viewport);
@@ -999,6 +1341,13 @@
     controls.addEventListener('click', (event) => {
       const button = event.target.closest('button');
       if (!button) return;
+      if (button.hasAttribute('data-manage-map')) {
+        window.OmniMapWorkspace.open(
+          conceptMapState,
+          window.OmniProduct.saveMapGraph
+        );
+        return;
+      }
       if (button.hasAttribute('data-fit-map')) {
         map.style.zoom = 1;
         zoom = Math.min(1, viewport.clientWidth / map.scrollWidth);
@@ -1319,10 +1668,11 @@
     if (button.hasAttribute('data-delete-session')) {
       if (
         !confirm(
-          'Hapus seluruh pustaka dan file asli yang tersimpan di perangkat ini? Ekspor cadangan lebih dahulu jika diperlukan.'
+          'Hapus pustaka lokal yang sedang aktif beserta file aslinya? Data cloud dan pustaka akun lain tidak ikut dihapus. Ekspor cadangan terlebih dahulu jika diperlukan.'
         )
       )
         return;
+      window.OmniAccounts?.pause();
       try {
         await window.OmniLocalLibrary.clear();
         libraryEpoch = (await window.OmniLocalLibrary.load()).clearedAt;
@@ -1338,6 +1688,7 @@
       freeChat = [];
       freeDeck = [];
       freeReviews = {};
+      pendingTasks = [];
       for (const storageKey of [
         key,
         'omnilearn-free-note',
@@ -1391,6 +1742,9 @@
     if (e.key === 'Escape') document.body.classList.remove('dashboard-drawer');
   });
   const initial = new URLSearchParams(location.search);
+  const accountReady = () => window.OmniAccounts.install(window.OmniProduct);
+  if (window.OmniAccounts) accountReady();
+  else window.addEventListener('load', accountReady, { once: true });
   const restoredSource = sources.find((source) => source.id === materialId);
   if (restoredSource) selectSource(restoredSource.id, true);
   else if (!materialText && freeChat.length) {

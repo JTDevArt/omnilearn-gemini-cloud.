@@ -18,6 +18,7 @@
 <link rel="stylesheet" href="/product.css">
 <link rel="stylesheet" href="/jarvis.css">
 <link rel="stylesheet" href="/workbench.css">
+<link rel="stylesheet" href="/forge.css">
 </head>
 <body>
 <header class="shell topbar" id="home">
@@ -690,6 +691,8 @@ async function safeRequestJson(url, options = {}, { timeoutMs = 45000, stageCont
       const httpErr = new Error(`${data.error || 'Permintaan gagal diproses.'} (ID: ${idSuffix})`);
       httpErr.isHttpError = true;
       httpErr.status = response.status;
+      httpErr.code = data.code;
+      httpErr.retryAt = data.retryAt;
       throw httpErr;
     }
 
@@ -747,7 +750,8 @@ async function safeRequestJson(url, options = {}, { timeoutMs = 45000, stageCont
 
 async function askAI(message, externalSignal) {
   const outputLanguage = $('outputLanguage') ? $('outputLanguage').value : 'auto';
-  if (materialText.trim()) await window.OmniProduct?.ensureAnalysis(externalSignal);
+  try { if (materialText.trim()) await window.OmniProduct?.ensureAnalysis(externalSignal); }
+  catch(error){window.OmniProduct?.deferTask('/api/chat',{message,materialId,...window.OmniProduct.sourceRequest(),outputLanguage},error);throw error;}
   const data = await safeRequestJson('/api/chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -764,6 +768,7 @@ async function askAI(message, externalSignal) {
       outputLanguage
     })
   }, { timeoutMs: 55000, stageContext: 'chat', externalSignal });
+  window.OmniRecovery?.notice(data);
   return data.answer;
 }
 
@@ -804,6 +809,7 @@ async function sendChat(event) {
   } catch (error) {
     pending.classList.remove('pending');
     if (error.isCancelled || capturedVersion !== materialVersion) return;
+    window.OmniProduct?.deferTask('/api/chat',{message,materialId,...window.OmniProduct.sourceRequest(),outputLanguage:$('outputLanguage').value},error);
     if (!chatInput.value) chatInput.value = message;
     pending.textContent = error.message;
     chatFeedback.textContent = error.message;
@@ -1220,6 +1226,7 @@ function renderInteractiveFlashcards() {
 
 function renderInteractiveConceptMap() {
   if (!conceptMapState || !conceptMapState.centralTopic) return;
+  if (conceptMapState.editorGraph && window.OmniMapWorkspace) { window.OmniMapWorkspace.render(toolOutput, conceptMapState); return; }
   toolOutput.classList.remove('md-rendered');
 
   const en = conceptMapState.language === 'en';
@@ -1322,6 +1329,7 @@ function restoreCachedTabView(cachedEntry, task) {
   if (!cachedEntry) return false;
   lastOutput = cachedEntry.markdown || '';
   lastOutputHtml = renderMarkdownToSafeHtml(lastOutput);
+  window.OmniRecovery?.notice(cachedEntry.provider);
 
   if (task === 'quiz' && cachedEntry.quizV4) {
     window.OmniJarvis.renderQuiz(toolOutput,cachedEntry.quizV4,cachedEntry.quizV4State);
@@ -1416,7 +1424,8 @@ async function runTool(task, customTopic = '', forceRegenerate = false) {
     lastOutput = formattedMarkdown;
     lastOutputHtml = renderMarkdownToSafeHtml(formattedMarkdown);
 
-    const cacheEntry = { markdown: formattedMarkdown };
+    const cacheEntry = { markdown: formattedMarkdown, provider:{model:data.model,fallbackUsed:data.fallbackUsed} };
+    window.OmniRecovery?.notice(data);
 
     if(task === 'quiz' && data.structuredData?.type === 'quiz-v4') {
       cacheEntry.quizV4=data.structuredData;cacheEntry.quizV4State={index:0,answers:{}};window.OmniJarvis.renderQuiz(toolOutput,data.structuredData,cacheEntry.quizV4State);
@@ -1471,6 +1480,7 @@ async function runTool(task, customTopic = '', forceRegenerate = false) {
     if (error.isCancelled || requestToken !== activeRequestToken || capturedMaterialVersion !== materialVersion) {
       return;
     }
+    window.OmniProduct?.deferTask('/api/study',{task,materialId,sourceVersion:window.OmniProduct?.sourceRequest().sourceVersion,topic,summaryStyle,difficulty:quizDifficulty,questionType:document.querySelector('#quizQuestionType')?.value,outputLanguage,count,targetLanguage:$('targetLanguage').value},error);
     toolOutput.classList.remove('md-rendered');
     toolOutput.textContent = error.message;
     chatFeedback.textContent = error.message;
@@ -1492,6 +1502,7 @@ function selectTab(tab, customTopic = '') {
   quizOptions.classList.toggle('show', tab === 'quiz');
   $('cardsOptions')?.classList.toggle('show', tab === 'cards');
   taskOptions.classList.toggle('show', tab === 'translate');
+  $('externalResearch')?.toggleAttribute('hidden', tab !== 'research');
   if (tab === 'chat') {
     if (!materialName && !lastOutput) {
       toolOutput.classList.remove('md-rendered');
@@ -1499,6 +1510,7 @@ function selectTab(tab, customTopic = '') {
     }
     return;
   }
+  if(tab==='research'&&window.OmniResearch){window.OmniResearch.mount(document.querySelector('.workspace'),window.OmniProduct);toolOutput.replaceChildren();const button=document.createElement('button');button.textContent='Susun rancangan riset dari materi';button.onclick=()=>runTool('research',customTopic);toolOutput.append(button);return;}
   const cacheKey = getTabCacheKey(tab, customTopic);
   if (tabViewCache.has(cacheKey)) {
     restoreCachedTabView(tabViewCache.get(cacheKey), tab);
@@ -1509,6 +1521,7 @@ function selectTab(tab, customTopic = '') {
 document.querySelectorAll('.tab').forEach(button => button.addEventListener('click', () => selectTab(button.dataset.tab)));
 $('outputLanguage')?.addEventListener('change', () => {
   renderMaterialBadgeAndSidebar();
+  if (activeTab === 'research') { selectTab('research'); return; }
   if (activeTab !== 'chat' && activeTab !== 'translate' && !busy && !uploadInFlight) {
     runTool(activeTab, '', false);
   }
@@ -1729,7 +1742,10 @@ async function uploadFile(file) {
       truncated: Boolean(finalData.truncated),
       partialRead: Boolean(finalData.partialRead),
       partialReadNotice: finalData.partialReadNotice || null,
-      detectedLanguage: finalData.detectedLanguage || null
+      detectedLanguage: finalData.detectedLanguage || null,
+      transcriptSegments: finalData.transcriptSegments || [],
+      preprocessing: finalData.preprocessing || [],
+      pageQuality: finalData.pageQuality || []
     };
 
     if (!materialText.trim()) {
@@ -1759,7 +1775,7 @@ async function uploadFile(file) {
       `- **Ukuran File:** ${formatFileSize(materialMeta.fileSize)}`,
       `- **Jumlah Halaman:** ${materialMeta.pageCount} halaman`,
       `- **Bahasa Dominan Materi:** ${detectedLangLabel}`,
-      `- **Jumlah Karakter:** ${materialMeta.characters.toLocaleString('id-ID')} karakter${materialMeta.truncated ? ' *(dipotong pada batas kalimat mendekati 50.000 karakter)*' : ''}`,
+      `- **Jumlah Karakter:** ${materialMeta.characters.toLocaleString('id-ID')} karakter${materialMeta.truncated ? ' *(hanya 50.000 karakter pertama tersedia; bagian akhir mungkin tidak lengkap)*' : ''}`,
       `- **Status OCR:** ${ocrStatusLabel}`
     ];
     if (materialMeta.partialReadNotice) {
@@ -2084,6 +2100,14 @@ checkAI();
 <script src="/jarvis.js"></script>
 <script src="/local-library.js"></script>
 <script src="/source-tools.js"></script>
-<script src="/product.js"></script>
+<script type="module" src="/map-workspace.js"></script>
+<script type="module" src="/backup-workspace.js"></script>
+<script type="module" src="/exam-workspace.js"></script>
+<script type="module" src="/video-workspace.js"></script>
+<script type="module" src="/research-workspace.js"></script>
+<script type="module" src="/account-workspace.js"></script>
+<script type="module" src="/recovery-workspace.js"></script>
+<script src="/vendor/jszip.min.js"></script>
+<script src="/product.js" defer></script>
 </body>
 </html>

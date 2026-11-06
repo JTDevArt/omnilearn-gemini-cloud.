@@ -1,8 +1,8 @@
 # OmniLearn AI — Gemini Cloud Edition
 
-Home is at `/` and the learning application at `/dashboard`. The [reviewed Final Forge status](docs/FINAL-FORGE-STATUS.md) distinguishes implemented, tested, partial and pending features. It supersedes earlier V2/MAX status documents for the current scope. In the managed cloud runtime start with `NODE_USE_ENV_PROXY=1 npm start`.
+Home is at `/` and the learning application at `/dashboard`. The [current Forge V2.1 report](docs/FORGE-V2.1-STATUS.md) distinguishes implemented, tested, partial and blocked features and supersedes earlier scope reports. Read [deployment and integration setup](docs/DEPLOYMENT.md) for external prerequisites. In the managed cloud runtime start with `NODE_USE_ENV_PROXY=1 npm start`.
 
-The current increment adds a shared source-analysis blueprint with exact supporting quotes, source revisions with archived artifacts, and device-local IndexedDB persistence. It remains an incremental implementation: authentication, cloud accounts, automatic YouTube transcripts, live literature research and production deployment are not complete.
+Forge V2.1 extends the existing shared source-analysis blueprint, source revisions and IndexedDB persistence with timed exams, editable mindmaps, versioned ZIP backup/import/restore, native video/subtitle learning, OCR preprocessing, centralized Gemini routing and request recovery. Firebase account/sync, authorized YouTube captions and research adapters are connected, but their live external acceptance tests remain blocked by missing credentials/network access. No hosted revision has been published by this increment.
 
 OmniLearn is a universal learning workspace. This migration replaces browser-local WebLLM/WebGPU inference with Gemini Cloud through a Node.js backend.
 
@@ -12,7 +12,7 @@ OmniLearn is a universal learning workspace. This migration replaces browser-loc
 - All Gemini requests now run in `server.js` using the official `@google/genai` SDK.
 - The browser never receives or stores `GEMINI_API_KEY`.
 - Google AI Studio Build Mode can provision `GEMINI_API_KEY` as a server-side secret.
-- Document uploads are extracted in server memory and are not written to disk.
+- Native extraction uses server memory. Targeted scanned-PDF rendering uses short-lived temporary files cleaned in `finally`; original uploads remain in the browser library when storage permits.
 
 ## Learning features retained and upgraded (Phase 2)
 
@@ -37,12 +37,12 @@ OmniLearn is a universal learning workspace. This migration replaces browser-loc
 5. Let the agent install dependencies and verify the preview.
 6. Open **Settings → Secrets**. Confirm that `GEMINI_API_KEY` exists as a server-side secret. Never put it in `public/index.html` or any client-side variable.
 7. Test chat, all learning tabs, and each supported upload format before sharing or deploying.
-8. When ready, sync changes back to GitHub using the **GitHub** button in the AI Studio top bar or deploy to Cloud Run.
+8. Bring the reviewed GitHub `main` files into the existing project using the import/sync controls available in that interface, restart the backend, verify `productVersion: forge-2.1`, then use **Publish**. A particular GitHub toolbar icon is not assumed to exist. See [exact deployment steps](docs/DEPLOYMENT.md).
 
 ## Local development
 
 ```bash
-npm install
+npm ci --no-audit --no-fund
 cp .env.example .env
 # Edit .env and set GEMINI_API_KEY for local testing only
 npm test
@@ -51,6 +51,20 @@ node --env-file=.env server.js
 ```
 
 Open `http://localhost:3000`.
+
+Requires Node >=20.9. The reviewed Docker image uses Node 24 and `poppler-utils` (`pdftoppm`) for scan-page preprocessing. Without that renderer, OCR reports fallback to the original PDF. `npm run build` checks application JavaScript/inline scripts and migration invariants; this app has no bundler output directory. Production startup requires a non-placeholder server-side Gemini secret.
+
+## Forge V2.1 configuration and APIs
+
+See [.env.example](.env.example). Optional server configuration: `FIREBASE_PROJECT_ID`, `FIREBASE_WEB_API_KEY`, `YOUTUBE_OAUTH_TOKEN`, `BRAVE_SEARCH_API_KEY`; model configuration: `GEMINI_MODEL`, `GEMINI_FALLBACK_MODEL`, `GEMINI_MULTIMODAL_FALLBACK_MODEL`, `GEMINI_SPEECH_MODEL`. Denoising is opt-in with `OCR_DENOISE=true` because it can erase thin formula strokes.
+
+- `GET /api/provider/status`, `/api/integrations`: safe provider/cooldown/configuration metadata.
+- `/api/account/*`: registration/login/logout, refresh, profile, password reset, email verification and verified identity.
+- `GET/POST /api/cloud/library`: owner-scoped Firebase library and atomic revision conflicts. Deploy [firestore.rules](firestore.rules) before enabling sync. Original binary files stay local; cloud limits are documented.
+- `POST /api/youtube/transcript`: official captions API for videos accessible to the configured OAuth account; manual transcript/SRT/VTT fallback remains available.
+- `POST /api/research/search`, `/api/research/synthesize`: Crossref/optional Brave metadata, registry references and optional evidence-linked AI synthesis; no full-article verification claim.
+- `POST /api/exam/grade`: validated rubric assessment for essays/cases; pending submissions survive unavailable inference.
+- ZIP backups use `omnilearn-backup/1`, SHA-256 checks and atomic previewed import. Source mindmaps and exams persist locally and are included in backups/sync.
 
 ## Server routes
 
@@ -65,9 +79,10 @@ Open `http://localhost:3000`.
 ## Security and privacy notes
 
 - The Gemini API key is read only from `process.env.GEMINI_API_KEY` in `server.js`.
-- Server upload buffers are processed in memory and released after extraction; temporary extracted-text and analysis caches are bounded and expire.
+- Server upload buffers are released after extraction; preprocessing work, extracted-text and analysis caches are bounded. Temporary scan-rendering files are removed after processing.
 - The browser stores the library, chats, notes, progress and new original uploads in device-local IndexedDB when available. Active selection and request session IDs remain tab-scoped. Device data can be erased through Settings; JSON exports omit binary originals.
-- There is no authenticated cloud account or cross-device synchronization. Automated quote/structure checks do not independently certify factual or OCR accuracy.
+- Optional Firebase account/sync uses server-verified identity, HttpOnly cookies and per-account local namespaces; fixture tests passed, while real Firebase configuration/rules and real-device tests remain outstanding. Automated quote/structure checks do not independently certify factual or OCR accuracy.
+- Nonce CSP, mutation Origin/Fetch Metadata checks, request/upload limits, bounded extraction/provider queues and ZIP validation are active. Guest AI endpoints remain public; process-local rate limits need an owner-chosen authenticated spending policy/shared abuse controls before public scaling. See the [security review](docs/FORGE-V2.1-STATUS.md#security-review).
 
 ## Project structure
 
@@ -93,10 +108,10 @@ omnilearn-gemini-cloud/
 
 Chat uses a 40-second total provider deadline; study tools use 42 or 55 seconds depending on the task. At most two configured candidates are attempted within that deadline. Browser timeouts include a margin for server responses. Failed POST responses are not automatically replayed.
 
-The default model is `gemini-3-flash-preview`, with `gemini-3.1-flash-lite` as a fallback for eligible errors; `GEMINI_MODEL` overrides the primary model. Responses identify the actual model used. Provider availability and quota still affect requests.
+The primary default remains `gemini-3.8-flash`, with `gemini-3.1-flash-lite` for text fallback and `gemini-3-flash-preview` for multimodal fallback. Centralized configuration, cooldowns and actual-model notices are active. Model availability and quota still affect requests; no new paid AI provider is enabled.
 
 Commands such as “bikin peta konsep” open the existing interactive map workflow. The output-language selector now reaches the backend. Automatic English/Indonesian detection is heuristic; uncertain material is left for model detection and the user can override it.
 
-Run `npm test`, `npm run build`, and `node tests/readiness.test.mjs` (starts a local server on an ephemeral port). Live Gemini validation additionally requires a configured key. `/api/health` includes `version: concise-ai-v4`; `ready` only indicates key presence. Pushing GitHub changes does not automatically update an existing AI Studio preview: sync or import the revision into that project and restart its backend before checking the version.
+Run `npm test` and `npm run build`. The suite starts local fixture servers on ephemeral ports without real Gemini calls. Live Gemini validation requires a configured key and quota. `/api/health` retains `version: concise-ai-v4` and identifies this increment as `productVersion: forge-2.1`; `ready` only indicates key presence. Pushing GitHub changes does not update an existing AI Studio preview: sync/import that revision and restart its backend before checking the version.
 
 Concept maps omit separate cause-and-effect fields, including legacy fields returned by a model or held in the browser cache. Map labels follow the selected output language. Shared AI guidance prioritizes brief, grounded explanations; invalid or incomplete structured results return `INVALID_AI_OUTPUT` rather than raw JSON shown as a successful answer.

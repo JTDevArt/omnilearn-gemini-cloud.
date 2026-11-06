@@ -1,11 +1,17 @@
-/* Device-local storage only. No authentication or cloud synchronization. */
+/* Device-local libraries; verified account namespaces are selected by product.js. */
 (() => {
   let database,
+    namespace = 'guest',
     revision = 0,
     queue = Promise.resolve();
   const open = () =>
     (database ||= new Promise((resolve, reject) => {
-      const request = indexedDB.open('omnilearn-library', 1);
+      const request = indexedDB.open(
+        namespace === 'guest'
+          ? 'omnilearn-library'
+          : `omnilearn-library:${namespace}`,
+        1
+      );
       request.onupgradeneeded = () => {
         request.result.createObjectStore('state');
         request.result.createObjectStore('files');
@@ -31,6 +37,20 @@
     return next;
   }
   window.OmniLocalLibrary = {
+    async setNamespace(owner = 'guest') {
+      if (!/^[\w-]{1,128}$/.test(owner))
+        throw new Error('Identitas pustaka tidak valid.');
+      if (owner === namespace) return;
+      await queue.catch(() => {});
+      if (database) {
+        try {
+          (await database).close();
+        } catch {}
+      }
+      database = undefined;
+      revision = 0;
+      namespace = owner;
+    },
     async load() {
       const saved = await read('state', 'library');
       revision = saved?.revision || 0;
@@ -69,6 +89,46 @@
         });
       });
     },
+    importData(value, files = []) {
+      const copy = structuredClone(value);
+      return enqueue(async () => {
+        const db = await open();
+        return new Promise((resolve, reject) => {
+          const tx = db.transaction(['state', 'files'], 'readwrite'),
+            state = tx.objectStore('state'),
+            request = state.get('library');
+          let conflict = false;
+          request.onsuccess = () => {
+            if ((request.result?.revision || 0) !== revision) {
+              conflict = true;
+              tx.abort();
+              return;
+            }
+            if (request.result)
+              state.put(request.result.value, 'before-import');
+            state.put({ revision: revision + 1, value: copy }, 'library');
+            for (const file of files)
+              tx.objectStore('files').put(
+                file.file,
+                `${file.sourceId}:${file.version}`
+              );
+          };
+          tx.oncomplete = () => {
+            revision++;
+            resolve();
+          };
+          tx.onabort = () =>
+            reject(
+              new Error(
+                conflict
+                  ? 'Data berubah di tab lain. Muat ulang sebelum impor.'
+                  : 'Impor dibatalkan; data lama tetap utuh.'
+              )
+            );
+          tx.onerror = () => {};
+        });
+      });
+    },
     saveFile(sourceId, version, file) {
       return enqueue(async () => {
         const db = await open();
@@ -83,6 +143,7 @@
     },
     readFile: (sourceId, version = 1) =>
       read('files', `${sourceId}:${version}`),
+    readRollback: () => read('state', 'before-import'),
     deleteSourceFiles(sourceId) {
       return enqueue(async () => {
         const db = await open();
@@ -110,6 +171,7 @@
           const current = state.get('library');
           let nextRevision;
           current.onsuccess = () => {
+            state.delete('before-import');
             nextRevision = (current.result?.revision || 0) + 1;
             // Keep an empty tombstone so another tab cannot reimport an old
             // sessionStorage snapshot after this deliberate device-wide erase.
