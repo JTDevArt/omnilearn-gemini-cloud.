@@ -1,0 +1,164 @@
+.map-edit-dialog {
+  max-width: min(650px, 94vw);
+  max-height: 90vh;
+  overflow: auto;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--edge);
+  border-radius: 20px;
+  padding: 24px;
+}
+.map-edit-dialog::backdrop {
+  background: #0009;
+}
+.map-edit-dialog form,
+.map-edit-dialog label {
+  display: grid;
+  gap: 12px;
+}
+.map-edit-dialog input,
+.map-edit-dialog select,
+.map-edit-dialog textarea {
+  width: 100%;
+  padding: 10px;
+  color: var(--text);
+  background: var(--background);
+  border: 1px solid var(--edge);
+  border-radius: 10px;
+}
+.map-edit-dialog textarea {
+  min-height: 120px;
+}
+.smart-input-hub {
+  margin: 24px 0;
+}
+.learning-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin: 22px 0;
+}
+.learning-stat {
+  padding: 18px;
+  background: var(--surface);
+  border: 1px solid var(--edge);
+  border-radius: 18px;
+}
+.learning-stat strong {
+  display: block;
+  font-size: 26px;
+}
+.learning-stat span {
+  font-size: 13px;
+  color: var(--soft-text);
+}
+.source-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 20px 0;
+}
+.source-filters select,
+.v4-quiz input,
+.v4-quiz select {
+  background: var(--surface);
+  color: var(--text);
+  padding: 10px;
+  border: 1px solid var(--edge);
+  border-radius: 10px;
+  max-width: 100%;
+}
+.v4-quiz {
+  padding: 20px;
+}
+.v4-quiz fieldset {
+  border: 0;
+  display: grid;
+  gap: 16px;
+  margin: 20px 0;
+  padding: 0;
+}
+.v4-quiz label {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 15px;
+  background: var(--background);
+  border: 1px solid var(--edge);
+  border-radius: 12px;
+  flex-wrap: wrap;
+}
+.v4-quiz button,
+.journey-workspace button {
+  padding: 10px 16px;
+  border: 1px solid var(--edge);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+}
+.journey-workspace {
+  display: grid;
+  grid-template-columns: minmax(180px, 250px) 1fr;
+  gap: 28px;
+  margin: 25px 0;
+}
+.journey-workspace nav {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+}
+.journey-workspace nav button {
+  text-align: left;
+}
+.journey-workspace nav .active {
+  border-color: var(--accent);
+  background: var(--lavender);
+}
+.journey-workspace article {
+  min-width: 0;
+}
+.journey-workspace h2 {
+  font-size: 28px;
+}
+.profile-form {
+  display: grid;
+  gap: 15px;
+  max-width: 650px;
+}
+.profile-form label {
+  display: grid;
+  gap: 7px;
+}
+.profile-form input,
+.profile-form select {
+  padding: 12px;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--edge);
+  border-radius: 12px;
+}
+.product-panel progress {
+  width: 100%;
+  accent-color: var(--accent);
+}
+.source-card .subject-tag {
+  font-size: 12px;
+  color: var(--accent);
+}
+@media (max-width: 700px) {
+  .learning-stats {
+    grid-template-columns: 1fr 1fr;
+  }
+  .journey-workspace {
+    grid-template-columns: 1fr;
+  }
+  .journey-workspace nav {
+    grid-template-columns: 1fr 1fr;
+  }
+  .v4-quiz {
+    padding: 8px;
+  }
+  .v4-quiz label {
+    gap: 8px;
+  }
+}

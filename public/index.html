@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#f7f7f2">
+<script src="/theme.js"></script>
+<link rel="preload" href="/assets/fonts/quicksand-variable.woff2" as="font" type="font/woff2" crossorigin>
 <title>OmniLearn AI — Belajar dengan caramu</title>
 <meta name="description" content="Ruang belajar personal bertenaga Gemini Cloud untuk ringkasan materi, kuis latihan, flashcard, peta konsep, dan tutor AI interaktif.">
 <meta property="og:title" content="OmniLearn AI — Belajar dengan caramu">
@@ -14,6 +16,8 @@
 <script src="/vendor/katex.min.js"></script>
 <link rel="stylesheet" href="/styles.css">
 <link rel="stylesheet" href="/product.css">
+<link rel="stylesheet" href="/jarvis.css">
+<link rel="stylesheet" href="/workbench.css">
 </head>
 <body>
 <header class="shell topbar" id="home">
@@ -749,8 +753,9 @@ async function askAI(message, externalSignal) {
     body: JSON.stringify({
       message,
       sessionId,
-      history: chatHistory.slice(-8),
+      history: chatHistory.slice(-24),
       teachingMode: document.querySelector('#teachingMode')?.value || 'standard',
+      learningContext: window.OmniProduct?.context?.(),
       material: materialText,
       materialId,
       materialName,
@@ -841,6 +846,17 @@ let flashcardState = {
 
 // Interactive Hierarchical Concept Map State
 let conceptMapState = null;
+
+function clearVisibleToolOutput() {
+  lastOutput = '';
+  lastOutputHtml = '';
+  conceptMapState = null;
+  quizState = { questions: [], answers: {}, completed: false };
+  allCards = [];
+  toolOutput.classList.remove('md-rendered');
+  toolOutput.innerHTML = '<h4>Pilih alat belajar untuk mulai.</h4><p class="placeholder">Hasil tiap materi akan tersimpan pada sumbernya masing-masing.</p>';
+}
+window.OmniProductSourceChange = clearVisibleToolOutput;
 
 function renderInteractiveQuiz() {
   const qs = quizState.questions;
@@ -1003,6 +1019,7 @@ function renderInteractiveQuiz() {
       isCorrect
     };
     quizState.submittedCurrent = true;
+    window.OmniProduct?.record({id:`quiz:${materialId}:${currentQ.question}`,type:'quiz',correct:isCorrect,topic:currentQ.question});
     renderInteractiveQuiz();
   });
 
@@ -1020,6 +1037,7 @@ function renderInteractiveQuiz() {
 }
 
 function renderInteractiveFlashcards() {
+  if(window.OmniProduct?.renderDeck?.(flashcardState.allCards))return;
   const all = flashcardState.allCards;
   if (!Array.isArray(all) || !all.length) return;
 
@@ -1291,7 +1309,7 @@ function getTabCacheKey(task, customTopic = '') {
 
   let optSig = '';
   if (task === 'summary') optSig = summaryStyle;
-  else if (task === 'quiz') optSig = `${quizDifficulty}:${quizCount}`;
+  else if (task === 'quiz') optSig = `${quizDifficulty}:${quizCount}:${document.querySelector('#quizQuestionType')?.value||'multiple'}`;
   else if (task === 'cards') optSig = `${cardsCount}`;
   else if (task === 'translate') optSig = `${targetLang}:${chatInput.value.trim().slice(0, 80)}`;
 
@@ -1303,7 +1321,9 @@ function restoreCachedTabView(cachedEntry, task) {
   lastOutput = cachedEntry.markdown || '';
   lastOutputHtml = renderMarkdownToSafeHtml(lastOutput);
 
-  if (task === 'quiz' && cachedEntry.quizState?.questions?.length) {
+  if (task === 'quiz' && cachedEntry.quizV4) {
+    window.OmniJarvis.renderQuiz(toolOutput,cachedEntry.quizV4,cachedEntry.quizV4State);
+  } else if (task === 'quiz' && cachedEntry.quizState?.questions?.length) {
     quizState = cachedEntry.quizState;
     renderInteractiveQuiz();
   } else if (task === 'cards' && cachedEntry.flashcardState?.allCards?.length) {
@@ -1329,6 +1349,7 @@ async function runTool(task, customTopic = '', forceRegenerate = false) {
   }
 
   const cacheKey = getTabCacheKey(task, customTopic);
+  if(!forceRegenerate && !tabViewCache.has(cacheKey)){const saved=window.OmniProduct?.getSavedTool(cacheKey);if(saved)tabViewCache.set(cacheKey,saved);}
   if (!forceRegenerate && tabViewCache.has(cacheKey)) {
     restoreCachedTabView(tabViewCache.get(cacheKey), task);
     return;
@@ -1368,6 +1389,7 @@ async function runTool(task, customTopic = '', forceRegenerate = false) {
         materialName,
         count,
         difficulty: quizDifficulty,
+        questionType: document.querySelector('#quizQuestionType')?.value || 'multiple',
         summaryStyle,
         targetLanguage: $('targetLanguage').value,
         outputLanguage,
@@ -1392,7 +1414,9 @@ async function runTool(task, customTopic = '', forceRegenerate = false) {
 
     const cacheEntry = { markdown: formattedMarkdown };
 
-    if (task === 'quiz' && data.structuredData?.questions?.length) {
+    if(task === 'quiz' && data.structuredData?.type === 'quiz-v4') {
+      cacheEntry.quizV4=data.structuredData;cacheEntry.quizV4State={index:0,answers:{}};window.OmniJarvis.renderQuiz(toolOutput,data.structuredData,cacheEntry.quizV4State);
+    } else if (task === 'quiz' && data.structuredData?.questions?.length) {
       quizState = {
         questions: data.structuredData.questions,
         difficulty: quizDifficulty,
@@ -1405,6 +1429,7 @@ async function runTool(task, customTopic = '', forceRegenerate = false) {
       cacheEntry.quizState = quizState;
       renderInteractiveQuiz();
     } else if (task === 'cards' && data.structuredData?.cards?.length) {
+      window.OmniProduct?.setDeck(data.structuredData.cards);
       flashcardState = {
         allCards: data.structuredData.cards.map(c => ({
           ...c,
@@ -1430,6 +1455,7 @@ async function runTool(task, customTopic = '', forceRegenerate = false) {
     }
 
     tabViewCache.set(cacheKey, cacheEntry);
+    window.OmniProduct?.saveTool(cacheKey,cacheEntry);
 
     if (!data.cached) {
       addMessage('assistant', formattedMarkdown);
@@ -1634,7 +1660,7 @@ async function pollUploadJobStatus(jobId, reqId) {
 async function uploadFile(file) {
   if (!file || busy || uploadInFlight) return;
   const reqId = generateClientRequestId('upload');
-  const allowed = ['.pdf', '.docx', '.pptx', '.txt', '.mp3', '.wav', '.mp4', '.mov'];
+  const allowed = window.OmniCapabilities?.extensions || ['.pdf', '.docx', '.pptx', '.xlsx', '.txt', '.png', '.jpg', '.jpeg', '.mp3', '.wav', '.m4a', '.mp4', '.mov', '.webm'];
   const fileName = String(file.name || 'dokumen');
   const dotIdx = fileName.lastIndexOf('.');
   const ext = dotIdx >= 0 ? fileName.slice(dotIdx).toLowerCase() : '';
@@ -1650,7 +1676,7 @@ async function uploadFile(file) {
     updateUploadError(msg);
     return;
   }
-  if (file.size > 15 * 1024 * 1024) {
+  if (file.size > (window.OmniCapabilities?.maxFileBytes || 15 * 1024 * 1024)) {
     const msg = `Ukuran file (${formatFileSize(file.size)}) melebihi batas maksimal 15 MB. (ID: ${reqId})`;
     updateUploadError(msg);
     return;
@@ -1764,10 +1790,12 @@ function updateUploadError(message) {
 $('uploadButton').addEventListener('click', () => {
   if (!busy && !uploadInFlight) $('materialFile').click();
 });
-$('materialFile').addEventListener('change', event => {
-  const selected = event.target.files && event.target.files[0];
-  if (selected) uploadFile(selected);
-});
+async function queueUploads(files) {
+  const selected=Array.from(files||[]);if(selected.length>(window.OmniCapabilities?.maxFilesPerQueue||5)){toast('Pilih maksimal lima file per antrean.');return;}
+  for(const file of selected){if(busy||uploadInFlight)break;await uploadFile(file);}
+}
+$('materialFile').multiple=true;
+$('materialFile').addEventListener('change', event => queueUploads(event.target.files));
 dropzone.addEventListener('click', () => {
   if (!busy && !uploadInFlight) $('materialFile').click();
 });
@@ -1791,7 +1819,7 @@ for (const name of ['dragleave', 'drop']) {
 }
 dropzone.addEventListener('drop', event => {
   if (!busy && !uploadInFlight && event.dataTransfer?.files?.[0]) {
-    uploadFile(event.dataTransfer.files[0]);
+    queueUploads(event.dataTransfer.files);
   }
 });
 $('chatForm').addEventListener('submit', sendChat);
@@ -2039,15 +2067,13 @@ document.querySelectorAll('.subject').forEach(button => button.addEventListener(
 $('menuBtn').addEventListener('click', () => $('nav').classList.toggle('open'));
 document.querySelectorAll('.nav a').forEach(link => link.addEventListener('click', () => $('nav').classList.remove('open')));
 $('themeToggle').addEventListener('click', () => {
-  document.body.classList.toggle('dark');
-  const dark = document.body.classList.contains('dark');
-  localStorage.setItem('omnilearn-theme', dark ? 'dark' : 'light');
-  $('themeToggle').textContent = dark ? '☀' : '☾';
+  window.OmniTheme?.cycle();
 });
-if (localStorage.getItem('omnilearn-theme') === 'dark') $('themeToggle').click();
 restoreSessionState();
 checkAI();
 </script>
+<script src="/workbench.js"></script>
+<script src="/jarvis.js"></script>
 <script src="/product.js"></script>
 </body>
 </html>

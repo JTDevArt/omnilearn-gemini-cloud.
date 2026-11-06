@@ -4,6 +4,12 @@ import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import { runProviderRequest } from '../lib/provider-request.js';
 
+test('one stalled model leaves time for a fallback within the shared deadline', async()=>{
+  const calls=[];
+  const result=await runProviderRequest({models:['slow','fast'],timeoutMs:200,attemptTimeoutMs:20,invoke:async(model,_ms,signal)=>{calls.push({model,signal});if(model==='slow')return new Promise(()=>{});return 'fallback result';}});
+  assert.equal(result.model,'fast');assert.equal(calls[0].signal.aborted,true);assert.equal(calls.length,2);
+});
+
 test('fallback receives only the remaining deadline and returns actual model', async () => {
   let clock = 0; const calls = [];
   const result = await runProviderRequest({ models: ['first', 'second', 'third'], timeoutMs: 1000, now: () => clock,

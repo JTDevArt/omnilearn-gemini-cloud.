@@ -46,3 +46,7 @@ test('TXT upload extracts content; unsupported files fail', async () => {
   const bad = new FormData(); bad.append('file', new Blob(['evil']), 'file.exe');
   assert.equal((await fetch(base + '/api/upload?sync=1', { method: 'POST', body: bad })).status, 415);
 });
+test('non-upload JSON has a smaller independent request budget',async()=>{
+  const response=await post('/api/chat',{message:'x'.repeat(1100000)});
+  assert.equal(response.status,413);
+});
