@@ -13,6 +13,7 @@
 <script src="/vendor/purify.min.js"></script>
 <script src="/vendor/katex.min.js"></script>
 <link rel="stylesheet" href="/styles.css">
+<link rel="stylesheet" href="/product.css">
 </head>
 <body>
 <header class="shell topbar" id="home">
@@ -65,12 +66,12 @@
 <section class="workspace-wrap" id="ruang-belajar"><div class="shell">
  <div class="section-head"><div><div class="kicker">Ruang belajar AI</div><h2>Satu materi. Banyak cara memahami.</h2></div><p class="section-desc">Unggah materi atau mulai dari pertanyaan. Tutor AI membantu menjelaskan, merangkum, dan membuat latihan melalui Gemini Cloud.</p></div>
  <div class="workspace">
-  <div class="workspace-head"><div><h3>Mau belajar apa hari ini?</h3><p id="materialLabel">Belum ada materi · Mulai dari pertanyaan atau unggah catatanmu</p></div><div class="head-actions"><span class="ai-status" id="aiStatus">● Memeriksa Gemini Cloud…</span><input class="upload-input" id="materialFile" type="file" accept=".pdf,.docx,.pptx,.txt"><button class="btn btn-soft" id="uploadButton" type="button">＋ Tambah materi</button></div></div>
+  <div class="workspace-head"><div><h3>Mau belajar apa hari ini?</h3><p id="materialLabel">Belum ada materi · Mulai dari pertanyaan atau unggah catatanmu</p></div><div class="head-actions"><span class="ai-status" id="aiStatus">● Memeriksa Gemini Cloud…</span><input class="upload-input" id="materialFile" type="file" accept=".pdf,.docx,.pptx,.txt,.mp3,.wav,.mp4,.mov"><button class="btn btn-soft" id="uploadButton" type="button">＋ Tambah materi</button></div></div>
   <div class="workspace-body">
    <aside class="side-panel"><div class="side-label">Materi kamu</div><div id="materialList"><div class="lesson active"><span class="lesson-icon">💡</span>Pertanyaan bebas</div></div><div class="privacy-note">🔒 Riwayat chat terisolasi per sesi tab browser (sessionStorage) dan tidak dibagikan ke pengguna lain. Dokumen hanya diproses sementara di memori. Konten yang dikirim ke Tutor AI diproses oleh penyedia Gemini Cloud untuk menghasilkan jawaban.</div></aside>
    <div class="content-panel">
     <div class="ai-setup"><div><strong>Teman belajar OmniLearn</strong><p>Mulai dari pertanyaan sederhana. Aku bantu menjelaskan, merangkum, dan menyusun latihan dari materimu.</p></div><span class="status">Gemini Cloud</span></div>
-    <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Pilih atau jatuhkan dokumen"><span class="dropzone-icon">↑</span><strong>Taruh materimu di sini. Kita pelajari bareng.</strong><span>PDF, DOCX, PPTX, atau TXT · OCR otomatis untuk PDF hasil scan · Maksimal 15 MB</span><span class="dropzone-hint">Klik untuk memilih file, atau seret dari perangkatmu</span></div>
+    <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Pilih atau jatuhkan dokumen"><span class="dropzone-icon">↑</span><strong>Taruh materimu di sini. Kita pelajari bareng.</strong><span>PDF, DOCX, PPTX, TXT, MP3, WAV, MP4, atau MOV · OCR otomatis untuk PDF hasil scan · Maksimal 15 MB</span><span class="dropzone-hint">Klik untuk memilih file, atau seret dari perangkatmu</span></div>
     <div class="setup-progress" id="uploadProgress" role="status" aria-live="polite">
       <div class="setup-progress-top"><span id="uploadProgressLabel">Mengunggah dokumen…</span><span id="uploadProgressStage">Tahap 1 dari 7</span></div>
       <div class="progress"><span id="uploadProgressBar" style="width:14%"></span></div>
@@ -402,6 +403,7 @@ function addMessage(role, text, extra = '') {
 }
 
 function saveSessionState() {
+  window.OmniProduct?.capture();
   try {
     sessionStorage.setItem(SESSION_CHAT_KEY, JSON.stringify(chatHistory.slice(-24)));
     if (materialName && materialText) {
@@ -748,6 +750,7 @@ async function askAI(message, externalSignal) {
       message,
       sessionId,
       history: chatHistory.slice(-8),
+      teachingMode: document.querySelector('#teachingMode')?.value || 'standard',
       material: materialText,
       materialId,
       materialName,
@@ -1631,14 +1634,14 @@ async function pollUploadJobStatus(jobId, reqId) {
 async function uploadFile(file) {
   if (!file || busy || uploadInFlight) return;
   const reqId = generateClientRequestId('upload');
-  const allowed = ['.pdf', '.docx', '.pptx', '.txt'];
+  const allowed = ['.pdf', '.docx', '.pptx', '.txt', '.mp3', '.wav', '.mp4', '.mov'];
   const fileName = String(file.name || 'dokumen');
   const dotIdx = fileName.lastIndexOf('.');
   const ext = dotIdx >= 0 ? fileName.slice(dotIdx).toLowerCase() : '';
 
   setUploadStage(2, 'Memvalidasi file…', true);
   if (!allowed.includes(ext)) {
-    const msg = `Format file "${ext || 'tidak dikenal'}" tidak didukung. Gunakan PDF, DOCX, PPTX, atau TXT. (ID: ${reqId})`;
+    const msg = `Format file "${ext || 'tidak dikenal'}" tidak didukung. Gunakan PDF, DOCX, PPTX, TXT, MP3, WAV, MP4, atau MOV. (ID: ${reqId})`;
     updateUploadError(msg);
     return;
   }
@@ -2045,5 +2048,6 @@ if (localStorage.getItem('omnilearn-theme') === 'dark') $('themeToggle').click()
 restoreSessionState();
 checkAI();
 </script>
+<script src="/product.js"></script>
 </body>
 </html>

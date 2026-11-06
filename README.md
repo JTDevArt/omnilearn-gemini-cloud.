@@ -1,5 +1,7 @@
 # OmniLearn AI — Gemini Cloud Edition
 
+Product V2 provides Home at `/` and the learning application at `/dashboard`. See [implemented scope and evidence](docs/PRODUCT-V2-DELIVERY.md) for media, notes, the original demo and current limitations. In the managed cloud runtime start with `NODE_USE_ENV_PROXY=1 npm start`.
+
 OmniLearn is a universal learning workspace. This migration replaces browser-local WebLLM/WebGPU inference with Gemini Cloud through a Node.js backend.
 
 ## What changed
