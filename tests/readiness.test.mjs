@@ -50,3 +50,10 @@ test('non-upload JSON has a smaller independent request budget',async()=>{
   const response=await post('/api/chat',{message:'x'.repeat(1100000)});
   assert.equal(response.status,413);
 });
+test('learning routes reject oversized material rather than silently analyzing a prefix', async () => {
+  for (const [route, body] of [['/api/chat', {message:'Explain the source'}], ['/api/study', {task:'summary'}]]) {
+    const response = await post(route, {...body, material:'x'.repeat(50001)});
+    assert.equal(response.status, 413);
+    assert.equal((await response.json()).code, 'SOURCE_TOO_LONG');
+  }
+});

@@ -1,6 +1,8 @@
 # OmniLearn AI — Gemini Cloud Edition
 
-Product V2 provides Home at `/` and the learning application at `/dashboard`. See [implemented scope and evidence](docs/PRODUCT-V2-DELIVERY.md) for media, notes, the original demo and current limitations. In the managed cloud runtime start with `NODE_USE_ENV_PROXY=1 npm start`.
+Home is at `/` and the learning application at `/dashboard`. The [reviewed Final Forge status](docs/FINAL-FORGE-STATUS.md) distinguishes implemented, tested, partial and pending features. It supersedes earlier V2/MAX status documents for the current scope. In the managed cloud runtime start with `NODE_USE_ENV_PROXY=1 npm start`.
+
+The current increment adds a shared source-analysis blueprint with exact supporting quotes, source revisions with archived artifacts, and device-local IndexedDB persistence. It remains an incremental implementation: authentication, cloud accounts, automatic YouTube transcripts, live literature research and production deployment are not complete.
 
 OmniLearn is a universal learning workspace. This migration replaces browser-local WebLLM/WebGPU inference with Gemini Cloud through a Node.js backend.
 
@@ -45,7 +47,7 @@ cp .env.example .env
 # Edit .env and set GEMINI_API_KEY for local testing only
 npm test
 npm run check
-npm start
+node --env-file=.env server.js
 ```
 
 Open `http://localhost:3000`.
@@ -55,14 +57,17 @@ Open `http://localhost:3000`.
 - `GET /api/health` — reports whether the server-side Gemini secret is available.
 - `POST /api/chat` — adaptive tutor chat with conversation history and page-indexed document context.
 - `POST /api/study` — structured & Markdown generation for `summary`, `quiz`, `cards`, `map`, `plan`, `translate`, `research`, and `explore`.
+- `POST /api/source/analyze` — session/source/version-scoped knowledge blueprint and automated structural/evidence checks, shared by document learning tools and the tutor.
+- `POST /api/speech` — real Gemini audio generation returned as a downloadable WAV.
 - `POST /api/upload` — asynchronous in-memory extraction & automatic OCR for PDF, DOCX, PPTX, and TXT.
 - `GET /api/upload/status/:jobId` — real-time progress and result polling for document extraction/OCR jobs.
 
 ## Security and privacy notes
 
 - The Gemini API key is read only from `process.env.GEMINI_API_KEY` in `server.js`.
-- Uploaded file bytes are processed in memory and automatically purged after extraction.
-- Chat history and active materials are isolated per browser tab session (`sessionStorage`).
+- Server upload buffers are processed in memory and released after extraction; temporary extracted-text and analysis caches are bounded and expire.
+- The browser stores the library, chats, notes, progress and new original uploads in device-local IndexedDB when available. Active selection and request session IDs remain tab-scoped. Device data can be erased through Settings; JSON exports omit binary originals.
+- There is no authenticated cloud account or cross-device synchronization. Automated quote/structure checks do not independently certify factual or OCR accuracy.
 
 ## Project structure
 

@@ -1,4 +1,4 @@
-/* V4 lesson/quiz workspaces use the existing authenticated request helper. */
+/* V4 lesson/quiz workspaces use the existing same-origin request helper. */
 (() => {
   const safe = (value) => escapeHtml(String(value ?? ''));
   async function check(question, answer) {
@@ -113,6 +113,7 @@
         button.disabled = true;
         button.textContent = 'Gemini sedang menyusun bab…';
         try {
+          await api.ensureAnalysis();
           const result = await safeRequestJson(
             '/api/study',
             {
@@ -123,6 +124,7 @@
                 material: source.text,
                 materialId: source.id,
                 sessionId,
+                ...api.sourceRequest(),
                 outputLanguage: $('outputLanguage').value
               })
             },

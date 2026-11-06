@@ -747,6 +747,7 @@ async function safeRequestJson(url, options = {}, { timeoutMs = 45000, stageCont
 
 async function askAI(message, externalSignal) {
   const outputLanguage = $('outputLanguage') ? $('outputLanguage').value : 'auto';
+  if (materialText.trim()) await window.OmniProduct?.ensureAnalysis(externalSignal);
   const data = await safeRequestJson('/api/chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -756,6 +757,7 @@ async function askAI(message, externalSignal) {
       history: chatHistory.slice(-24),
       teachingMode: document.querySelector('#teachingMode')?.value || 'standard',
       learningContext: window.OmniProduct?.context?.(),
+      ...window.OmniProduct?.sourceRequest(),
       material: materialText,
       materialId,
       materialName,
@@ -852,7 +854,7 @@ function clearVisibleToolOutput() {
   lastOutputHtml = '';
   conceptMapState = null;
   quizState = { questions: [], answers: {}, completed: false };
-  allCards = [];
+  flashcardState = { allCards: [], deckOrder: [], currentIndex: 0, isFlipped: false, reviewHardOnly: false };
   toolOutput.classList.remove('md-rendered');
   toolOutput.innerHTML = '<h4>Pilih alat belajar untuk mulai.</h4><p class="placeholder">Hasil tiap materi akan tersimpan pada sumbernya masing-masing.</p>';
 }
@@ -1305,7 +1307,7 @@ function getTabCacheKey(task, customTopic = '') {
   const targetLang = $('targetLanguage') ? $('targetLanguage').value : 'Bahasa Inggris';
   const outputLanguage = $('outputLanguage') ? $('outputLanguage').value : 'auto';
   const subjectText = $('subjectResult').textContent.startsWith('Bidang pilihan:') ? $('subjectResult').textContent.replace('Bidang pilihan:', '').trim() : '';
-  const topicSig = materialText.trim() ? `mat:${materialId || materialName}:${materialText.length}` : `top:${customTopic || subjectText || 'default'}`;
+  const topicSig = materialText.trim() ? `mat:${materialId || materialName}:r${window.OmniProduct?.sourceRequest().sourceVersion || 1}:${materialText.length}` : `top:${customTopic || subjectText || 'default'}`;
 
   let optSig = '';
   if (task === 'summary') optSig = summaryStyle;
@@ -1376,6 +1378,7 @@ async function runTool(task, customTopic = '', forceRegenerate = false) {
   chatFeedback.textContent = `AI sedang menyusun ${taskNames[task].toLowerCase()}…`;
   setBusy(true);
   try {
+    if (materialText.trim() && task !== 'translate') await window.OmniProduct?.ensureAnalysis(abortController.signal);
     const data = await safeRequestJson('/api/study', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1393,7 +1396,8 @@ async function runTool(task, customTopic = '', forceRegenerate = false) {
         summaryStyle,
         targetLanguage: $('targetLanguage').value,
         outputLanguage,
-        forceRegenerate: Boolean(forceRegenerate)
+        forceRegenerate: Boolean(forceRegenerate),
+        ...window.OmniProduct?.sourceRequest()
       })
     }, { timeoutMs: 65000, stageContext: `study-${task}`, externalSignal: abortController.signal });
 
@@ -1710,6 +1714,8 @@ async function uploadFile(file) {
     materialVersion++;
     tabViewCache.clear();
 
+    window.OmniProduct?.capture();
+    window.OmniProductSourceChange?.();
     materialText = String(finalData.text || '').slice(0, 50000);
     materialName = finalData.filename || fileName;
     materialId = finalData.materialId || '';
@@ -1739,6 +1745,8 @@ async function uploadFile(file) {
     chatMessages.innerHTML = '';
     renderMaterialBadgeAndSidebar();
     saveSessionState();
+    window.OmniProduct?.capture();
+    window.OmniProduct?.saveOriginal(file);
 
     const ocrStatusLabel = materialMeta.ocrUsed
       ? (materialMeta.extractionMode === 'pdf-hybrid-ocr' ? 'Digunakan (PDF Campuran: Text Layer + OCR)' : 'Digunakan (OCR Gemini)')
@@ -2074,6 +2082,8 @@ checkAI();
 </script>
 <script src="/workbench.js"></script>
 <script src="/jarvis.js"></script>
+<script src="/local-library.js"></script>
+<script src="/source-tools.js"></script>
 <script src="/product.js"></script>
 </body>
 </html>

@@ -10,8 +10,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
-    "build": "node --check server.js && node scripts/verify-migration.mjs",
-    "lint": "node --check server.js",
+    "build": "node scripts/check-syntax.mjs && node scripts/verify-migration.mjs",
+    "lint": "node scripts/check-syntax.mjs",
     "check": "node scripts/verify-migration.mjs",
     "test": "node --test lib/learning-engine.test.js tests/*.test.mjs"
   },

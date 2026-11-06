@@ -58,7 +58,7 @@
       const version = ++saveVersion;
       try {
         if (typeof options.onSave === 'function') await options.onSave(editor.value);
-        if (!destroyed && version === saveVersion) status.textContent = 'Tersimpan di sesi tab ini.';
+        if (!destroyed && version === saveVersion) status.textContent = options.storageLabel || 'Tersimpan di sesi tab ini.';
         return true;
       } catch {
         if (!destroyed) status.textContent = 'Belum tersimpan. Ekspor Markdown agar catatan tetap aman.';
