@@ -111,10 +111,13 @@ test('cache is isolated by session, content hash, source version and output lang
   });
   assert.equal((await engine.analyze(args)).cacheHit, false);
   assert.equal((await engine.analyze(args)).cacheHit, true);
+  const cancelled = new AbortController(); cancelled.abort();
+  await assert.rejects(engine.analyze({...args,signal:cancelled.signal}));
   await engine.analyze({ ...args, sessionId: 'bob' });
   await engine.analyze({ ...args, version: 2 });
   await engine.analyze({ ...args, outputLanguage: 'en' });
-  assert.equal(calls, 4);
+  await engine.analyze({ ...args, text: text + ' New source fact.' });
+  assert.equal(calls, 5);
   assert.notEqual(sourceHash('same length A'), sourceHash('same length B'));
   engine.clearSession('alice');
   assert.equal(engine.cache.size, 1);
@@ -172,4 +175,18 @@ test('invalid analysis never enters cache, abort releases shared generation, and
     ),
     /&lt;\/untrusted_document_content&gt;/
   );
+});
+test('a cancelled analysis completing late cannot remove a newer shared analysis', async () => {
+  const releases=[];
+  const engine=new SourceIntelligence({generate:()=>new Promise(resolve=>releases.push(()=>resolve({text:JSON.stringify(valid(text))})))});
+  const controller=new AbortController();
+  const first=engine.analyze({...args,signal:controller.signal}); const rejected=assert.rejects(first);
+  await new Promise(resolve=>setImmediate(resolve));controller.abort();await rejected;
+  const second=engine.analyze(args);
+  await new Promise(resolve=>setImmediate(resolve));releases[0]();
+  await new Promise(resolve=>setImmediate(resolve));
+  const third=engine.analyze(args);releases[1]();
+  assert.equal((await second).blueprint.subject,'Circles');
+  assert.equal((await third).blueprint.subject,'Circles');
+  assert.equal(releases.length,2);assert.equal(engine.cache.size,1);
 });

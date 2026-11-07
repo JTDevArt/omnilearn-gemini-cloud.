@@ -9,12 +9,12 @@ globalThis.fetch = async (input, options = {}) => {
     return new Response(
       JSON.stringify({
         error: {
-          code: 429,
-          status: 'RESOURCE_EXHAUSTED',
-          message: 'Test fixture daily quota PerDay retryDelay: "7200s"',
+          code: 404,
+          status: 'NOT_FOUND',
+          message: 'Test fixture model not found',
         },
       }),
-      { status: 429, headers: { 'Content-Type': 'application/json' } }
+      { status: 404, headers: { 'Content-Type': 'application/json' } }
     );
   const body = typeof options.body === 'string' ? JSON.parse(options.body) : {},
     prompt = (body.contents || [])

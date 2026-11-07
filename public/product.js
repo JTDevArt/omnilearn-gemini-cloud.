@@ -500,13 +500,21 @@
       delete clean.history;
       delete clean.learningContext;
       const key = JSON.stringify([route, clean]);
-      if (!pendingTasks.some((task) => task.key === key)) {
+      const previousTask = pendingTasks.find(task => task.key === key);
+      if (previousTask) {
+        previousTask.retryAt = Number.isFinite(error?.retryAt) ? error.retryAt : null;
+        previousTask.failureKind = error?.failureKind || null;
+        previousTask.error = String(error?.message || 'Permintaan belum selesai').slice(0, 1000);
+        persist();
+      } else {
         pendingTasks.push({
           id: crypto.randomUUID(),
           key,
           route,
           body: clean,
           createdAt: Date.now(),
+          retryAt: Number.isFinite(error?.retryAt) ? error.retryAt : null,
+          failureKind: error?.failureKind || null,
           error: String(error?.message || 'Permintaan belum selesai').slice(
             0,
             1000
@@ -518,6 +526,8 @@
     async retryTask(id) {
       const task = pendingTasks.find((task) => task.id === id);
       if (!task) return;
+      if (task.retryAt > Date.now())
+        throw new Error('Tunggu hingga ' + new Date(task.retryAt).toLocaleString('id-ID') + ' sebelum mencoba kembali.');
       const source = sources.find((s) => s.id === task.body.materialId);
       if (
         task.body.materialId &&

@@ -7,6 +7,9 @@ import { QUIZ_V4_TYPES, buildQuizV4Prompt, normalizeQuizV4, gradeQuizAnswer, bui
 import { AI_SYSTEM_INSTRUCTION, validateStudyResult, teachingInstruction } from './lib/ai-policy.js';
 import { SUMMARY_SYSTEM_INSTRUCTION, resolveOutputLanguage, languageInstruction, buildSummaryPrompt, normalizeSummaryOutput } from './lib/output-language.js';
 import { ProviderManager } from './lib/provider-manager.js';
+import { classifyAiFailure, providerFailureError } from './lib/provider-errors.js';
+import { thinkingConfigForModel } from './lib/provider-models.js';
+import { validateSourceReferences } from './lib/source-references.js';
 import { YoutubeCaptionProvider } from './lib/youtube-provider.js';
 import { ResearchProvider } from './lib/research-provider.js';
 import { parseSubtitles } from './public/transcripts.js';
@@ -299,43 +302,7 @@ function requestMaterial(req, cachedEntry) {
 
 function classifyProviderError(error, stage = 'gemini-generate') {
   if (error?.code && error?.stage) return error;
-  const message = String(error?.message || '');
-  if (/RESOURCE_EXHAUSTED|quota|429/i.test(message) || error?.status === 429) {
-    return createApiError(
-      'Batas kuota permintaan Gemini tercapai (Rate Limit 429). Silakan tunggu beberapa saat lalu coba kembali.',
-      { status: 429, code: 'GEMINI_RATE_LIMIT', stage }
-    );
-  }
-  if (/UNAVAILABLE|high demand|overloaded|503/i.test(message) || error?.status === 503) {
-    return createApiError(
-      'Layanan Gemini Cloud sedang mengalami lonjakan permintaan. Silakan coba lagi beberapa saat.',
-      { status: 500, code: 'GEMINI_UNAVAILABLE', stage }
-    );
-  }
-  if (/DEADLINE_EXCEEDED|timeout|504|HeadersTimeoutError|AbortError/i.test(message) || error?.status === 504) {
-    return createApiError(
-      'Waktu pemrosesan ke Gemini Cloud habis (Timeout). Coba ulangi atau gunakan dokumen yang lebih ringkas.',
-      { status: 504, code: 'GEMINI_TIMEOUT', stage }
-    );
-  }
-  if (/API_KEY_INVALID|API key not valid|permission denied|403/i.test(message) || error?.status === 403) {
-    return createApiError(
-      'Kunci API Gemini tidak valid atau belum memiliki akses. Periksa konfigurasi Settings → Secrets.',
-      { status: 500, code: 'GEMINI_AUTH_ERROR', stage }
-    );
-  }
-  if (/SAFETY|blocked/i.test(message)) {
-    return createApiError(
-      'Permintaan tidak dapat diproses karena kebijakan keamanan konten Gemini.',
-      { status: 422, code: 'GEMINI_SAFETY_BLOCKED', stage }
-    );
-  }
-  return createApiError(
-    stage === 'pdf-ocr'
-      ? 'Gagal menjalankan OCR otomatis pada dokumen PDF. Pastikan halaman PDF tidak rusak.'
-      : 'Gemini gagal memproses permintaan saat ini. Silakan coba lagi sebentar.',
-    { status: stage === 'pdf-ocr' ? 422 : 500, code: stage === 'pdf-ocr' ? 'OCR_FAILED' : 'GEMINI_ERROR', stage }
-  );
+  return providerFailureError(classifyAiFailure(error), stage);
 }
 
 function normalizeThinkingLevel(level) {
@@ -352,7 +319,7 @@ const providerManager = new ProviderManager({primary:MODEL,fallback:process.env.
 async function generateText({
   contents, systemInstruction = SYSTEM_INSTRUCTION,
   thinkingLevel = ThinkingLevel.LOW, responseMimeType,
-  timeoutMs = 40000, stage = 'gemini-generate', signal, maxOutputTokens = 6000, requestScope, forceRegenerate = false
+  timeoutMs = 40000, stage = 'gemini-generate', signal, maxOutputTokens = 6000, requestScope, forceRegenerate = false, sourceContext
 }) {
   const startedAt = Date.now();
   const validThinkingLevel = normalizeThinkingLevel(thinkingLevel);
@@ -365,16 +332,17 @@ async function generateText({
       invoke: async (candidateModel, remainingMs, abortSignal) => {
         const response = await getAI(remainingMs).models.generateContent({
           model: candidateModel, contents,
-          config: { systemInstruction, thinkingConfig: { thinkingLevel: validThinkingLevel },
+          config: { systemInstruction, ...thinkingConfigForModel(candidateModel, validThinkingLevel),
             maxOutputTokens, abortSignal, ...(responseMimeType ? { responseMimeType } : {}) }
         });
         const text = response.text?.trim();
-        if (!text) throw new Error('Gemini tidak mengembalikan teks.');
+        if (!text) throw providerFailureError(classifyAiFailure({status:422}), stage);
         if (response.candidates?.[0]?.finishReason === 'MAX_TOKENS') {
           throw createApiError('Hasil terlalu panjang. Kurangi cakupan materi atau jumlah soal.', {
             status: 422, code: 'OUTPUT_TRUNCATED', stage
           });
         }
+        if (sourceContext !== undefined) validateSourceReferences(text, sourceContext, stage);
         const usage = response.usageMetadata;
         return { text, usage: usage ? { inputTokens: usage.promptTokenCount ?? null, outputTokens: usage.candidatesTokenCount ?? null, totalTokens: usage.totalTokenCount ?? null } : null };
       }
@@ -1176,6 +1144,7 @@ app.post('/api/chat', aiLimiter, async (req, res, next) => {
       responseMimeType: 'text/plain',
       thinkingLevel: depthInfo.depth === 'ADVANCED' ? depthInfo.thinkingLevel : ThinkingLevel.LOW,
       signal: req.aiSignal, stage: 'chat-generate', requestScope:sessionId,
+      sourceContext: relevantMaterial + (analysis ? blueprintContext(analysis.blueprint) : ''),
     });
 
     logProcessEvent(req, 'chat-complete', 200, 'NONE');
@@ -1454,7 +1423,8 @@ app.post('/api/study', aiLimiter, async (req, res, next) => {
       thinkingLevel,
       responseMimeType: isStructuredJsonTask ? 'application/json' : undefined,
       timeoutMs: task === 'research' || task === 'plan' || (task === 'quiz' && count >= 15) ? 55000 : 42000,
-      signal: req.aiSignal, stage: `study-${task}`, requestScope:sessionId, forceRegenerate:req.body?.forceRegenerate===true
+      signal: req.aiSignal, stage: `study-${task}`, requestScope:sessionId, forceRegenerate:req.body?.forceRegenerate===true,
+      sourceContext: sampledMaterial + (analysis ? blueprintContext(analysis.blueprint) : '')
     });
 
     let result = task === 'summary' ? normalizeSummaryOutput(rawResult, { sourceHasPageMarkers: /\[(?:Halaman|Page)\s+\d+\]/i.test(sampledMaterial) }) : rawResult;
@@ -1801,7 +1771,8 @@ app.use((error, req, res, _next) => {
     code,
     stage,
     requestId: req?.requestId || 'unknown',
-    ...(Number.isFinite(error?.retryAt)?{retryAt:error.retryAt}:{})
+    ...(Number.isFinite(error?.retryAt)?{retryAt:error.retryAt}:{}),
+    ...(error?.failureKind ? {failureKind:error.failureKind, retryable:error.retryable} : {})
   });
 });
 

@@ -22,7 +22,7 @@ test('invalid structured answers cannot count as successful results', () => {
   assert.equal(validateStudyResult('map', {centralTopic: 'x', branches: []}), false);
   assert.equal(normalizeConceptMapData({centralTopic:'x',branches:[{}]}), null);
   assert.equal(validateStudyResult('quiz', { questions: [{}] }, 5), false);
-  assert.equal(validateStudyResult('cards', { cards: [{}] }, 1), true);
+  assert.equal(validateStudyResult('cards', { cards: [{}] }, 1), false);
 });
 test('cached map rendering omits causal fields and uses the result language', () => {
   const script = readFileSync(new URL('../public/index.html', import.meta.url), 'utf8').match(/<script>([\s\S]*?)<\/script>/)[1];

@@ -3,6 +3,11 @@ const el = (tag, text) => {
   if (text !== undefined) n.textContent = text;
   return n;
 };
+export function providerNoticeText(data) {
+  return data?.model
+    ? `${data.fallbackUsed ? 'Model cadangan digunakan. ' : ''}Model: ${data.model}${data.cacheHit ? ' · hasil tersimpan' : ''}. Periksa informasi penting dari sumber.`
+    : '';
+}
 export function providerNotice(data) {
   let notice = document.querySelector('#providerNotice');
   if (!notice) {
@@ -13,9 +18,7 @@ export function providerNotice(data) {
     document.querySelector('#toolOutput')?.before(notice);
   }
   notice.hidden = !data?.model;
-  notice.textContent = data?.model
-    ? `${data.fallbackUsed ? 'Model cadangan digunakan karena model utama belum tersedia. ' : ''}Model: ${data.model}${data.cacheHit ? ' · hasil tersimpan' : ''}. Periksa informasi penting dari sumber.`
-    : '';
+  notice.textContent = providerNoticeText(data);
 }
 export async function renderRecovery(host, api) {
   host.replaceChildren(
@@ -35,7 +38,7 @@ export async function renderRecovery(host, api) {
       host.append(
         el(
           'p',
-          `${model.model}: ${model.state}${model.retryAt && model.state === 'cooldown' ? ' · coba setelah ' + new Date(model.retryAt).toLocaleString('id-ID') : ''}`
+          `${model.model}: ${model.state}${model.reason ? ' · ' + model.reason : ''}${model.retryAt > Date.now() ? ' · coba setelah ' + new Date(model.retryAt).toLocaleString('id-ID') : ''}`
         )
       );
   } catch (error) {
@@ -52,6 +55,10 @@ export async function renderRecovery(host, api) {
       el('p', task.error)
     );
     const retry = el('button', 'Coba kembali');
+    if (task.retryAt > Date.now()) {
+      row.append(el('p', 'Coba setelah ' + new Date(task.retryAt).toLocaleString('id-ID') + '. Buka ulang halaman ini setelah jeda.'));
+      retry.disabled = true;
+    }
     retry.onclick = async () => {
       retry.disabled = true;
       try {
@@ -70,4 +77,4 @@ export async function renderRecovery(host, api) {
     host.append(row);
   }
 }
-window.OmniRecovery = { notice: providerNotice, render: renderRecovery };
+window.OmniRecovery = { notice: providerNotice, text: providerNoticeText, render: renderRecovery };

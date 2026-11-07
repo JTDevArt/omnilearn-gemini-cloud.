@@ -693,6 +693,10 @@ async function safeRequestJson(url, options = {}, { timeoutMs = 45000, stageCont
       httpErr.status = response.status;
       httpErr.code = data.code;
       httpErr.retryAt = data.retryAt;
+      httpErr.stage = data.stage;
+      httpErr.failureKind = data.failureKind;
+      httpErr.retryable = data.retryable;
+      httpErr.isCancelled = data.code === 'REQUEST_CANCELLED';
       throw httpErr;
     }
 
@@ -769,7 +773,7 @@ async function askAI(message, externalSignal) {
     })
   }, { timeoutMs: 55000, stageContext: 'chat', externalSignal });
   window.OmniRecovery?.notice(data);
-  return data.answer;
+  return data;
 }
 
 function isConceptMapCommand(message) {
@@ -796,7 +800,8 @@ async function sendChat(event) {
   setBusy(true);
   chatFeedback.textContent = 'Tutor sedang menyusun penjelasan.';
   try {
-    const answer = await askAI(message, abortController.signal);
+    const data = await askAI(message, abortController.signal);
+    const answer = data.answer;
     if (abortController.signal.aborted || capturedVersion !== materialVersion) return;
     pending.classList.remove('pending');
     setRenderedContent(pending, 'assistant', answer);
@@ -805,7 +810,7 @@ async function sendChat(event) {
     chatHistory.push({ role: 'user', content: message }, { role: 'assistant', content: answer });
     saveSessionState();
     setStatus('ready', 'Gemini Cloud tersambung');
-    chatFeedback.textContent = 'Jawaban dibuat oleh OmniLearn AI. Periksa fakta penting dari sumber tepercaya.';
+    chatFeedback.textContent = window.OmniRecovery?.text(data) || 'Jawaban dibuat oleh OmniLearn AI. Periksa fakta penting dari sumber tepercaya.';
   } catch (error) {
     pending.classList.remove('pending');
     if (error.isCancelled || capturedVersion !== materialVersion) return;
