@@ -24,6 +24,8 @@ export async function renderVideo(host, api) {
   let player, frame, objectUrl;
   const url = source.meta?.sourceUrl || source.meta?.youtubeUrl;
   const status = el('p');
+  const description = el('p', source.name);
+  host.append(description);
   status.setAttribute('role', 'status');
   if (url) {
     try {
@@ -159,6 +161,24 @@ export async function renderVideo(host, api) {
     }
   };
   render();
+  if (player) {
+    const progress = el('p');
+    progress.setAttribute('role', 'status');
+    const resume = el('button', 'Lanjutkan menonton');
+    resume.onclick = () => seek(Number(source.meta?.watchSeconds) || 0);
+    host.append(progress, resume);
+    player.addEventListener('timeupdate', () => {
+      progress.textContent = `${timeLabel(player.currentTime)} / ${Number.isFinite(player.duration) ? timeLabel(player.duration) : '—'}`;
+    });
+    const saveProgress = () => {
+      source.meta ||= {};
+      source.meta.watchSeconds = player.currentTime;
+      source.meta.watchDuration = Number.isFinite(player.duration) ? player.duration : null;
+      api.persist();
+    };
+    player.addEventListener('pause', saveProgress);
+    player.addEventListener('ended', saveProgress);
+  }
   if (player) {
     const scan = el('button', 'Cari perubahan visual tersampel'),
       scenes = el('section');

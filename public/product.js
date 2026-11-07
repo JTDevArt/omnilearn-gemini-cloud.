@@ -2,6 +2,14 @@
 (async () => {
   document.body.classList.add('product-dashboard');
   const views = {
+    dashboard: ['⌂', 'Dashboard'],
+    subjects: ['▤', 'Mata Pelajaran'],
+    streaks: ['◴', 'Streaks'],
+    leaderboard: ['♜', 'Leaderboard'],
+    profile: ['♙', 'Profil'],
+    help: ['?', 'Bantuan'],
+    pinned: ['◇', 'Disematkan'],
+    updates: ['✦', 'Patch Updates'],
     learn: ['⌂', 'Belajar'],
     journey: ['↝', 'Jalur belajar'],
     exams: ['◷', 'Simulasi ujian'],
@@ -194,12 +202,16 @@
   const shell = document.querySelector('#ruang-belajar > .shell');
   const workspace = shell.querySelector('.workspace');
   const panel = document.createElement('div');
+  const chatHome = document.createComment('Conversation workspace anchor');
+  const feedbackHome = document.createComment('Diagnostics workspace anchor');
+  chatMessages.before(chatHome);
+  chatFeedback.before(feedbackHome);
   panel.className = 'product-panel';
   shell.prepend(panel);
   const sidebar = document.createElement('aside');
   sidebar.className = 'product-sidebar';
-  sidebar.innerHTML = `<a class="wordmark" href="/">✳ omni<span>learn</span></a><nav aria-label="Ruang belajar">${Object.entries(
-    views
+  sidebar.innerHTML = `<a class="wordmark" href="/">✳ omni<span>learn</span></a><nav aria-label="Menu utama">${Object.entries(
+    Object.fromEntries(['dashboard','exams','subjects','streaks','leaderboard','profile','help','pinned','updates'].map(id => [id, views[id]]))
   )
     .map(
       ([id, [icon, label]]) =>
@@ -207,7 +219,7 @@
     )
     .join(
       ''
-    )}</nav><div class="sidebar-bottom">Pustaka di perangkat ini<br>Cloud opsional melalui menu Akun</div>`;
+    )}</nav><div class="sidebar-bottom"><button id="shellTheme">◐ Tema</button><button id="shellLayout">Coba tampilan baru</button><button id="shellLogout">Keluar</button><p>Pustaka pribadi · OmniLearn v1.01</p></div>`;
   document.body.prepend(sidebar);
   const closeSidebar = document.createElement('button');
   closeSidebar.className = 'menu-product secondary';
@@ -223,6 +235,19 @@
   top.innerHTML =
     '<button class="secondary" id="productMenu" aria-label="Buka atau tutup sidebar" aria-expanded="true">☰</button><span>Ruang belajar saya</span><input type="search" id="sourceSearch" aria-label="Cari sumber belajar" placeholder="Cari sumber belajarmu…"><button class="secondary" id="productTheme" aria-label="Ganti tema">◐</button><a class="secondary" href="/dashboard?view=settings" data-view="settings">Perangkat ini</a>';
   document.body.insertBefore(top, document.querySelector('main'));
+  sidebar.querySelector('#shellTheme').onclick = () => window.OmniTheme?.cycle();
+  sidebar.querySelector('#shellLayout').onclick = () => navigate(current === 'learn' ? 'dashboard' : 'learn');
+  sidebar.querySelector('#shellLogout').onclick = async () => {
+    try {
+      await safeRequestJson('/api/account/logout', {method:'POST'}, {stageContext:'logout'});
+      location.reload();
+    } catch (error) { toast(error.message); }
+  };
+  const materialNav = document.createElement('nav');
+  materialNav.className = 'material-navigation';
+  materialNav.setAttribute('aria-label', 'Workspace materi');
+  materialNav.innerHTML = ['map','quiz','cards','sources','chat','podcast','sticky'].map(id => `<a href="/dashboard?view=${id}" data-view="${id}">${views[id][1]}</a>`).join('');
+  shell.prepend(materialNav);
   window.OmniTheme?.refreshControls?.();
   safeRequestJson(
     '/api/capabilities',
@@ -270,6 +295,8 @@
         control.value = saved[id];
     }
   } catch {}
+  if (profile.language && [...$('outputLanguage').options].some(option => option.value === profile.language))
+    $('outputLanguage').value = profile.language;
   document.addEventListener('change', (event) => {
     if (!optionIds.includes(event.target.id)) return;
     const values = {};
@@ -410,6 +437,17 @@
     return true;
   }
   window.OmniProduct = {
+    getSource: id => sources.find(source => source.id === id),
+    openTranscript: () => transcriptView(),
+    selectSource,
+    updateDashboard(mutator) { mutator({sources, profile}); persist(); },
+    openRecorder(button) { return recordAudio(button); },
+    mountDashboardChat(host) { host.append(chatMessages, chatFeedback); },
+    submitDashboardChat(message) {
+      if (isConceptMapCommand(message)) navigate('chat');
+      chatInput.value = message;
+      return sendChat();
+    },
     capture,
     record,
     persist,
@@ -1181,8 +1219,12 @@
       toast('Tunggu proses saat ini selesai.');
       return;
     }
-    if (!views[view] && !tools.has(view)) view = 'learn';
+    panel.dashboardRenderId = null;
+    chatHome.after(chatMessages);
+    feedbackHome.after(chatFeedback);
+    if (!views[view] && !tools.has(view)) view = 'dashboard';
     current = view;
+    sidebar.querySelector('#shellLayout').textContent = view === 'learn' ? 'Coba tampilan baru' : 'Tampilan klasik';
     if (push)
       history.pushState({}, '', `/dashboard?view=${encodeURIComponent(view)}`);
     document.querySelectorAll('[data-view]').forEach((a) => {
@@ -1196,8 +1238,13 @@
       else a.removeAttribute('aria-current');
     });
     document.body.classList.remove('dashboard-drawer');
+    materialNav.hidden = !materialId;
     workspace.hidden = !tools.has(view);
     panel.hidden = tools.has(view);
+    if (['dashboard','subjects','streaks','leaderboard','profile','help','pinned','updates'].includes(view)) {
+      window.OmniDashboard.render(panel, view, window.OmniProduct);
+      return;
+    }
     if (tools.has(view)) {
       if (view === 'research')
         window.OmniResearch?.mount(workspace, window.OmniProduct);
@@ -1729,7 +1776,7 @@
     if (results) results.innerHTML = sourceCards(e.target.value);
   });
   window.addEventListener('popstate', () =>
-    navigate(new URLSearchParams(location.search).get('view') || 'learn', false)
+    navigate(new URLSearchParams(location.search).get('view') || 'dashboard', false)
   );
   window.addEventListener('pagehide', () => {
     window.speechSynthesis?.cancel();
@@ -1753,5 +1800,5 @@
     for (const item of freeChat) addMessage(item.role, item.content);
   }
   persist();
-  navigate(initial.get('tool') || initial.get('view') || 'learn', false);
+  navigate(initial.get('tool') || initial.get('view') || 'dashboard', false);
 })();

@@ -1,0 +1,15 @@
+# Master Proficiency — implementation status
+
+UI release v1.01, 7 November 2026. Backend identity remains `forge-2.1`.
+
+Changed files: `public/dashboard-shell.js`, `public/product.js`, `public/product.css`, `public/index.html`, `public/video-workspace.js`, `scripts/verify-dashboard-browser.mjs`, and this status document. The appearance-switch action opens the retained classic library Home or the new Dashboard; desktop collapse remains available through the header menu button.
+
+The dashboard now has a dedicated Home, simplified main navigation and a material navigation bar shown when a source is selected. Existing tool URLs remain supported. Home reuses the existing conversation nodes and backend chat flow, including error/recovery handling; navigation returns those nodes to the legacy workspace. Video playback reuses `video-workspace.js`, including original-file access, subtitles and native playback progress saved on pause/end.
+
+New pages include persisted subject creation/rename/deletion and source assignment, persisted source pins, searchable/filterable gallery and list views, recorded activity and a 365-day calendar, profile preferences/account links, safe diagnostics/help, and a structured release history. Leaderboard explicitly reports that cross-user rankings are unavailable. Source previews display text excerpts rather than generated document-cover images.
+
+Validation: baseline and updated Node suites each passed 104 tests. Build checks 48 JavaScript modules and inline scripts plus migration invariants. npm audit reported zero advisories. Browser checks use an isolated browser profile and explicit unavailable-provider fixture; they test persistence, source-title escaping, desktop/mobile layouts in light/dark themes, drawer/Escape, conversation placement, and main/legacy routes. Screenshots are generated under `/tmp/master-verified-*.png`.
+
+To repeat browser validation, start `PORT=3101 NODE_USE_ENV_PROXY=1 npm start`, then run `node scripts/verify-dashboard-browser.mjs` with Playwright available to Node. Alternatively set `PLAYWRIGHT_MODULE` to the absolute module path of an external Playwright installation. No browser package is added to application dependencies. `DASHBOARD_TEST_URL` and `CHROMIUM_PATH` may override the local server URL and Chromium path.
+
+Limitations: no live Gemini credential/quota is available here. No new live inference or OCR accuracy claim is made. Firebase, authorized YouTube captions, Crossref, Brave and AI Studio publication are not validated by these browser checks. Avatar upload is not implemented; verified account identity remains available through existing account settings. YouTube playback progress is not tracked; native video saves progress when paused/ended. Microphone permissions and device recording require a real supported browser/device. Existing regression tests cover backup, source isolation and OCR/provider fixtures; the new browser check does not repeat every prior full backup/media journey. No production deployment was performed.
