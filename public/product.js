@@ -1130,6 +1130,7 @@
       event.preventDefault();
       const data = new FormData(form);
       profile = {
+        ...profile,
         name: data.get('name').trim(),
         education: data.get('education').trim(),
         subject: data.get('subject').trim(),

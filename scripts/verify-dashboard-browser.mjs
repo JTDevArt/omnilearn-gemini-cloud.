@@ -19,6 +19,20 @@ try {
   await page.getByRole("heading", { name: "Biologi", exact: true }).waitFor();
   await page.reload();
   await page.getByRole("heading", { name: "Biologi", exact: true }).waitFor();
+  // Legacy preference edits must preserve fields owned by newer dashboard views.
+  await page.evaluate(() => {
+    window.OmniProduct.updateDashboard(state => { state.profile.language = 'en'; });
+    window.OmniProduct.navigate('settings');
+  });
+  await page.locator('.profile-form input[name="name"]').fill('Audit learner');
+  await page.getByRole('button', {name: 'Simpan preferensi', exact: true}).click();
+  await page.evaluate(() => window.OmniLocalLibrary.flush());
+  await page.reload();
+  await page.locator('.profile-form').waitFor();
+  const savedProfile = await page.evaluate(() => window.OmniProduct.snapshot().profile);
+  assert.deepEqual(savedProfile.subjects, ['Biologi']);
+  assert.equal(savedProfile.language, 'en');
+  assert.equal(savedProfile.name, 'Audit learner');
   await page.evaluate(() => {
     window.OmniProduct.addSource({
       name: "Biologi <script>.txt",
@@ -41,7 +55,7 @@ try {
       (value) => window.OmniTheme.setPreference(value),
       theme,
     );
-    for (const width of [1440, 1280, 768, 390, 360]) {
+    for (const width of [1440, 1280, 1024, 768, 390, 360]) {
       await page.setViewportSize({ width, height: 900 });
       await page.goto(`${base}/dashboard`);
       await page.locator(".master-composer").waitFor();
@@ -128,7 +142,7 @@ try {
   await page.locator(".workspace #chatMessages").waitFor();
   assert.deepEqual(errors, []);
   console.log(
-    "Dashboard browser checks passed: subjects/pins persistence, escaped source titles, 10 viewport/theme combinations, drawer, unavailable-provider conversation, main and legacy routes.",
+    "Dashboard browser checks passed: subjects/pins and legacy preferences persistence, escaped source titles, 12 viewport/theme combinations, drawer, unavailable-provider conversation, main and legacy routes.",
   );
 } finally {
   await browser.close();
