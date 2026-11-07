@@ -19,6 +19,7 @@ import {
   mergeImported,
   restoredSource,
   sha256,
+  validateLibrary,
 } from '../public/backup-format.js';
 import { BoundedWorkQueue } from '../lib/work-queue.js';
 test('file decoding queue bounds concurrent work and queued buffers', async () => {
@@ -58,6 +59,16 @@ const library = {
   activity: { events: [] },
   stickyNotes: [],
 };
+test('library validation rejects malformed dashboard fields and retains older optional data', () => {
+  for (const profile of [{ subjects: 42 }, { subjects: [null] }, { language: {} }, { name: [] }])
+    assert.throws(() => validateLibrary({ ...library, profile }), /valid/);
+  for (const extra of [{ pinned: 'yes' }, { hasOriginal: 1 }, { meta: [] }, { createdAt: -1 }])
+    assert.throws(() => validateLibrary({ ...library, sources: [{ ...source, ...extra }] }), /valid/);
+  assert.throws(() => validateLibrary({ ...library, pendingTasks: [{id:'1', route:'/api/delete', body:{}}] }), /valid/);
+  const legacy = { ...library, profile: { customPreference: { keep: true } } };
+  assert.deepEqual(validateLibrary(legacy), legacy);
+  assert.notEqual(validateLibrary(legacy).sources[0], legacy.sources[0]);
+});
 test('mindmap preserves hierarchy and removes incident edges on subtree deletion', () => {
   let graph = graphFromMap({
     centralTopic: 'Circle',

@@ -64,6 +64,14 @@ export function validateLibrary(raw) {
         (typeof s[key] !== 'string' || s[key].length > 1000000)
       )
         throw new Error('Catatan sumber tidak valid.');
+    for (const key of ['pinned', 'hasOriginal'])
+      if (s[key] !== undefined && typeof s[key] !== 'boolean')
+        throw new Error('Status sumber tidak valid.');
+    if (s.meta !== undefined && !object(s.meta))
+      throw new Error('Metadata sumber tidak valid.');
+    for (const key of ['createdAt', 'updatedAt'])
+      if (s[key] !== undefined && (!Number.isFinite(s[key]) || s[key] < 0))
+        throw new Error('Tanggal sumber tidak valid.');
     if (
       s.chat !== undefined &&
       (!Array.isArray(s.chat) ||
@@ -160,6 +168,20 @@ export function validateLibrary(raw) {
   raw.sources.forEach((s) => source(s));
   if (raw.profile !== undefined && !object(raw.profile))
     throw new Error('Profil tidak valid.');
+  if (raw.profile) {
+    for (const key of ['name', 'education', 'subject', 'goal', 'teachingMode', 'language'])
+      if (raw.profile[key] !== undefined &&
+          (typeof raw.profile[key] !== 'string' || raw.profile[key].length > 1000))
+        throw new Error('Preferensi profil tidak valid.');
+    if (raw.profile.subjects !== undefined &&
+        (!Array.isArray(raw.profile.subjects) || raw.profile.subjects.length > 1000 ||
+         raw.profile.subjects.some(s => typeof s !== 'string' || s.length > 100)))
+      throw new Error('Daftar mata pelajaran tidak valid.');
+  }
+  if (raw.pendingTasks !== undefined && (!Array.isArray(raw.pendingTasks) ||
+      raw.pendingTasks.some(task => !object(task) || typeof task.id !== 'string' ||
+        !['/api/chat', '/api/study'].includes(task.route) || !object(task.body))))
+    throw new Error('Permintaan tersimpan tidak valid.');
   if (
     raw.activity !== undefined &&
     (!object(raw.activity) || !Array.isArray(raw.activity.events))

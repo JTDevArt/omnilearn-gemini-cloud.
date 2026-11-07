@@ -71,6 +71,24 @@
       host.append(node);
       return node;
     };
+    const saveStatus = document.createElement('p');
+    saveStatus.setAttribute('role', 'status');
+    host.append(saveStatus);
+    let saving = false;
+    async function commit(mutator, onSaved = () => {}) {
+      if (saving) return;
+      saving = true;
+      saveStatus.textContent = 'Menyimpan di perangkat…';
+      try {
+        await api.updateDashboard(mutator);
+        saveStatus.textContent = 'Tersimpan di perangkat.';
+        if (host.dashboardRenderId === renderId) await onSaved();
+      } catch (error) {
+        saveStatus.textContent = 'Belum tersimpan di perangkat. ' + error.message;
+      } finally { saving = false; }
+    }
+    const subjectNames = value => Array.isArray(value)
+      ? value.filter(name => typeof name === 'string') : [];
     function library(pinned = false) {
       const node = section(
         pinned ? "Materi disematkan" : "Catatan",
@@ -125,13 +143,14 @@
           api.navigate("notes");
         }
         if (b.dataset.pinId) {
-          api.updateDashboard((s) => {
+          commit((s) => {
             const item = s.sources.find((x) => x.id === b.dataset.pinId);
             item.pinned = !item.pinned;
+          }, () => {
+            const item = sources.find((x) => x.id === b.dataset.pinId);
+            item.pinned = api.getSource(item.id).pinned;
+            draw();
           });
-          const item = sources.find((x) => x.id === b.dataset.pinId);
-          item.pinned = !item.pinned;
-          draw();
         }
       };
       draw();
@@ -209,7 +228,7 @@
     if (view === "subjects") {
       const names = [
         ...new Set([
-          ...(profile.subjects || []),
+          ...subjectNames(profile.subjects),
           ...sources.map((s) => s.subject).filter(Boolean),
         ]),
       ];
@@ -218,10 +237,12 @@
         `<form><label>Nama mata pelajaran <input name="subject" required maxlength="100"></label><button>Tambah</button></form><input class="subject-search" placeholder="Cari mata pelajaran" aria-label="Cari mata pelajaran"><div class="subject-items">${names.map((name, i) => `<article class="master-subject" data-name="${escape(name.toLowerCase())}"><h3>${escape(name)}</h3><p>${sources.filter((s) => s.subject === name).length} materi</p><form data-index="${i}"><label>Ubah nama <input name="subject" value="${escape(name)}" required maxlength="100"></label><button>Simpan</button><button type="button" data-delete="${i}">Hapus</button></form></article>`).join("") || "<p>Belum ada mata pelajaran.</p>"}</div>`,
       );
       function change(old, name) {
-        api.updateDashboard((s) => {
+        commit((s) => {
+          if (s.profile.subjects !== undefined && !Array.isArray(s.profile.subjects))
+            s.profile.legacySubjects = s.profile.subjects;
           s.profile.subjects = [
             ...new Set(
-              [...(s.profile.subjects || []), ...names]
+              [...subjectNames(s.profile.subjects), ...names]
                 .filter((x) => x !== old)
                 .concat(name ? [name] : []),
             ),
@@ -229,8 +250,7 @@
           s.sources.forEach((x) => {
             if (x.subject === old) x.subject = name;
           });
-        });
-        render(host, view, api);
+        }, () => render(host, view, api));
       }
       node.onsubmit = (e) => {
         e.preventDefault();
@@ -267,11 +287,10 @@
           .join("") || "<p>Unggah materi terlebih dahulu.</p>",
       ).onchange = (e) => {
         if (e.target.dataset.assign)
-          api.updateDashboard((s) => {
+          commit((s) => {
             s.sources.find((x) => x.id === e.target.dataset.assign).subject =
               e.target.value;
-          });
-        render(host, view, api);
+          }, () => render(host, view, api));
       };
     }
     if (view === "streaks") {
@@ -325,14 +344,15 @@
       preferences.querySelector("select").value = profile.language || "auto";
       preferences.onsubmit = (e) => {
         e.preventDefault();
-        api.updateDashboard((s) => {
+        commit((s) => {
           s.profile.name = e.target.elements.name.value.trim();
           s.profile.language = e.target.elements.language.value;
+        }, () => {
+          e.target.querySelector('[role=status]').textContent = 'Preferensi tersimpan di pustaka perangkat.';
         });
         const language = document.querySelector("#outputLanguage");
         if (language) language.value = e.target.elements.language.value;
-        e.target.querySelector("[role=status]").textContent =
-          "Preferensi tersimpan di pustaka perangkat.";
+        e.target.querySelector('[role=status]').textContent = '';
       };
       const identity = section("Identitas akun", "<p>Memeriksa akun…</p>");
       try {

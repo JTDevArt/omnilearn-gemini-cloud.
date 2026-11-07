@@ -181,6 +181,13 @@
     source.analysisSchema = 'forge-1';
   }
   let durableWrite = Promise.resolve();
+  let pendingWrites = 0, saveSequence = 0, unsavedChanges = false;
+  window.addEventListener('beforeunload', event => {
+    if (pendingWrites || unsavedChanges) {
+      event.preventDefault();
+      event.returnValue = '';
+    }
+  });
   const snapshot = () => ({
     schemaVersion: 1,
     clearedAt: libraryEpoch,
@@ -195,7 +202,19 @@
   function saveDurable() {
     if (!durableAvailable)
       return Promise.reject(new Error('Penyimpanan perangkat tidak tersedia.'));
-    durableWrite = window.OmniLocalLibrary.save(snapshot());
+    const sequence = ++saveSequence;
+    pendingWrites++;
+    unsavedChanges = true;
+    const copy = structuredClone(snapshot());
+    durableWrite = Promise.resolve().then(() => window.OmniLocalLibrary.save(copy));
+    // Capture immediately: subsequent edits must not change this transaction's value.
+    durableWrite = Promise.resolve(durableWrite).then(() => {
+      pendingWrites--;
+      if (sequence === saveSequence) unsavedChanges = false;
+    }, error => {
+      pendingWrites--;
+      throw error;
+    });
     durableWrite.catch((error) => toast(error.message));
     return durableWrite;
   }
@@ -239,6 +258,7 @@
   sidebar.querySelector('#shellLayout').onclick = () => navigate(current === 'learn' ? 'dashboard' : 'learn');
   sidebar.querySelector('#shellLogout').onclick = async () => {
     try {
+      await persistAsync();
       await safeRequestJson('/api/account/logout', {method:'POST'}, {stageContext:'logout'});
       location.reload();
     } catch (error) { toast(error.message); }
@@ -308,6 +328,7 @@
     }
   });
   const persist = () => {
+    unsavedChanges = true;
     if (durableAvailable) saveDurable();
     window.OmniAccounts?.changed();
     try {
@@ -320,6 +341,10 @@
       );
       return false;
     }
+  };
+  const persistAsync = () => {
+    persist();
+    return durableAvailable ? durableWrite : Promise.reject(new Error('Belum tersimpan di perangkat. Ekspor cadangan sebelum menutup tab.'));
   };
   const html = escapeHtml;
   function capture() {
@@ -440,7 +465,9 @@
     getSource: id => sources.find(source => source.id === id),
     openTranscript: () => transcriptView(),
     selectSource,
-    updateDashboard(mutator) { mutator({sources, profile}); persist(); },
+    updateDashboard(mutator) { mutator({sources, profile}); return persistAsync(); },
+    persistAsync,
+    storageStatus: () => ({pendingWrites, unsavedChanges}),
     openRecorder(button) { return recordAudio(button); },
     mountDashboardChat(host) { host.append(chatMessages, chatFeedback); },
     submitDashboardChat(message) {
@@ -556,6 +583,8 @@
         throw new Error('Tunggu proses saat ini sebelum mengubah pustaka.');
       setBusy(true);
       try {
+        const { validateLibrary } = await import('/backup-format.js');
+        next = validateLibrary(next);
         await window.OmniLocalLibrary.importData(
           { ...next, clearedAt: libraryEpoch },
           files
@@ -631,7 +660,7 @@
       try {
         await window.OmniLocalLibrary.saveFile(source.id, source.version, file);
         source.hasOriginal = true;
-        persist();
+        await persistAsync();
       } catch {
         toast(
           'Teks tersimpan; file asli belum tersimpan. Periksa kapasitas perangkat.'
@@ -1126,7 +1155,7 @@
     panel.prepend(form);
     form.elements.teachingMode.value = profile.teachingMode || 'standard';
     form.elements.theme.value = window.OmniTheme?.getPreference() || 'system';
-    form.onsubmit = (event) => {
+    form.onsubmit = async (event) => {
       event.preventDefault();
       const data = new FormData(form);
       profile = {
@@ -1147,10 +1176,10 @@
       teaching.value = profile.teachingMode;
       teaching.dispatchEvent(new Event('change', { bubbles: true }));
       window.OmniTheme?.setPreference(data.get('theme'));
-      persist();
-      form.querySelector('[data-profile-status]').textContent = saved
-        ? 'Preferensi disimpan untuk sesi ini.'
-        : 'Preferensi berlaku sementara dan belum tersimpan.';
+      const status = form.querySelector('[data-profile-status]');
+      status.textContent = 'Menyimpan…';
+      try { await persistAsync(); status.textContent = 'Preferensi tersimpan di perangkat.'; }
+      catch (error) { status.textContent = 'Belum tersimpan di perangkat. ' + error.message; }
     };
   }
   function podcastView() {
@@ -1672,13 +1701,27 @@
       }
       if (button.dataset.action === 'delete') {
         if (busy || uploadInFlight) return;
+        if (!confirm('Hapus materi ini dan file aslinya? Ekspor cadangan jika masih diperlukan.')) return;
+        setBusy(true);
+        try {
+        const previous = sources;
         sources = sources.filter((s) => s.id !== id);
-        window.OmniLocalLibrary.deleteSourceFiles(id).catch((error) =>
-          toast(error.message)
-        );
-        persist();
-        if (id === materialId) $('clearChat').click();
+        try { await persistAsync(); }
+        catch (error) {
+          sources = previous;
+          try { sessionStorage.setItem(key, JSON.stringify(sources)); } catch {}
+          toast('Penghapusan dibatalkan. ' + error.message); return;
+        }
+        if (id === materialId) {
+          materialId = ''; materialName = ''; materialText = ''; materialMeta = null;
+          chatHistory = freeChat; chatMessages.replaceChildren();
+          for (const message of freeChat) addMessage(message.role, message.content);
+          saveSessionState(); renderMaterialBadgeAndSidebar();
+          window.OmniProductSourceChange?.();
+        }
+        await window.OmniLocalLibrary.deleteSourceFiles(id).catch(error => toast(error.message));
         sourcesView(current === 'learn');
+        } finally { setBusy(false); }
       } else if (selectSource(id)) navigate(button.dataset.action);
     }
     if (

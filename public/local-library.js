@@ -16,7 +16,12 @@
         request.result.createObjectStore('state');
         request.result.createObjectStore('files');
       };
-      request.onsuccess = () => resolve(request.result);
+      request.onsuccess = () => {
+        const db = request.result;
+        db.onversionchange = () => { db.close(); database = undefined; };
+        db.onclose = () => { database = undefined; };
+        resolve(db);
+      };
       request.onerror = () => reject(request.error);
       request.onblocked = () =>
         reject(
@@ -40,8 +45,8 @@
     async setNamespace(owner = 'guest') {
       if (!/^[\w-]{1,128}$/.test(owner))
         throw new Error('Identitas pustaka tidak valid.');
+      return enqueue(async () => {
       if (owner === namespace) return;
-      await queue.catch(() => {});
       if (database) {
         try {
           (await database).close();
@@ -50,12 +55,13 @@
       database = undefined;
       revision = 0;
       namespace = owner;
+      });
     },
-    async load() {
+    load() { return enqueue(async () => {
       const saved = await read('state', 'library');
       revision = saved?.revision || 0;
       return saved?.value || null;
-    },
+    }); },
     save(value) {
       const copy = structuredClone(value);
       return enqueue(async () => {
@@ -142,8 +148,8 @@
       });
     },
     readFile: (sourceId, version = 1) =>
-      read('files', `${sourceId}:${version}`),
-    readRollback: () => read('state', 'before-import'),
+      enqueue(() => read('files', `${sourceId}:${version}`)),
+    readRollback: () => enqueue(() => read('state', 'before-import')),
     deleteSourceFiles(sourceId) {
       return enqueue(async () => {
         const db = await open();
