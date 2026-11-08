@@ -54,7 +54,7 @@
     }
     badge.textContent = `${profile.name || "Profil"} · Level ${summary.level} · ${summary.xp} XP · ${summary.streak} hari`;
     const title = {
-      dashboard: "Mau belajar apa hari ini?",
+      dashboard: "Mulai belajar dari mana hari ini?",
       subjects: "Mata Pelajaran",
       streaks: "Streak & Aktivitas",
       leaderboard: "Leaderboard",
@@ -92,7 +92,7 @@
     function library(pinned = false) {
       const node = section(
         pinned ? "Materi disematkan" : "Catatan",
-        `<div class="master-filters"><input type="search" aria-label="Cari catatan" placeholder="Cari catatan…"><select aria-label="Format catatan"><option value="all">Semua</option><option value="document">Dokumen</option><option value="slide">Slide</option><option value="audio">Audio</option><option value="youtube">YouTube</option></select><select aria-label="Mata pelajaran"><option value="">Semua pelajaran</option>${[...new Set(sources.map((s) => s.subject).filter(Boolean))].map((s) => `<option>${escape(s)}</option>`).join("")}</select><select aria-label="Urutan"><option value="new">Terbaru</option><option value="old">Terlama</option></select><button data-layout="grid" aria-pressed="true">Galeri</button><button data-layout="list" aria-pressed="false">Daftar</button></div><div class="master-library"></div>`,
+        `<div class="master-filters"><input type="search" aria-label="Cari catatan" placeholder="Cari catatan…"><select aria-label="Format catatan"><option value="all">Semua</option><option value="document">Dokumen</option><option value="slide">Slide</option><option value="audio">Audio</option><option value="video">Video</option><option value="youtube">YouTube</option></select><select aria-label="Mata pelajaran"><option value="">Semua pelajaran</option>${[...new Set(sources.map((s) => s.subject).filter(Boolean))].map((s) => `<option>${escape(s)}</option>`).join("")}</select><select aria-label="Urutan"><option value="new">Terbaru</option><option value="old">Terlama</option></select><button data-layout="grid" aria-pressed="true">Galeri</button><button data-layout="list" aria-pressed="false">Daftar</button></div><div class="master-library"></div>`,
       );
       const [search, type, subject, sort] =
           node.querySelectorAll("input,select"),
@@ -102,7 +102,9 @@
           ? "youtube"
           : /pptx/.test(s.name)
             ? "slide"
-            : /audio/.test(s.meta?.extractionMode || "")
+            : /video/.test(s.meta?.extractionMode || "")
+              ? "video"
+              : /audio/.test(s.meta?.extractionMode || "")
               ? "audio"
               : "document";
       function draw() {
@@ -156,9 +158,13 @@
       draw();
     }
     if (view === "dashboard") {
+      const hour = new Date().getHours();
+      const greeting = document.createElement('p');
+      greeting.textContent = `Selamat ${hour < 11 ? 'pagi' : hour < 15 ? 'siang' : hour < 18 ? 'sore' : 'malam'}, ${profile.name || 'teman belajar'}. ${sources.length} materi tersimpan · ${summary.streak} hari streak.`;
+      host.append(greeting);
       const chat = section(
         "Tanya, pahami, lanjutkan",
-        `<form class="master-composer"><textarea aria-label="Pertanyaan untuk tutor" placeholder="Rangkum bab, jelaskan konsep, atau buat pelajaran dari materi apa pun..." required maxlength="12000"></textarea><div class="panel-actions"><button type="button" data-record-audio>● Rekam</button><button type="button" data-upload>＋ Unggah</button><button type="button" data-open="sources">▶ YouTube</button><button class="primary" type="submit">Kirim ↑</button></div><span id="recordStatus" role="status"></span></form>`,
+        `<form class="master-composer"><textarea aria-label="Pertanyaan untuk tutor" placeholder="Rangkum bab, jelaskan konsep, atau buat pelajaran dari materi apa pun..." required maxlength="12000"></textarea><div class="panel-actions"><button type="button" data-record-audio>● Rekam</button><button type="button" data-upload>＋ Unggah</button><button type="button" data-paste-material>Tempel materi</button><button type="button" data-open="sources">▶ YouTube</button><button class="primary" type="submit">Kirim ↑</button></div><span id="recordStatus" role="status"></span></form>`,
       );
       chat.querySelector("form").onsubmit = (e) => {
         e.preventDefault();
@@ -173,8 +179,35 @@
       const youtube = chat.querySelector('[data-open="sources"]');
       delete youtube.dataset.open;
       youtube.setAttribute("data-transcript", "");
+      chat.querySelector('[data-paste-material]').onclick = () => {
+        const dialog = document.createElement('dialog');
+        dialog.innerHTML = '<form><h2>Tempel materi</h2><label>Judul<input name="title" required maxlength="200"></label><label>Teks sumber<textarea name="text" required minlength="20" maxlength="50000"></textarea></label><p role="status"></p><div class="panel-actions"><button type="submit">Simpan materi</button><button type="button">Batal</button></div></form>';
+        document.body.append(dialog); dialog.showModal();
+        dialog.onclose = () => dialog.remove();
+        dialog.querySelector('[type=button]').onclick = () => dialog.close();
+        dialog.querySelector('form').onsubmit = async event => {
+          event.preventDefault();
+          const button = dialog.querySelector('[type=submit]'); button.disabled = true;
+          try {
+            if (!dialog.dataset.sourceId) {
+              const source = api.addSource({name: dialog.querySelector('[name=title]').value.trim(), text: dialog.querySelector('[name=text]').value.trim(), meta: {extractionMode:'paste'}});
+              dialog.dataset.sourceId = source.id;
+            }
+            await api.persistAsync(); dialog.close(); api.navigate('dashboard');
+          } catch (error) { dialog.querySelector('[role=status]').textContent = error.message; button.disabled = false; }
+        };
+      };
       api.mountDashboardChat(chat);
       host.insertAdjacentHTML("beforeend", stats);
+      const recent = [...sources].filter(s => s.text?.trim()).sort((a,b) => (b.lastOpenedAt || b.createdAt) - (a.lastOpenedAt || a.createdAt)).slice(0,4);
+      const continuation = section('Lanjutkan belajar', recent.length ? `<div class="master-library">${recent.map(s => {
+        const chapters = s.journey?.chapters || [];
+        const done = chapters.filter(c => s.completedChapters?.includes(c.id)).length;
+        return `<article class="master-note"><h3>${escape(s.name)}</h3><p>${escape(s.subject || 'Tanpa pelajaran')}</p><p>${chapters.length ? `${done}/${chapters.length} bab ditandai selesai` : 'Belum ada jalur belajar'}</p>${chapters.length ? `<progress aria-label="Progres ${escape(s.name)}" max="${chapters.length}" value="${done}"></progress>` : ''}<button data-resume="${escape(s.id)}">Lanjutkan belajar</button></article>`;
+      }).join('')}</div>` : '<p class="master-empty">Unggah atau tempel materi untuk memulai pelajaran pertama.</p>');
+      continuation.onclick = event => { const id = event.target.closest('[data-resume]')?.dataset.resume; if (id && api.selectSource(id)) api.navigate('journey'); };
+      const timer = section('Timer fokus', '<div class="focus-timer"></div>');
+      import('./focus-timer.js').then(({mountTimer}) => { if (timer.isConnected) mountTimer(timer.querySelector('.focus-timer'),api); });
       const video = section(
         "Lanjutkan dari video",
         `<p>Video, transkrip, dan ide penting dalam satu tempat.</p><div class="panel-actions"><button data-upload>Unggah video</button>${action("YouTube & transkrip", "sources")}</div><div class="master-video"></div>`,

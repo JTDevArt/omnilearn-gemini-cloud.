@@ -32,7 +32,7 @@ export async function renderVideo(host, api) {
       const id = youtubeId(url);
       frame = el('iframe');
       frame.title = source.name;
-      frame.src = `https://www.youtube-nocookie.com/embed/${id}?enablejsapi=1&origin=${encodeURIComponent(location.origin)}`;
+      frame.src = `https://www.youtube-nocookie.com/embed/${id}?enablejsapi=1&start=${Math.floor(Number(source.meta?.watchSeconds) || 0)}&origin=${encodeURIComponent(location.origin)}`;
       frame.allow = 'fullscreen; encrypted-media; picture-in-picture';
       frame.allowFullscreen = true;
       frame.referrerPolicy = 'strict-origin-when-cross-origin';
@@ -45,10 +45,9 @@ export async function renderVideo(host, api) {
     source.hasOriginal &&
     /video/.test(source.meta?.extractionMode || '')
   ) {
-    const file = await window.OmniLocalLibrary.readFile(
-      source.id,
-      source.version
-    );
+    let file;
+    try { file = await window.OmniLocalLibrary.readFile(source.id, source.version); }
+    catch (error) { status.textContent = 'File video belum dapat dibuka: ' + error.message; }
     if (!heading.isConnected) return;
     if (file) {
       player = el('video');
@@ -57,6 +56,8 @@ export async function renderVideo(host, api) {
       player.playsInline = true;
       objectUrl = URL.createObjectURL(file);
       player.src = objectUrl;
+      const poster = source.meta?.videoScenes?.[0]?.thumbnail;
+      if (typeof poster === 'string' && /^data:image\/jpeg;base64,[\w+/=]+$/.test(poster) && poster.length < 150000) player.poster = poster;
       player.onerror = () =>
         (status.textContent = 'Format video tidak didukung browser ini.');
       host.append(player);
@@ -161,23 +162,38 @@ export async function renderVideo(host, api) {
     }
   };
   render();
-  if (player) {
+  let videoMessage, listenInterval;
+  if (player || frame) {
     const progress = el('p');
     progress.setAttribute('role', 'status');
     const resume = el('button', 'Lanjutkan menonton');
     resume.onclick = () => seek(Number(source.meta?.watchSeconds) || 0);
     host.append(progress, resume);
-    player.addEventListener('timeupdate', () => {
-      progress.textContent = `${timeLabel(player.currentTime)} / ${Number.isFinite(player.duration) ? timeLabel(player.duration) : '—'}`;
-    });
-    const saveProgress = () => {
+    let lastSave = 0;
+    const updateProgress = (seconds, duration, force = false) => {
+      if (!Number.isFinite(seconds) || seconds < 0) return;
+      progress.textContent = `${timeLabel(seconds)} / ${Number.isFinite(duration) ? timeLabel(duration) : '—'}`;
       source.meta ||= {};
-      source.meta.watchSeconds = player.currentTime;
-      source.meta.watchDuration = Number.isFinite(player.duration) ? player.duration : null;
-      api.persist();
+      source.meta.watchSeconds = seconds;
+      source.meta.watchDuration = Number.isFinite(duration) ? duration : null;
+      if (force || Date.now() - lastSave > 5000) { api.persist(); lastSave = Date.now(); }
     };
-    player.addEventListener('pause', saveProgress);
-    player.addEventListener('ended', saveProgress);
+    progress.textContent = `Tersimpan: ${timeLabel(Number(source.meta?.watchSeconds) || 0)}`;
+    if (player) {
+      player.addEventListener('timeupdate', () => updateProgress(player.currentTime, player.duration));
+      player.addEventListener('pause', () => updateProgress(player.currentTime, player.duration, true));
+      player.addEventListener('ended', () => updateProgress(player.currentTime, player.duration, true));
+    } else {
+      videoMessage = event => {
+        if (event.origin !== 'https://www.youtube-nocookie.com' || event.source !== frame.contentWindow) return;
+        let data;
+        try { data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data; } catch { return; }
+        if (data?.event === 'infoDelivery' && typeof data.info?.currentTime === 'number')
+          updateProgress(data.info.currentTime, data.info.duration);
+      };
+      window.addEventListener('message', videoMessage);
+      listenInterval = setInterval(() => frame.contentWindow?.postMessage(JSON.stringify({event:'listening',id:source.id}), 'https://www.youtube-nocookie.com'), 1000);
+    }
   }
   if (player) {
     const scan = el('button', 'Cari perubahan visual tersampel'),
@@ -236,13 +252,16 @@ export async function renderVideo(host, api) {
   }
   host.append(learning);
   const observer = new MutationObserver(() => {
-    if (!player?.isConnected && objectUrl) {
-      player.pause();
-      URL.revokeObjectURL(objectUrl);
+    if (!heading.isConnected) {
+      player?.pause();
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+      if (videoMessage) window.removeEventListener('message', videoMessage);
+      clearInterval(listenInterval);
+      api.persist();
       observer.disconnect();
     }
   });
-  if (player)
+  if (player || frame)
     observer.observe(document.body, { childList: true, subtree: true });
 }
 window.OmniVideo = { render: renderVideo };
