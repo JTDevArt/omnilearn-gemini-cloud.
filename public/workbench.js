@@ -174,8 +174,8 @@
     const save = () => {
       try {
         const result = options.onSave?.(notes.map(note => ({...note})));
-        Promise.resolve(result).catch(() => { status.textContent = 'Belum tersimpan. Salin catatan penting sebelum meninggalkan halaman.'; });
-        status.textContent = `${notes.length} catatan · sesi tab ini`;
+        status.textContent = 'Menyimpan…';
+        Promise.resolve(result).then(() => { status.textContent = `${notes.length} catatan · tersimpan di perangkat`; }).catch(() => { status.textContent = 'Belum tersimpan. Salin catatan penting sebelum meninggalkan halaman.'; });
       } catch { status.textContent = 'Belum tersimpan. Salin catatan penting sebelum meninggalkan halaman.'; }
     };
     const addCard = note => {
@@ -199,7 +199,7 @@
       button('Ekspor catatan', () => download(notes.map((note,i) => `## Catatan ${i + 1}\n\n${note.text}`).join('\n\n'), 'omnilearn-tempel.md', 'text/markdown;charset=utf-8')));
     root.append(actions, grid, status); panel.append(root);
     notes.forEach(addCard);
-    status.textContent = notes.length ? `${notes.length} catatan · sesi tab ini` : 'Mulai dengan satu ide yang ingin kamu ingat.';
+    status.textContent = notes.length ? `${notes.length} catatan tersimpan` : 'Mulai dengan satu ide yang ingin kamu ingat.';
     return {getNotes: () => notes.map(note => ({...note})), destroy() {}};
   }
 
@@ -207,6 +207,12 @@
     let cards = (Array.isArray(options.cards) ? options.cards : []).filter(card => card && typeof card.front === 'string' && typeof card.back === 'string').map(card => ({...card}));
     let reviews = {...(options.reviews || {})};
     let order = cards.map((_,i) => i), cursor = 0, flipped = false, dueOnly = false, scheduler, disposed = false;
+    const saved = options.session;
+    const cardKeys = cards.map(card=>JSON.stringify([card.front,card.back]));
+    const canRestore = saved && JSON.stringify(saved.cardKeys) === JSON.stringify(cardKeys) && Array.isArray(saved.order) && new Set(saved.order).size === saved.order.length && saved.order.every(i=>Number.isInteger(i) && i>=0 && i<cards.length);
+    if (canRestore) { order=[...saved.order];cursor=Math.max(0,Math.min(Number(saved.cursor)||0,order.length));dueOnly=!!saved.dueOnly; }
+    let ready = false;
+    const saveSession = () => { if (ready) options.onSessionChange?.({cardKeys:cards.map(card=>JSON.stringify([card.front,card.back])),order:[...order],cursor,flipped,dueOnly}); };
     host.replaceChildren();
     const root = element('section', 'omni-flashcards'); root.tabIndex = -1;
     const header = element('div', 'omni-wb-heading');
@@ -243,6 +249,7 @@
     };
     const draw = () => {
       flipped = false; cardArea.classList.remove('is-flipped'); cardArea.setAttribute('aria-pressed','false');
+      saveSession();
       const card = currentCard();
       stage.hidden = !card;
       drawStats();
@@ -261,6 +268,7 @@
       front.setAttribute('aria-hidden',String(flipped)); back.setAttribute('aria-hidden',String(!flipped));
       flip.textContent = flipped ? 'Lihat pertanyaan' : 'Balik kartu';
       gradeButtons.forEach(node => node.disabled = !flipped || !scheduler);
+      saveSession();
     };
     const grade = value => {
       const card = currentCard(); if (!card || !flipped || !scheduler) return;
@@ -341,7 +349,8 @@
       if(index>=0 && flipped){event.preventDefault();grade(['again','hard','good','easy'][index]);}
     };
     root.addEventListener('keydown',keyboard);
-    draw();
+    draw(); ready = true;
+    if (canRestore && saved.flipped) flipCard();
     import('/review-scheduler.js').then(module=>{
       if(disposed)return;
       scheduler=module;drawStats();

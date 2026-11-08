@@ -107,6 +107,7 @@
       materialText = '';
       materialName = '';
       materialId = '';
+      $('retryChat').hidden = true;
       materialMeta = null;
       chatHistory = [];
       chatMessages.replaceChildren();
@@ -320,6 +321,7 @@
   quizType.innerHTML =
     '<option value="multiple">Pilihan ganda</option><option value="truefalse">Benar / salah</option><option value="blanks">Isian singkat</option><option value="ordering">Urutan</option><option value="matching">Pasangan</option>';
   document.querySelector('#quizOptions').prepend(quizType);
+  quizType.addEventListener('change', () => { if (activeTab === 'quiz' && !busy && !uploadInFlight) runTool('quiz', '', false); });
   const optionIds = [
     'summaryStyle',
     'quizDifficulty',
@@ -469,6 +471,8 @@
     window.OmniWorkbench.installFlashcards(toolOutput, {
       cards: source?.deck || (freeDeck.length && freeDeck) || cards,
       reviews: source?.reviews || freeReviews,
+      session: source?.reviewSession,
+      onSessionChange(session) { if (source) { source.reviewSession = session; persist(); } },
       onCardsChange(updated) {
         if (source) source.deck = updated;
         else freeDeck = updated;
@@ -497,7 +501,7 @@
     persistAsync,
     storageStatus: () => ({pendingWrites, unsavedChanges}),
     openRecorder(button) { return recordAudio(button); },
-    mountDashboardChat(host) { host.append(chatMessages, chatFeedback); },
+    mountDashboardChat(host) { host.append(chatMessages, chatFeedback, $('chatRequestActions')); },
     submitDashboardChat(message) {
       if (isConceptMapCommand(message)) navigate('chat');
       chatInput.value = message;
@@ -780,6 +784,7 @@
     cancelActiveStudyRequest();
     materialVersion++;
     tabViewCache.clear();
+    $('retryChat').hidden = true;
     materialText = source.text;
     materialName = source.name;
     materialId = source.id;
@@ -889,6 +894,10 @@
           'blueprintLanguage',
           'generated',
           'journey',
+          'journeyOriginal',
+          'practiceDrafts',
+          'reviewSession',
+          'podcastText',
           'activeChapter',
           'completedChapters',
           'deck',
@@ -1249,12 +1258,22 @@
       catch (error) { status.textContent = 'Belum tersimpan di perangkat. ' + error.message; }
     };
   }
+  let disposePodcast = () => {};
   function podcastView() {
+    disposePodcast();
+    const source = sources.find(s => s.id === materialId);
     panel.innerHTML =
       '<h1>Dengarkan catatanmu</h1><p>Buat audio yang bisa diputar dan diunduh. Maksimal 6.000 karakter per proses.</p><textarea id="spokenText" aria-label="Teks yang dibacakan" placeholder="Tempel catatan atau ambil hasil AI terakhir…"></textarea><div class="panel-actions"><button data-spoken-last>Ambil hasil AI</button><button data-generate-audio>Buat audio</button><button data-speak>▶ Baca di perangkat</button><button data-pause>Jeda / lanjut</button><button data-stop>Berhenti</button></div><audio controls data-generated-audio hidden></audio><a data-audio-download hidden>Unduh audio WAV</a><p id="speechStatus" role="status"></p>';
     const audio = panel.querySelector('[data-generated-audio]');
     const download = panel.querySelector('[data-audio-download]');
     let audioUrl;
+    const speechAbort = new AbortController();
+    const cleanup = new MutationObserver(() => { if (!audio.isConnected) disposePodcast(); });
+    disposePodcast = () => {
+      speechAbort.abort(); audio.pause(); if (audioUrl) URL.revokeObjectURL(audioUrl);
+      window.speechSynthesis?.cancel(); cleanup.disconnect();
+    };
+    cleanup.observe(panel,{childList:true,subtree:true});
     panel
       .querySelector('[data-generate-audio]')
       .addEventListener('click', async (event) => {
@@ -1275,7 +1294,7 @@
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ text }),
             },
-            { timeoutMs: 50000, stageContext: 'speech' }
+            { timeoutMs: 50000, stageContext: 'speech', externalSignal: speechAbort.signal }
           );
           const bytes = Uint8Array.from(atob(response.audioBase64), (char) =>
             char.charCodeAt(0)
@@ -1297,7 +1316,10 @@
           button.disabled = false;
         }
       });
-    panel.querySelector('#spokenText').value = lastOutput || '';
+    const spoken = panel.querySelector('#spokenText');
+    spoken.maxLength = 6000;
+    spoken.value = source?.podcastText ?? (source?.notes || lastOutput || source?.text || profile.freePodcastText || '').slice(0,6000);
+    spoken.oninput = () => { if (source) source.podcastText = spoken.value; else profile.freePodcastText = spoken.value; persist(); };
     if (!('speechSynthesis' in window)) {
       panel.querySelector('#speechStatus').textContent =
         'Text-to-speech tidak tersedia di browser ini.';
@@ -1318,9 +1340,10 @@
       return;
     }
     view=({home:'dashboard',ujian:'exams',flashcards:'cards',mindmap:'map',update:'updates'})[view] || view;
+    if (current === 'podcast') disposePodcast();
     panel.dashboardRenderId = null;
     chatHome.after(chatMessages);
-    feedbackHome.after(chatFeedback);
+    feedbackHome.after(chatFeedback, $('chatRequestActions'));
     if (!views[view] && !tools.has(view)) view = 'dashboard';
     current = view;
     sidebar.querySelector('#shellLayout').textContent = view === 'learn' ? 'Coba tampilan baru' : 'Tampilan klasik';
@@ -1381,7 +1404,7 @@
           } catch {
             toast('Catatan tempel belum tersimpan.');
           }
-          persist();
+          return persistAsync();
         },
       });
   }
@@ -1681,6 +1704,7 @@
       materialText = '';
       materialName = '';
       materialId = '';
+      $('retryChat').hidden = true;
       materialMeta = null;
       window.OmniProductSourceChange?.();
       chatHistory = freeChat;
@@ -1858,8 +1882,9 @@
       $('clearChat').click();
       navigate('learn');
     }
-    if (button.hasAttribute('data-spoken-last'))
-      panel.querySelector('#spokenText').value = lastOutput || '';
+    if (button.hasAttribute('data-spoken-last')) {
+      const spoken = panel.querySelector('#spokenText'); spoken.value = (lastOutput || '').slice(0,6000); spoken.dispatchEvent(new Event('input'));
+    }
     if (button.hasAttribute('data-speak')) {
       speechSynthesis.cancel();
       utterance = new SpeechSynthesisUtterance(

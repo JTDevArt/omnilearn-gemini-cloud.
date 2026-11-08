@@ -136,7 +136,7 @@
     <div class="tool-output" id="toolOutput"><h4>Kita mulai dari yang kamu butuhkan.</h4><p class="placeholder">Tulis pertanyaan dengan bahasamu sendiri, atau unggah materi supaya kita bisa membahasnya bersama.</p><div class="key-points"><span>Tanya apa saja</span><span>Belajar bertahap</span><span>Latihan dari materi</span></div></div>
     <div class="chat-messages" id="chatMessages" aria-live="polite"><div class="chat-message assistant">Hai! Aku teman belajar OmniLearn. Kamu bisa bertanya, mengunggah materi, atau minta penjelasan ulang dengan contoh yang lebih sederhana. Kita mulai dari bagian yang paling membingungkan.</div></div>
     <form class="chat-row" id="chatForm"><input id="chatInput" placeholder="Tanyakan apa saja tentang materi atau topikmu…" aria-label="Tulis pertanyaan" autocomplete="off"><button id="sendButton" aria-label="Kirim pertanyaan">↑</button></form>
-    <div class="tool-actions"><button class="tool-action" id="clearChat">Hapus chat</button><button class="tool-action" id="copyOutput">Salin hasil</button><span class="small-muted" id="chatFeedback">Memeriksa koneksi Gemini Cloud…</span></div>
+    <div class="tool-actions"><button class="tool-action" id="clearChat">Hapus chat</button><button class="tool-action" id="copyOutput">Salin hasil</button><span id="chatRequestActions"><button type="button" id="cancelChat" hidden>Batalkan jawaban</button><button type="button" id="retryChat" hidden>Coba pertanyaan lagi</button></span><span class="small-muted" id="chatFeedback">Memeriksa koneksi Gemini Cloud…</span></div>
    </div>
   </div>
  </div>
@@ -796,6 +796,9 @@ async function sendChat(event) {
   const abortController = new AbortController();
   activeStudyAbortController = abortController;
   const capturedVersion = materialVersion;
+  chatRetry = {message, sourceId: materialId};
+  $('retryChat').hidden = true;
+  $('cancelChat').hidden = false;
   chatInput.value = '';
   addMessage('user', message);
   const pending = addMessage('assistant', 'Gemini sedang berpikir…', 'pending');
@@ -815,7 +818,13 @@ async function sendChat(event) {
     chatFeedback.textContent = window.OmniRecovery?.text(data) || 'Jawaban dibuat oleh OmniLearn AI. Periksa fakta penting dari sumber tepercaya.';
   } catch (error) {
     pending.classList.remove('pending');
-    if (error.isCancelled || capturedVersion !== materialVersion) return;
+    if (capturedVersion !== materialVersion) return;
+    if (error.isCancelled || abortController.signal.aborted) {
+      pending.textContent = 'Jawaban dibatalkan.'; chatFeedback.textContent = 'Permintaan dibatalkan. Kamu dapat mencoba lagi.';
+      if (!chatInput.value) chatInput.value = message;
+      $('retryChat').hidden = false; return;
+    }
+    $('retryChat').hidden = false;
     window.OmniProduct?.deferTask('/api/chat',{message,materialId,...window.OmniProduct.sourceRequest(),outputLanguage:$('outputLanguage').value},error);
     if (!chatInput.value) chatInput.value = message;
     pending.textContent = error.message;
@@ -824,6 +833,7 @@ async function sendChat(event) {
   } finally {
     if (activeStudyAbortController === abortController) activeStudyAbortController = null;
     setBusy(false);
+    $('cancelChat').hidden = true;
     chatInput.focus();
   }
 }
@@ -874,6 +884,7 @@ function clearVisibleToolOutput() {
 window.OmniProductSourceChange = clearVisibleToolOutput;
 
 function renderInteractiveQuiz() {
+  window.OmniProduct?.persist();
   const qs = quizState.questions;
   if (!Array.isArray(qs) || !qs.length) return;
 
@@ -1775,6 +1786,12 @@ dropzone.addEventListener('drop', event => {
     queueUploads(event.dataTransfer.files);
   }
 });
+let chatRetry = null;
+$('cancelChat').onclick = () => { activeStudyAbortController?.abort(); };
+$('retryChat').onclick = () => {
+  if (!chatRetry || chatRetry.sourceId !== materialId || busy) return;
+  chatInput.value = chatRetry.message; void sendChat();
+};
 $('chatForm').addEventListener('submit', sendChat);
 
 $('clearChat').addEventListener('click', async () => {
