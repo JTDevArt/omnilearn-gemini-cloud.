@@ -1,0 +1,7 @@
+# Milestone 04 — design system
+
+Completed 8 November 2026 (Asia/Jakarta). Semantic light/dark tokens and legacy component aliases now have one canonical home in public/design-system.css, loaded by both entry pages. System typography, restrained orange branding, reusable controls/cards/dialogs, focus indicators, empty/status states, spacing and reduced-motion behavior share this foundation. Existing OmniLearn mascot and licensed assets are retained; no competitor or Apple assets were copied.
+
+Validation: dashboard browser suite passes 12 width/theme combinations (1440,1280,1024,768,390,360), persistence and retained tool routes. The design browser script checks primary/secondary/muted text and primary-button token contrast against WCAG AA 4.5:1, system theme changes, reduced motion and landing overflow at all six widths. Mobile dark screenshot was inspected. This is targeted component validation, not a full accessibility certification.
+
+Research: supplied reference montage informed broad educational organization. Fresh pelajarin.ai and app.pelajarin.ai requests were denied by the environment proxy; no fresh site inspection is claimed. WAI dialog guidance was retrieved from https://github.com/w3c/aria-practices/blob/main/content/patterns/dialog-modal/dialog-modal-pattern.html for the next milestone. An attempted MDN reduced-motion raw path returned 404; existing audited MDN guidance and browser media-query behavior remain the verified basis.
