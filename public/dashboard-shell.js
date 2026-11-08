@@ -267,7 +267,7 @@
       ];
       const node = section(
         "Atur materi berdasarkan pelajaran",
-        `<form><label>Nama mata pelajaran <input name="subject" required maxlength="100"></label><button>Tambah</button></form><input class="subject-search" placeholder="Cari mata pelajaran" aria-label="Cari mata pelajaran"><div class="subject-items">${names.map((name, i) => `<article class="master-subject" data-name="${escape(name.toLowerCase())}"><h3>${escape(name)}</h3><p>${sources.filter((s) => s.subject === name).length} materi</p><form data-index="${i}"><label>Ubah nama <input name="subject" value="${escape(name)}" required maxlength="100"></label><button>Simpan</button><button type="button" data-delete="${i}">Hapus</button></form></article>`).join("") || "<p>Belum ada mata pelajaran.</p>"}</div>`,
+        `<form><label>Nama mata pelajaran <input name="subject" required maxlength="100"></label><button>Tambah</button></form><input class="subject-search" placeholder="Cari mata pelajaran" aria-label="Cari mata pelajaran"><select aria-label="Urutan mata pelajaran" class="subject-sort"><option value="name">Nama A–Z</option><option value="count">Materi terbanyak</option></select><div class="subject-items">${names.map((name, i) => `<article class="master-subject" data-name="${escape(name.toLowerCase())}" data-count="${sources.filter(s=>s.subject===name).length}"><h3>${escape(name)}</h3><p>${sources.filter((s) => s.subject === name).length} materi</p><form data-index="${i}"><label>Ubah nama <input name="subject" value="${escape(name)}" required maxlength="100"></label><button>Simpan</button><button type="button" data-delete="${i}">Hapus</button></form></article>`).join("") || "<p>Belum ada mata pelajaran.</p>"}</div>`,
       );
       function change(old, name) {
         commit((s) => {
@@ -301,15 +301,13 @@
         if (b && confirm("Hapus pelajaran ini? Materi tetap disimpan."))
           change(names[b.dataset.delete], "");
       };
-      node.querySelector(".subject-search").oninput = (e) =>
-        node
-          .querySelectorAll(".master-subject")
-          .forEach(
-            (x) =>
-              (x.hidden = !x.dataset.name.includes(
-                e.target.value.toLowerCase(),
-              )),
-          );
+      const sortSubjects = () => {
+        const query=node.querySelector('.subject-search').value.toLowerCase();
+        const byCount=node.querySelector('.subject-sort').value==='count';
+        const items=[...node.querySelectorAll('.master-subject')].sort((a,b)=>(byCount?Number(b.dataset.count)-Number(a.dataset.count):0)||a.dataset.name.localeCompare(b.dataset.name,'id'));
+        for(const item of items){item.hidden=!item.dataset.name.includes(query);node.querySelector('.subject-items').append(item);}
+      };
+      node.querySelector('.subject-search').oninput=sortSubjects;node.querySelector('.subject-sort').onchange=sortSubjects;sortSubjects();
       section(
         "Kelompokkan materi",
         sources

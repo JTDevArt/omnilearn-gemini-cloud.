@@ -1,6 +1,6 @@
 # Executable roadmap status
 
-Updated 8 November 2026 (Asia/Jakarta). Work stops after Milestone 07 as requested. No production deployment, release tag, model-name change or dependency upgrade.
+Updated 8 November 2026 (Asia/Jakarta). Work continues through the remaining roadmap as requested. No production deployment, release tag, model-name change or dependency upgrade.
 
 | Milestone | Status | Evidence |
 | --- | --- | --- |
@@ -12,6 +12,7 @@ Updated 8 November 2026 (Asia/Jakarta). Work stops after Milestone 07 as request
 | 05 — Navigation | Complete with browser checks | [Navigation report](05-navigation.md) |
 | 06 — Home dashboard | Complete with browser checks | [Home report](06-home-dashboard.md); `e9d6383` |
 | 07 — Learning workspace | Implementation and fixture acceptance complete | [Workspace report](07-learning-workspace.md) |
-| 08–12 | Not started under this roadmap | Next: Exams |
+| 08 — Exams and subjects | Complete locally | [Report](08-exams-subjects.md) |
+| 09–12 | Pending | Next: Progress and personalization |
 
-Latest code verification: **133 tests passed**, build/lint passed, and workspace, storage, navigation, AI recovery and home browser suites passed. Milestone 01 also has a dedicated real-IndexedDB browser suite. These counts refer to local code and explicit fixtures, not live AI quality or deployed-service health. Detailed reports preserve the limits and reproduction commands.
+Latest code verification: **135 tests passed**, build/lint passed, and workspace, storage, navigation, AI recovery and home browser suites passed. Milestone 01 also has a dedicated real-IndexedDB browser suite. These counts refer to local code and explicit fixtures, not live AI quality or deployed-service health. Detailed reports preserve the limits and reproduction commands.

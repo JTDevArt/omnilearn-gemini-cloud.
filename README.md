@@ -1,6 +1,6 @@
 # OmniLearn AI — Gemini Cloud Edition
 
-Home is at `/` and the learning application at `/dashboard`. The [current milestone status](docs/milestones/README.md) records work through Milestone 07, test evidence and live-service limitations. The [Forge V2.1 report](docs/FORGE-V2.1-STATUS.md) is the earlier feature baseline. Read [deployment and integration setup](docs/DEPLOYMENT.md) for external prerequisites. In the managed cloud runtime start with `NODE_USE_ENV_PROXY=1 npm start`.
+Home is at `/` and the learning application at `/dashboard`. The [current milestone status](docs/milestones/README.md) records work through Milestone 08, test evidence and live-service limitations. The [Forge V2.1 report](docs/FORGE-V2.1-STATUS.md) is the earlier feature baseline. Read [deployment and integration setup](docs/DEPLOYMENT.md) for external prerequisites. In the managed cloud runtime start with `NODE_USE_ENV_PROXY=1 npm start`.
 
 Forge V2.1 extends the existing shared source-analysis blueprint, source revisions and IndexedDB persistence with timed exams, editable mindmaps, versioned ZIP backup/import/restore, native video/subtitle learning, OCR preprocessing, centralized Gemini routing and request recovery. Firebase account/sync, authorized YouTube captions and research adapters are connected, but their live external acceptance tests remain blocked by missing credentials/network access. No hosted revision has been published by this increment.
 

@@ -5,6 +5,7 @@ import {
   submitExam,
   examScore,
   examFromQuiz,
+  selectExamQuestions,
 } from './exam-engine.js';
 import { installExamBuilder } from './exam-builder.js';
 const el = (tag, text) => {
@@ -27,6 +28,10 @@ export function renderExams(host, api) {
     )
   );
   const source = api.getCurrentSource();
+  const sourcePicker = el('select'); sourcePicker.setAttribute('aria-label','Sumber ujian');
+  const empty = el('option','Pilih materi'); empty.value=''; sourcePicker.append(empty);
+  for (const item of api.snapshot().sources) { const option=el('option',item.name);option.value=item.id;option.selected=item.id===source?.id;sourcePicker.append(option); }
+  sourcePicker.onchange=()=>{if(api.selectSource(sourcePicker.value))renderExams(host,api);};host.append(sourcePicker);
   if (!source) {
     host.append(el('p', 'Pilih sumber dari pustaka terlebih dahulu.'));
     return;
@@ -63,6 +68,7 @@ export function renderExams(host, api) {
         });
         observer.observe(document.body, { childList: true, subtree: true });
         try {
+          if (attempt.sourceVersion !== source.version) throw new Error('Ujian ini memakai versi sumber lama. Penilaian AI untuk arsip belum tersedia; jawaban tetap tersimpan.');
           await api.ensureAnalysis(controller.signal);
           const response = await safeRequestJson(
             '/api/exam/grade',
@@ -336,7 +342,20 @@ export function renderExams(host, api) {
     source.examDraft = editor.value;
     save();
   };
+  const savedBanks=el('section');savedBanks.append(el('h2','Bank soal tersimpan'));
+  for(const bank of source.examBanks || []) savedBanks.append(button(`${bank.title} · ${bank.questions.length} soal`,()=>{editor.value=JSON.stringify(bank,null,2);editor.dispatchEvent(new Event('input'));status.textContent='Bank dimuat ke draf.';}));
+  savedBanks.append(button('Simpan bank soal',async()=>{
+    try { const bank=validateExam(JSON.parse(editor.value)); (source.examBanks ||= []).push({...bank,id:crypto.randomUUID(),savedAt:Date.now(),sourceVersion:source.version});await api.persistAsync();renderExams(host,api); }
+    catch(error){status.textContent='Belum tersimpan: '+error.message;}
+  })); content.append(savedBanks);
   installExamBuilder(content, editor, status, source);
+  const selection=el('section'),count=el('input'),preset=el('select'),mixFields=el('div'),mix={};
+  count.type='number';count.min=1;count.max=100;count.placeholder='Semua soal';count.setAttribute('aria-label','Jumlah soal ujian');
+  for(const [value,label] of [['all','Pilih jumlah dari bank'],['mix','20 PG + 5 isian + 5 esai (dapat diubah)']]){const option=el('option',label);option.value=value;preset.append(option);}
+  preset.setAttribute('aria-label','Komposisi ujian');mixFields.hidden=true;
+  for(const [type,label,amount] of [['multiple','Jumlah pilihan ganda',20],['short','Jumlah isian',5],['essay','Jumlah esai',5]]){const row=el('label',label),input=el('input');input.type='number';input.min=0;input.max=100;input.value=amount;input.setAttribute('aria-label',label);row.append(input);mixFields.append(row);mix[type]=input;}
+  preset.onchange=()=>{mixFields.hidden=preset.value!=='mix';count.hidden=preset.value==='mix';};
+  selection.append(el('h2','Komposisi percobaan'),preset,count,mixFields,el('p','Komposisi mengambil soal yang tersedia. Bank asli tetap tersimpan.'));content.append(selection);
   const advanced = el('details');
   advanced.append(
     el('summary', 'Impor / edit bank soal lanjutan (JSON)'),
@@ -353,7 +372,9 @@ export function renderExams(host, api) {
   content.append(
     button('Mulai ujian', () => {
       try {
-        const definition = validateExam(JSON.parse(editor.value));
+        const definition = selectExamQuestions(JSON.parse(editor.value),preset.value==='mix'?{mix:Object.fromEntries(Object.entries(mix).map(([key,input])=>[key,Number(input.value)]))}:{count:count.value});
+        const bankVersion=JSON.parse(editor.value).sourceVersion;
+        if(bankVersion && bankVersion!==source.version) throw new Error('Bank berasal dari versi sumber lain. Periksa dan simpan ulang bank untuk versi aktif.');
         const attempt = startExam(definition, {
           sourceId: source.id,
           sourceVersion: source.version,

@@ -92,6 +92,7 @@ export function installExamBuilder(host, editor, status, source) {
     preview.replaceChildren();
     try {
       const bank = JSON.parse(editor.value);
+      title.value=bank.title || '';duration.value=bank.durationSeconds ? bank.durationSeconds/60 : bank.durationMinutes || 20;difficulty.value=bank.difficulty || 'mixed';
       for (const [index, q] of bank.questions.entries()) {
         const row = el('p', `${index + 1}. ${q.question} (${q.type}) `),
           remove = el('button', 'Hapus');

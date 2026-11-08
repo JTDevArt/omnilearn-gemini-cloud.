@@ -304,3 +304,22 @@ export function examFromQuiz(quiz, title = 'Latihan dari kuis') {
     .filter(Boolean);
   return validateExam({ title, durationMinutes: 30, questions });
 }
+
+/** Select existing bank questions; never manufacture missing questions for a preset. */
+export function selectExamQuestions(bank, {count, mix} = {}) {
+  const definition = validateExam(bank);
+  if (mix) {
+    const selected = [];
+    for (const type of ['multiple','short','essay']) {
+      const wanted = Number(mix[type] || 0);
+      if (!Number.isInteger(wanted) || wanted < 0 || wanted > 100) throw new Error('Jumlah per jenis harus 0–100.');
+      const available = definition.questions.filter(q => q.type === type);
+      if (available.length < wanted) throw new Error(`Bank hanya memiliki ${available.length} soal ${type}; diminta ${wanted}. Tambahkan soal atau ubah komposisi.`);
+      selected.push(...available.slice(0,wanted));
+    }
+    return validateExam({...definition,questions:selected});
+  }
+  if (count === undefined || count === '') return definition;
+  if (!Number.isInteger(Number(count)) || Number(count) < 1 || Number(count) > definition.questions.length) throw new Error(`Pilih 1–${definition.questions.length} soal dari bank.`);
+  return {...definition,questions:definition.questions.slice(0,Number(count))};
+}
