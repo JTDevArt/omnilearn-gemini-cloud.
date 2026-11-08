@@ -123,3 +123,8 @@ dialog::backdrop{background:var(--overlay)}
 progress{accent-color:var(--primary)}.pending{opacity:.75}.product-panel,.master-section,.content-panel{min-width:0}.master-heading h1{font-size:clamp(1.8rem,3vw,2.6rem)}
 @media(max-width:700px){.master-section{padding:18px}.panel-actions{gap:8px}.product-top{gap:10px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+/* Contextual navigation replaces duplicate legacy tab controls. */
+.product-dashboard.has-lesson .workspace .tabs{display:none}.material-navigation{display:flex;flex-wrap:wrap;gap:8px}.material-navigation[hidden]{display:none}.material-navigation a[hidden]{display:none}.material-navigation a.active{background:var(--primary-soft);color:var(--primary);box-shadow:inset 0 -2px var(--primary)}
+.more-tools{position:relative;padding:0;border:0}.more-tools summary{padding:9px 12px;min-height:44px;border:1px solid var(--border);border-radius:12px}.more-tools div{position:absolute;z-index:20;right:0;min-width:190px;background:var(--surface);padding:10px;border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow-raised)}.more-tools a{display:block}
+.sidebar-bottom{display:grid;gap:8px}.sidebar-bottom label{display:grid;gap:4px}.product-sidebar{overflow-y:auto}.navigation-backdrop{position:fixed;inset:0;background:var(--overlay);border:0;border-radius:0;z-index:29}.navigation-backdrop[hidden]{display:none}.product-sidebar[inert]{visibility:hidden}
+@media(min-width:701px){.product-sidebar>.menu-product{display:none}}

@@ -9,10 +9,10 @@
     profile: ['♙', 'Profil'],
     help: ['?', 'Bantuan'],
     pinned: ['◇', 'Disematkan'],
-    updates: ['✦', 'Patch Updates'],
+    updates: ['✦', 'Update List'],
     learn: ['⌂', 'Belajar'],
     journey: ['↝', 'Jalur belajar'],
-    exams: ['◷', 'Simulasi ujian'],
+    exams: ['◷', 'Ujian'],
     notes: ['☷', 'Catatan'],
     map: ['⌘', 'Mindmap'],
     quiz: ['✓', 'Kuis'],
@@ -230,7 +230,7 @@
   const sidebar = document.createElement('aside');
   sidebar.className = 'product-sidebar';
   sidebar.innerHTML = `<a class="wordmark" href="/">✳ omni<span>learn</span></a><nav aria-label="Menu utama">${Object.entries(
-    Object.fromEntries(['dashboard','exams','subjects','streaks','leaderboard','profile','help','pinned','updates'].map(id => [id, views[id]]))
+    Object.fromEntries(['dashboard','exams','subjects','streaks','leaderboard','pinned','updates','profile'].map(id => [id, views[id]]))
   )
     .map(
       ([id, [icon, label]]) =>
@@ -238,15 +238,14 @@
     )
     .join(
       ''
-    )}</nav><div class="sidebar-bottom"><button id="shellTheme">◐ Tema</button><button id="shellLayout">Coba tampilan baru</button><button id="shellLogout">Keluar</button><p>Pustaka pribadi · OmniLearn v1.01</p></div>`;
+    )}</nav><div class="sidebar-bottom"><a href="/dashboard?view=help" data-view="help">Bantuan</a><a href="/dashboard?view=account" data-view="account">Akun</a><label>Tema <select data-theme-select aria-label="Tema"><option value="system">Ikuti perangkat</option><option value="light">Terang</option><option value="dark">Gelap</option></select></label><button id="shellTheme" hidden>◐ Tema</button><button id="shellLayout">Coba tampilan baru</button><button id="shellLogout">Keluar</button><p>Pustaka pribadi · OmniLearn v1.01</p></div>`;
   document.body.prepend(sidebar);
   const closeSidebar = document.createElement('button');
   closeSidebar.className = 'menu-product secondary';
   closeSidebar.textContent = 'Tutup menu ×';
   closeSidebar.setAttribute('aria-label', 'Tutup navigasi');
   closeSidebar.addEventListener('click', () => {
-    document.body.classList.remove('dashboard-drawer');
-    document.querySelector('#productMenu')?.focus();
+    setDrawer(false, true);
   });
   sidebar.prepend(closeSidebar);
   const top = document.createElement('header');
@@ -266,7 +265,36 @@
   const materialNav = document.createElement('nav');
   materialNav.className = 'material-navigation';
   materialNav.setAttribute('aria-label', 'Workspace materi');
-  materialNav.innerHTML = ['map','quiz','cards','sources','chat','podcast','sticky'].map(id => `<a href="/dashboard?view=${id}" data-view="${id}">${views[id][1]}</a>`).join('');
+  materialNav.innerHTML = ['journey','notes','map','quiz','cards','sources','chat','podcast','sticky','video'].map(id => `<a href="/dashboard?view=${id}" data-view="${id}">${id === 'journey' ? 'Belajar' : views[id][1]}</a>`).join('');
+  materialNav.insertAdjacentHTML('beforeend','<details class=more-tools><summary>Alat lainnya</summary><div>'+['summary','research','translate','plan','recovery'].map(id=>`<a href="/dashboard?view=${id}" data-view="${id}">${({summary:'Ringkasan',research:'Riset',translate:'Terjemahan',plan:'Rencana belajar',recovery:'Permintaan tersimpan'})[id]}</a>`).join('')+'</div></details>');
+  const mobile = matchMedia('(max-width:700px)');
+  sidebar.id='primarySidebar';
+  const menu=top.querySelector('#productMenu');menu.setAttribute('aria-controls',sidebar.id);
+  const backdrop=document.createElement('button');backdrop.className='navigation-backdrop';backdrop.setAttribute('aria-label','Tutup navigasi');backdrop.hidden=true;document.body.append(backdrop);
+  function syncDrawer() {
+    const open=mobile.matches && document.body.classList.contains('dashboard-drawer');
+    const visible=mobile.matches?open:!document.body.classList.contains('dashboard-collapsed');
+    sidebar.inert=!visible;sidebar.setAttribute('aria-hidden',String(!visible));menu.setAttribute('aria-expanded',String(visible));backdrop.hidden=!open;
+    document.querySelector('main').inert=open;top.inert=open;
+    sidebar.setAttribute('role',open?'dialog':'complementary');sidebar.setAttribute('aria-label','Navigasi OmniLearn');
+    if(open)sidebar.setAttribute('aria-modal','true');else sidebar.removeAttribute('aria-modal');
+  }
+  function setDrawer(open, restore=false) {
+    document.body.classList.toggle('dashboard-drawer',open);syncDrawer();
+    if(open)closeSidebar.focus();else if(restore)menu.focus();
+  }
+  backdrop.onclick=()=>setDrawer(false,true);
+  mobile.addEventListener('change',()=>setDrawer(false));syncDrawer();
+  sidebar.addEventListener('keydown',event=>{
+    if(!mobile.matches || !document.body.classList.contains('dashboard-drawer'))return;
+    if(event.key==='Escape'){event.preventDefault();setDrawer(false,true);}
+    if(event.key==='Tab') {
+      const controls=[...sidebar.querySelectorAll('a,button,select')].filter(node=>!node.hidden && !node.disabled && node.getClientRects().length);
+      const first=controls[0],last=controls.at(-1);
+      if(event.shiftKey && document.activeElement===first){event.preventDefault();last.focus();}
+      else if(!event.shiftKey && document.activeElement===last){event.preventDefault();first.focus();}
+    }
+  });
   shell.prepend(materialNav);
   window.OmniTheme?.refreshControls?.();
   safeRequestJson(
@@ -1284,10 +1312,12 @@
       toast('Selesaikan rekaman mikrofon sebelum pindah menu.');
       return;
     }
-    if (busy || uploadInFlight) {
+    if (busy && !uploadInFlight) {
+      if(!push) history.replaceState({},'',`/dashboard?view=${encodeURIComponent(current)}`);
       toast('Tunggu proses saat ini selesai.');
       return;
     }
+    view=({home:'dashboard',ujian:'exams',flashcards:'cards',mindmap:'map',update:'updates'})[view] || view;
     panel.dashboardRenderId = null;
     chatHome.after(chatMessages);
     feedbackHome.after(chatFeedback);
@@ -1306,8 +1336,13 @@
         a.setAttribute('aria-current', 'page');
       else a.removeAttribute('aria-current');
     });
-    document.body.classList.remove('dashboard-drawer');
-    materialNav.hidden = !materialId;
+    setDrawer(false);
+    document.body.classList.toggle('has-lesson',!!materialId);
+    materialNav.hidden = !materialId || ![...tools,'journey','notes','sources','podcast','sticky','video'].includes(view);
+    const selected=sources.find(s=>s.id===materialId);
+    materialNav.querySelector('[data-view=video]').hidden=!(/video/.test(selected?.meta?.extractionMode || '') || selected?.meta?.youtubeUrl);
+    panel.tabIndex=-1;panel.setAttribute('aria-label',views[view]?.[1] || view);
+    if(push)panel.focus({preventScroll:true});
     workspace.hidden = !tools.has(view);
     panel.hidden = tools.has(view);
     if (['dashboard','subjects','streaks','leaderboard','profile','help','pinned','updates'].includes(view)) {
@@ -1769,16 +1804,8 @@
     )
       $('themeToggle').click();
     if (button.id === 'productMenu') {
-      if (innerWidth <= 700) document.body.classList.toggle('dashboard-drawer');
-      else document.body.classList.toggle('dashboard-collapsed');
-      button.setAttribute(
-        'aria-expanded',
-        String(
-          innerWidth <= 700
-            ? document.body.classList.contains('dashboard-drawer')
-            : !document.body.classList.contains('dashboard-collapsed')
-        )
-      );
+      if(mobile.matches)setDrawer(!document.body.classList.contains('dashboard-drawer'));
+      else {document.body.classList.toggle('dashboard-collapsed');syncDrawer();}
     }
     if (button.hasAttribute('data-fill-note')) {
       panel.querySelector('#noteEditor').value = lastOutput;
@@ -1869,7 +1896,7 @@
     });
   });
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') document.body.classList.remove('dashboard-drawer');
+    if (e.key === 'Escape' && document.body.classList.contains('dashboard-drawer')) setDrawer(false,true);
   });
   const initial = new URLSearchParams(location.search);
   const accountReady = () => window.OmniAccounts.install(window.OmniProduct);

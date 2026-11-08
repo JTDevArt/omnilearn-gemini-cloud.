@@ -9,7 +9,7 @@ await page.evaluate(t=>OmniTheme.setPreference(t),theme);
 const colors=await page.evaluate(()=>{const s=getComputedStyle(document.body);return Object.fromEntries(['text-primary','text-secondary','text-muted','surface','primary','on-primary'].map(k=>[k,s.getPropertyValue('--'+k)]));});
 for(const [a,b] of [['text-primary','surface'],['text-secondary','surface'],['text-muted','surface'],['on-primary','primary']]){const l=[luminance(colors[a]),luminance(colors[b])].sort((a,b)=>b-a);assert.ok((l[0]+.05)/(l[1]+.05)>=4.5,theme+' '+a);}
 }
-await page.evaluate(()=>OmniTheme.setPreference('system'));await page.emulateMedia({colorScheme:'dark',reducedMotion:'reduce'});assert.equal(await page.evaluate(()=>document.documentElement.dataset.theme),'dark');
+await page.evaluate(()=>OmniTheme.setPreference('system'));await page.emulateMedia({colorScheme:'dark',reducedMotion:'reduce'});await page.waitForFunction(()=>document.documentElement.dataset.theme==='dark');
 assert.equal(await page.locator('button').first().evaluate(e=>getComputedStyle(e).transitionDuration),'0s');
 for(const width of [1440,1280,1024,768,390,360]){await page.setViewportSize({width,height:900});await page.goto(base+'/');assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);}
 console.log('Design checks passed: semantic text contrast, system theme, reduced motion and landing widths.');
