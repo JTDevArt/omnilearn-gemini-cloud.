@@ -3,6 +3,14 @@ import assert from 'node:assert/strict';
 import sharp from 'sharp';
 import { preprocessOcrImage, estimateSkew } from '../lib/ocr-preprocess.js';
 import { pageExtractionQuality } from '../lib/pdf-preprocess.js';
+import { parseOcrPagesMap } from '../lib/ocr-pages.js';
+test('OCR only accepts requested page identities and never assigns unmarked multi-page text to a page', () => {
+  assert.equal(parseOcrPagesMap('[Page 2] Formula x = 3.\n[Halaman 4] Tabel: nilai 7.',[2,4]).get(4),'Tabel: nilai 7.');
+  assert.equal(parseOcrPagesMap('Unmarked mixed pages',[2,4]).size,0);
+  assert.equal(parseOcrPagesMap('Single page text',[2]).get(2),'Single page text');
+  assert.throws(()=>parseOcrPagesMap('[Halaman 99] Invented page',[2]),e=>e.code==='INVALID_OCR_OUTPUT');
+  assert.throws(()=>parseOcrPagesMap('[Halaman 2] One\n[Halaman 2] Duplicate',[2]),e=>e.code==='INVALID_OCR_OUTPUT');
+});
 test('image preprocessing respects resolution limits, rotates EXIF and reports no invented OCR confidence', async () => {
   const input = await sharp({
     create: { width: 80, height: 120, channels: 3, background: '#fff' },

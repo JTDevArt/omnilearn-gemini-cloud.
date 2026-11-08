@@ -19,6 +19,7 @@
 <link rel="stylesheet" href="/jarvis.css">
 <link rel="stylesheet" href="/workbench.css">
 <link rel="stylesheet" href="/forge.css">
+<link rel="stylesheet" href="/upload-queue.css">
 </head>
 <body>
 <header class="shell topbar" id="home">
@@ -1569,119 +1570,35 @@ function arrayBufferToBase64(buffer) {
   return btoa(chunks.join(''));
 }
 
-async function submitUploadInitialRequest(fileBuffer, fileName, mimeType, reqId) {
-  const makeFormData = () => {
-    const blob = new Blob([fileBuffer], { type: mimeType || 'application/octet-stream' });
-    const form = new FormData();
-    form.append('file', blob, fileName);
-    form.append('sessionId', sessionId);
-    return form;
-  };
-
-  await warmAuthAndHealthCheck(true);
-
-  // Layer 1: Relative POST /api/upload with FormData field 'file' and NO manual Content-Type header
-  try {
-    const f = getCleanFetch();
-    const res = await f('/api/upload', {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'X-Request-Id': reqId,
-        'X-Session-Id': sessionId,
-        'X-Upload-Mode': 'async'
-      },
-      body: makeFormData(),
-      cache: 'no-store',
-      credentials: 'same-origin'
-    });
-
-    const contentType = res.headers.get('content-type') || '';
-    if (contentType.includes('application/json')) {
-      const data = await res.json();
-      if (!res.ok) {
-        const err = new Error(`${data.error || 'Gagal memvalidasi dokumen.'} (ID: ${data.requestId || reqId})`);
-        err.isHttpError = true;
-        throw err;
-      }
-      return data;
-    }
-    if (res.status === 413) {
-      const err413 = new Error(`Ukuran file melebihi batas maksimal 15 MB. (ID: ${reqId})`);
-      err413.isHttpError = true;
-      throw err413;
-    }
-  } catch (err) {
-    if (err.isHttpError) throw err;
+async function submitUploadInitialRequest(fileBuffer, fileName, mimeType, reqId, signal) {
+  const form = new FormData();
+  form.append('file', new Blob([fileBuffer], {type:mimeType || 'application/octet-stream'}), fileName);
+  form.append('sessionId', sessionId);
+  // A transport error is ambiguous. A manual retry reuses this idempotency key.
+  return safeRequestJson('/api/upload', {method:'POST',headers:{'X-Upload-Mode':'async','X-Upload-Id':reqId},body:form},
+    {timeoutMs:45000,stageContext:'upload',externalSignal:signal});
+}
+async function pollUploadJobStatus(jobId, reqId, signal, onProgress) {
+  const startTime=Date.now();
+  while (Date.now()-startTime<150000) {
+    signal?.throwIfAborted();
+    const data=await safeRequestJson(`/api/upload/status/${encodeURIComponent(jobId)}?sessionId=${encodeURIComponent(sessionId)}`,
+      {},{timeoutMs:20000,stageContext:'upload-poll',externalSignal:signal});
+    if (data.status==='completed') return data;
+    if (data.status==='cancelled') throw Object.assign(new Error('Unggahan dibatalkan.'),{isCancelled:true});
+    if (data.status==='failed') throw Object.assign(new Error(data.error || 'Ekstraksi gagal.'),{isHttpError:true,code:data.code});
+    const stage=Number(data.stageNumber)||3;
+    setUploadStage(stage,data.stageLabel,true);
+    onProgress?.(stage,data.stageLabel);
+    await new Promise(resolve=>setTimeout(resolve,950));
   }
-
-  // Layer 2: Refresh auth cookie via hidden iframe and send FormData via XMLHttpRequest
-  await warmAuthAndHealthCheck(true);
-  try {
-    return await requestViaXhr('/api/upload', {
-      method: 'POST',
-      headers: { 'X-Upload-Mode': 'async' },
-      body: makeFormData(),
-      timeoutMs: 35000,
-      reqId
-    });
-  } catch (xhrErr) {
-    if (xhrErr.isHttpError) throw xhrErr;
-  }
-
-  // Layer 3: JSON base64 fallback to /api/upload if proxy blocks multipart/form-data
-  return await requestViaXhr('/api/upload', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Upload-Mode': 'async'
-    },
-    body: JSON.stringify({
-      filename: fileName,
-      mimeType: mimeType || 'application/octet-stream',
-      fileBase64: arrayBufferToBase64(fileBuffer),
-      sessionId
-    }),
-    timeoutMs: 45000,
-    reqId
-  });
+  throw new Error('Pemrosesan belum selesai. Coba lagi untuk melanjutkan pemeriksaan pekerjaan yang sama.');
 }
 
-async function pollUploadJobStatus(jobId, reqId) {
-  const maxPollDurationMs = 150000;
-  const pollIntervalMs = 950;
-  const startTime = Date.now();
-
-  while (Date.now() - startTime < maxPollDurationMs) {
-    await new Promise(resolve => window.setTimeout(resolve, pollIntervalMs));
-
-    const pollData = await safeRequestJson(
-      `/api/upload/status/${encodeURIComponent(jobId)}?sessionId=${encodeURIComponent(sessionId)}&t=${Date.now()}`,
-      { method: 'GET' },
-      { timeoutMs: 20000, stageContext: 'upload-poll' }
-    );
-
-    if (pollData.status === 'completed') {
-      return pollData;
-    }
-
-    if (pollData.status === 'failed') {
-      throw new Error(`${pollData.error || 'Gagal memproses dokumen.'} (ID: ${pollData.requestId || reqId})`);
-    }
-
-    // Update the 7-stage progress indicator from backend job state
-    const stageNum = Number(pollData.stageNumber) || 3;
-    const stageLabel = pollData.stageLabel || 'Memproses dokumen…';
-    setUploadStage(stageNum, stageLabel, true);
-    chatFeedback.textContent = `Tahap ${stageNum} dari 7 · ${stageLabel}`;
-  }
-
-  throw new Error(`Waktu pemrosesan OCR habis karena dokumen sangat kompleks. Silakan coba lagi. (ID: ${reqId})`);
-}
-
-async function uploadFile(file) {
-  if (!file || busy || uploadInFlight) return;
-  const reqId = generateClientRequestId('upload');
+async function uploadFile(file, task = {}) {
+  if (!file || busy || uploadInFlight) throw new Error('Tunggu proses saat ini selesai.');
+  const reqId = task.requestId || generateClientRequestId('upload');
+  const signal = task.signal;
   const allowed = window.OmniCapabilities?.extensions || ['.pdf', '.docx', '.pptx', '.xlsx', '.txt', '.png', '.jpg', '.jpeg', '.mp3', '.wav', '.m4a', '.mp4', '.mov', '.webm'];
   const fileName = String(file.name || 'dokumen');
   const dotIdx = fileName.lastIndexOf('.');
@@ -1690,18 +1607,15 @@ async function uploadFile(file) {
   setUploadStage(2, 'Memvalidasi file…', true);
   if (!allowed.includes(ext)) {
     const msg = `Format file "${ext || 'tidak dikenal'}" tidak didukung. Gunakan PDF, DOCX, PPTX, TXT, MP3, WAV, MP4, atau MOV. (ID: ${reqId})`;
-    updateUploadError(msg);
-    return;
+    throw new Error(msg);
   }
   if (file.size === 0) {
     const msg = `File "${fileName}" kosong (0 byte). Pilih dokumen yang berisi materi. (ID: ${reqId})`;
-    updateUploadError(msg);
-    return;
+    throw new Error(msg);
   }
   if (file.size > (window.OmniCapabilities?.maxFileBytes || 15 * 1024 * 1024)) {
     const msg = `Ukuran file (${formatFileSize(file.size)}) melebihi batas maksimal 15 MB. (ID: ${reqId})`;
-    updateUploadError(msg);
-    return;
+    throw new Error(msg);
   }
 
   uploadInFlight = true;
@@ -1710,11 +1624,14 @@ async function uploadFile(file) {
   chatFeedback.textContent = 'Tahap 1 dari 7 · Mengunggah dokumen ke server…';
 
   try {
+    signal?.throwIfAborted();
     const fileBuffer = await file.arrayBuffer();
+    signal?.throwIfAborted();
     setUploadStage(2, 'Memvalidasi file…', true);
     chatFeedback.textContent = 'Tahap 2 dari 7 · Memvalidasi file…';
 
-    const initData = await submitUploadInitialRequest(fileBuffer, fileName, file.type, reqId);
+    const initData = task.jobId ? {jobId:task.jobId,status:'accepted'} : await submitUploadInitialRequest(fileBuffer, fileName, file.type, reqId, signal);
+    if(initData.jobId) task.onJob?.(initData.jobId);
 
     let finalData = initData;
     if (initData.jobId && initData.status !== 'completed') {
@@ -1722,9 +1639,16 @@ async function uploadFile(file) {
       const currentLabel = initData.stageLabel || 'Membaca halaman…';
       setUploadStage(currentStage, currentLabel, true);
       chatFeedback.textContent = `Tahap ${currentStage} dari 7 · ${currentLabel}`;
-      finalData = await pollUploadJobStatus(initData.jobId, initData.requestId || reqId);
+      finalData = await pollUploadJobStatus(initData.jobId, initData.requestId || reqId, signal, task.onProgress);
     }
 
+    signal?.throwIfAborted();
+    if (!String(finalData.text || '').trim()) throw new Error('Tidak ada teks yang dapat diekstrak. File asli tetap tersedia.');
+    if (task.sourceId) {
+      await window.OmniProduct.finishUpload(task.sourceId, finalData);
+      task.onProgress?.(7, 'Teks tersimpan · tinjau hasil ekstraksi');
+      return finalData;
+    }
     setUploadStage(6, 'Menyiapkan materi…', true);
     chatFeedback.textContent = 'Tahap 6 dari 7 · Menyiapkan materi…';
 
@@ -1767,7 +1691,7 @@ async function uploadFile(file) {
     renderMaterialBadgeAndSidebar();
     saveSessionState();
     window.OmniProduct?.capture();
-    window.OmniProduct?.saveOriginal(file);
+    await window.OmniProduct?.saveOriginal(file);
 
     const ocrStatusLabel = materialMeta.ocrUsed
       ? (materialMeta.extractionMode === 'pdf-hybrid-ocr' ? 'Digunakan (PDF Campuran: Text Layer + OCR)' : 'Digunakan (OCR Gemini)')
@@ -1800,11 +1724,13 @@ async function uploadFile(file) {
     chatFeedback.textContent = `Tahap 7 dari 7 · Selesai (${materialMeta.characters.toLocaleString('id-ID')} karakter diekstrak).`;
     toast(materialMeta.ocrUsed ? 'Dokumen berhasil dibaca dengan OCR otomatis.' : 'Dokumen berhasil ditambahkan.');
   } catch (error) {
-    updateUploadError(error.message || `Gagal mengunggah dokumen. (ID: ${reqId})`);
+    if (!task.sourceId) updateUploadError(error.message || `Gagal mengunggah dokumen. (ID: ${reqId})`);
+    throw error;
   } finally {
     uploadInFlight = false;
     setBusy(false);
     $('materialFile').value = '';
+    uploadProgress.classList.remove('show');
   }
 }
 
@@ -1819,10 +1745,7 @@ function updateUploadError(message) {
 $('uploadButton').addEventListener('click', () => {
   if (!busy && !uploadInFlight) $('materialFile').click();
 });
-async function queueUploads(files) {
-  const selected=Array.from(files||[]);if(selected.length>(window.OmniCapabilities?.maxFilesPerQueue||5)){toast('Pilih maksimal lima file per antrean.');return;}
-  for(const file of selected){if(busy||uploadInFlight)break;await uploadFile(file);}
-}
+function queueUploads(files) { return window.OmniUploads?.enqueue(files); }
 $('materialFile').multiple=true;
 $('materialFile').addEventListener('change', event => queueUploads(event.target.files));
 dropzone.addEventListener('click', () => {
@@ -2114,6 +2037,7 @@ checkAI();
 <script type="module" src="/recovery-workspace.js"></script>
 <script src="/vendor/jszip.min.js"></script>
 <script src="/dashboard-shell.js"></script>
+<script src="/upload-queue.js"></script>
 <script src="/product.js" defer></script>
 </body>
 </html>

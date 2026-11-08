@@ -588,6 +588,35 @@
       persist();
       return source;
     },
+    async stageUpload(file, id) {
+      if (!durableAvailable) throw new Error('Penyimpanan perangkat tidak tersedia. Aktifkan penyimpanan sebelum mengunggah.');
+      let source = sources.find(source => source.id === id);
+      if (!source) {
+        source = {id,name:file.name,text:'',meta:{uploadState:'queued',fileSize:file.size},version:1,
+          createdAt:Date.now(),notes:'',subject:profile.subject || '',analysisSchema:'forge-1'};
+        sources.unshift(source);
+      }
+      await window.OmniLocalLibrary.saveFile(id, 1, file);
+      source.hasOriginal = true;
+      await persistAsync();
+    },
+    async uploadState(id, state, error = '') {
+      const source = sources.find(source => source.id === id);
+      if (!source) return;
+      source.meta.uploadState = state;
+      source.meta.uploadError = String(error).slice(0,1000);
+      await persistAsync();
+    },
+    async finishUpload(id, data) {
+      const source = sources.find(source => source.id === id);
+      if (!source) throw new Error('Sumber unggahan tidak ditemukan.');
+      const {text,filename,materialId:serverMaterialId,...meta} = data;
+      if (typeof text !== 'string' || !text.trim()) throw new Error('Tidak ada teks yang dapat diekstrak. File asli tetap tersedia.');
+      source.text = text.slice(0,50000);
+      source.meta = {...meta, serverMaterialId, uploadState:'completed'};
+      await persistAsync();
+      return source;
+    },
     async importLibrary(next, files) {
       if (busy || uploadInFlight)
         throw new Error('Tunggu proses saat ini sebelum mengubah pustaka.');
@@ -769,7 +798,7 @@
       );
     if (!list.length)
       return '<div class="empty-panel"><div><h3>Mulai dari satu materi.</h3><p>Upload dokumen atau tempel transkrip. Semua alat belajar memakai sumber yang kamu pilih.</p><button class="primary" data-upload>＋ Tambah sumber</button></div><img src="/mascot.svg" width="140" height="140" alt="Maskot OmniLearn"></div>';
-    return `<div class="source-grid">${list.map((s) => `<article class="source-card"><span>▤ ${{ audio: 'Audio', video: 'Video', transcript: 'Transkrip', document: 'Dokumen' }[kind(s)]}</span><h3>${html(s.name)}</h3><p>${Number(s.meta?.pageCount || 1)} bagian · ${s.text.length.toLocaleString('id-ID')} karakter<br>${new Date(s.createdAt).toLocaleDateString('id-ID')}</p><p class="subject-tag">${html(s.subject || '')} · ${s.meta?.partialRead || s.meta?.truncated ? 'Teks sebagian; periksa sumber asli' : 'Teks siap dipakai'}</p><div class="panel-actions"><button data-source="${html(s.id)}" data-action="preview">Pratinjau</button><button data-source="${html(s.id)}" data-action="download">Unduh teks</button><button data-source="${html(s.id)}" data-action="chat">Buka</button><button data-source="${html(s.id)}" data-action="summary">Ringkas</button><button data-source="${html(s.id)}" data-action="quiz">Kuis</button><button data-source="${html(s.id)}" data-action="cards">Kartu</button><button data-source="${html(s.id)}" data-action="map">Mindmap</button><button data-source="${html(s.id)}" data-action="delete">Hapus</button></div></article>`).join('')}</div>`;
+    return `<div class="source-grid">${list.map((s) => `<article class="source-card"><span>▤ ${{ audio: 'Audio', video: 'Video', transcript: 'Transkrip', document: 'Dokumen' }[kind(s)]}</span><h3>${html(s.name)}</h3><p>${Number(s.meta?.pageCount || 1)} bagian · ${s.text.length.toLocaleString('id-ID')} karakter<br>${new Date(s.createdAt).toLocaleDateString('id-ID')}</p><p class="subject-tag">${html(s.subject || '')} · ${s.meta?.uploadState && s.meta.uploadState !== 'completed' ? 'Ekstraksi belum selesai; file asli tersimpan jika tersedia' : s.meta?.partialRead || s.meta?.truncated ? 'Teks sebagian; periksa sumber asli' : 'Teks siap dipakai'}</p><div class="panel-actions"><button data-source="${html(s.id)}" data-action="preview">Pratinjau</button><button data-source="${html(s.id)}" data-action="download">Unduh teks</button><button data-source="${html(s.id)}" data-action="chat">Buka</button><button data-source="${html(s.id)}" data-action="summary">Ringkas</button><button data-source="${html(s.id)}" data-action="quiz">Kuis</button><button data-source="${html(s.id)}" data-action="cards">Kartu</button><button data-source="${html(s.id)}" data-action="map">Mindmap</button><button data-source="${html(s.id)}" data-action="delete">Hapus</button></div></article>`).join('')}</div>`;
   }
   function sourcesView(home = false, query = '') {
     panel.innerHTML = `<span class="handwriting">${home ? 'selangkah lebih paham hari ini' : 'semua materi, satu tempat'}</span><h1>${home ? 'Mau belajar apa hari ini?' : 'Pustaka sumbermu'}</h1><p>${home ? 'Lanjutkan materimu, atau mulai dari rasa ingin tahu yang baru.' : 'Dokumen dan transkrip disimpan di browser perangkat ini. Pilih sumber untuk menghubungkannya ke seluruh alat belajar.'}</p><div class="panel-actions"><button data-explorer>Jelajahi bidang ilmu</button><button data-free-chat data-open="chat">Tanya tanpa dokumen ↗</button></div><div id="sourceResults">${sourceCards(query)}</div>`;
@@ -1854,5 +1883,6 @@
     for (const item of freeChat) addMessage(item.role, item.content);
   }
   persist();
+  window.OmniUploads?.restore();
   navigate(initial.get('tool') || initial.get('view') || 'dashboard', false);
 })();
