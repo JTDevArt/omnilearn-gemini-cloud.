@@ -2,7 +2,7 @@
 (async () => {
   document.body.classList.add('product-dashboard');
   const views = {
-    home: ['✧', 'Beranda AI'],
+    home: ['✧', 'Beranda'],
     dashboard: ['⌂', 'Dashboard'],
     subjects: ['▤', 'Mata Pelajaran'],
     streaks: ['◴', 'Streaks'],
@@ -233,7 +233,7 @@
   const sidebar = document.createElement('aside');
   sidebar.className = 'product-sidebar';
   sidebar.innerHTML = `<a class="wordmark" href="/">✳ omni<span>learn</span></a><nav aria-label="Menu utama">${Object.entries(
-    Object.fromEntries(['dashboard','exams','subjects','streaks','leaderboard','pinned','updates','profile'].map(id => [id, views[id]]))
+    Object.fromEntries(['home','dashboard','subjects','notes','exams','streaks','leaderboard','updates','profile'].map(id => [id, views[id]]))
   )
     .map(
       ([id, [icon, label]]) =>
@@ -241,7 +241,7 @@
     )
     .join(
       ''
-    )}</nav><div class="sidebar-bottom"><a href="/dashboard?view=help" data-view="help">Bantuan</a><a href="/dashboard?view=account" data-view="account">Akun</a><label>Tema <select data-theme-select aria-label="Tema"><option value="system">Ikuti perangkat</option><option value="light">Terang</option><option value="dark">Gelap</option></select></label><button id="shellTheme" hidden>◐ Tema</button><button id="shellLayout">Coba tampilan baru</button><button id="shellLogout">Keluar</button><p>Pustaka pribadi · v1.0.0 dalam pengembangan</p></div>`;
+    )}</nav><div class="sidebar-bottom"><a href="/dashboard?view=pinned" data-view="pinned">Disematkan</a><a href="/dashboard?view=help" data-view="help">Bantuan</a><a href="/dashboard?view=account" data-view="account">Akun</a><label>Tema <select data-theme-select aria-label="Tema"><option value="system">Ikuti perangkat</option><option value="light">Terang</option><option value="dark">Gelap</option></select></label><button id="shellTheme" hidden>◐ Tema</button><button id="shellLogout">Keluar</button><p>Pustaka pribadi · v1.0.0 dalam pengembangan</p></div>`;
   document.body.prepend(sidebar);
   const closeSidebar = document.createElement('button');
   closeSidebar.className = 'menu-product secondary';
@@ -257,7 +257,6 @@
     '<button class="secondary" id="productMenu" aria-label="Buka atau tutup sidebar" aria-expanded="true">☰</button><button class="secondary home-mode-switch" id="homeModeSwitch" type="button" aria-label="Buka beranda AI" title="Beralih antara beranda AI dan dashboard">⇄</button><span>Ruang belajar saya</span><input type="search" id="sourceSearch" aria-label="Cari sumber belajar" placeholder="Cari sumber belajarmu…"><button class="secondary" id="productTheme" aria-label="Ganti tema">◐</button><a class="secondary" href="/dashboard?view=settings" data-view="settings">Perangkat ini</a>';
   document.body.insertBefore(top, document.querySelector('main'));
   sidebar.querySelector('#shellTheme').onclick = () => window.OmniTheme?.cycle();
-  sidebar.querySelector('#shellLayout').onclick = () => navigate(current === 'home' ? 'dashboard' : 'home');
   top.querySelector('#homeModeSwitch').onclick = () => navigate(current === 'home' ? 'dashboard' : 'home');
   sidebar.querySelector('#shellLogout').onclick = async () => {
     try {
@@ -1357,7 +1356,6 @@
     document.body.classList.toggle('ai-home-view', view === 'home');
     const modeLabel = top.querySelector(':scope > span');
     if (modeLabel) modeLabel.textContent = view === 'home' ? 'Beranda AI' : 'Ruang belajar saya';
-    sidebar.querySelector('#shellLayout').textContent = view === 'home' ? 'Buka Dashboard' : 'Beranda AI';
     top.querySelector('#homeModeSwitch').setAttribute('aria-label',view === 'home' ? 'Buka Dashboard' : 'Buka Beranda AI');
     top.querySelector('#homeModeSwitch').setAttribute('aria-pressed',String(view === 'home'));
     if (push)
@@ -1366,7 +1364,6 @@
       a.classList.toggle(
         'active',
         a.dataset.view === view ||
-          (view === 'home' && a.dataset.view === 'dashboard') ||
           (view === 'summary' && a.dataset.view === 'notes')
       );
       if (a.classList.contains('active'))

@@ -52,14 +52,14 @@
 }
 :root.dark, :root[data-theme='dark'], body.dark {
   color-scheme: dark;
-  --background: #10131a;
-  --surface: #171c26;
-  --surface-elevated: #202735;
-  --surface-hover: #293344;
-  --text-primary: #f4f6fa;
-  --text-secondary: #bcc6d5;
-  --text-muted: #a1adbf;
-  --border: #3a4456;
+  --background: #0b1220;
+  --surface: #111c2f;
+  --surface-elevated: #19273d;
+  --surface-hover: #24334c;
+  --text-primary: #f3f7ff;
+  --text-secondary: #c0ccdd;
+  --text-muted: #acbbce;
+  --border: #3a4b64;
   --primary: #ff9148;
   --primary-hover: #ffa66a;
   --primary-soft: #35251e;
@@ -100,7 +100,7 @@
   --yellow: var(--warning-soft);
   --lav: var(--lavender);
 }
-:root{--font-ui:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;--radius-control:12px;--radius-card:20px;--space-unit:4px;--motion-fast:160ms}
+:root{--font-ui:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;--radius-control:12px;--radius-card:20px;--space-unit:4px;--motion-fast:160ms}
 html,body,.landing,.product-dashboard,.product-dashboard input,.product-dashboard textarea,.product-dashboard select,.product-dashboard button{font-family:var(--font-ui)}
 body{background:var(--background);color:var(--text-primary);line-height:1.6}
 h1,h2,h3{font-family:var(--font-ui);letter-spacing:-.025em;line-height:1.2}h1{font-weight:750}p{color:var(--text-secondary)}

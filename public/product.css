@@ -261,6 +261,15 @@ button, input, textarea, select { color: inherit; }
 .product-sidebar a[data-view]:hover { background: var(--surface-elevated); color: var(--text-primary); }
 .product-sidebar a[data-view].active { background: var(--primary-soft); color: var(--primary); }
 .product-sidebar a.active::before { content: ''; position: absolute; width: 3px; height: 18px; left: 0; top: calc(50% - 9px); border-radius: 3px; background: var(--primary); }
+:root[data-theme='dark'] .product-sidebar { background: #0e1727; }
+.product-sidebar a[data-view].active { background: var(--primary); color: var(--on-primary); }
+.product-sidebar a.active::before { background: currentColor; }
+.product-top { background: var(--background); }
+@media (hover:hover) and (prefers-reduced-motion:no-preference) {
+  .product-sidebar a[data-view], .product-top button, .product-panel button { transition: background .18s ease, color .18s ease, transform .18s ease, border-color .18s ease; }
+  .product-sidebar a[data-view]:hover, .product-top button:hover, .product-panel button:hover { transform: translateY(-2px); }
+  .product-top button:active, .product-panel button:active { transform: translateY(0) scale(.98); }
+}
 .product-dashboard .workspace-wrap { padding-top: 10px; }
 .product-dashboard .workspace { border-radius: 24px; box-shadow: var(--shadow); }
 .product-panel { padding-top: 26px; }
@@ -435,15 +444,7 @@ button, input, textarea, select { color: inherit; }
 @media(max-width:700px){.profile-usage-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.profile-usage-grid article{padding:12px}}
 
 
-/* AI Learning Home: distraction-free entry, management remains in the separate sidebar view. */
-body.product-dashboard.ai-home-view .product-sidebar{display:none}
-body.product-dashboard.ai-home-view .product-top{margin-left:0}
-body.product-dashboard.ai-home-view .workspace-wrap{margin-left:0;padding:18px 24px 72px}
-body.product-dashboard.ai-home-view .workspace-wrap>.shell{max-width:1120px}
-body.product-dashboard.ai-home-view #productMenu,
-body.product-dashboard.ai-home-view #sourceSearch{display:none}
-body.product-dashboard.ai-home-view .product-top{justify-content:flex-start;min-height:70px}
-body.product-dashboard.ai-home-view .product-top>a{margin-left:auto}
+/* AI Home uses the same navigation shell as every other dashboard view. */
 .master-home-mode>.master-heading{justify-content:center;text-align:center;flex-direction:column;gap:10px;padding:34px 10px 12px}
 .master-home-mode>.master-heading img{width:86px;height:86px}
 .master-home-mode>.master-heading h1{font-size:clamp(30px,4vw,46px);letter-spacing:-1.3px}
@@ -455,8 +456,6 @@ body.product-dashboard.ai-home-view .product-top>a{margin-left:auto}
 .master-home-mode .home-composer-panel .primary{margin-left:auto}
 .master-home-mode .master-section{scroll-margin-top:92px}
 @media(max-width:700px){
- body.product-dashboard.ai-home-view .workspace-wrap{padding:12px 14px 50px}
- body.product-dashboard.ai-home-view .product-top{padding:12px 14px}
  .master-home-mode>.master-heading{padding:20px 4px 8px}
  .master-home-mode .home-composer-panel{padding:14px}
  .master-home-mode .master-composer>.panel-actions{gap:8px}

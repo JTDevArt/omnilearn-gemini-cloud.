@@ -4,9 +4,9 @@ const browser=await chromium.launch({executablePath:'/usr/bin/chromium',args:['-
 const base=process.env.DASHBOARD_TEST_URL || 'http://127.0.0.1:3108';
 try {const page=await browser.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('dialog',d=>d.accept());
 await page.goto(base+'/dashboard');await page.waitForFunction(()=>!!window.OmniProduct);
-assert.deepEqual(await page.locator('nav[aria-label="Menu utama"] a').evaluateAll(nodes=>nodes.map(n=>n.dataset.view)),['dashboard','exams','subjects','streaks','leaderboard','pinned','updates','profile']);
+assert.deepEqual(await page.locator('nav[aria-label="Menu utama"] a').evaluateAll(nodes=>nodes.map(n=>n.dataset.view)),['home','dashboard','subjects','notes','exams','streaks','leaderboard','updates','profile']);
 await page.locator('#productMenu').click();assert.equal(await page.locator('.product-sidebar').evaluate(n=>n.inert),true);await page.locator('#productMenu').click();
-for(const view of ['dashboard','exams','subjects','streaks','leaderboard','pinned','updates','profile']) {await page.locator('nav[aria-label="Menu utama"] [data-view='+view+']').click();assert.equal(await page.locator('nav[aria-label="Menu utama"] [data-view='+view+']').getAttribute('aria-current'),'page');}
+for(const view of ['home','dashboard','subjects','notes','exams','streaks','leaderboard','updates','profile']) {await page.locator('nav[aria-label="Menu utama"] [data-view='+view+']').click();assert.equal(await page.locator('nav[aria-label="Menu utama"] [data-view='+view+']').getAttribute('aria-current'),'page');}
 await page.goBack();await page.waitForFunction(()=>document.querySelector('[data-view=updates]').classList.contains('active'));
 await page.goForward();await page.waitForFunction(()=>document.querySelector('[data-view=profile]').classList.contains('active'));
 await page.setViewportSize({width:390,height:844});assert.equal(await page.locator('#productMenu').getAttribute('aria-expanded'),'false');assert.equal(await page.locator('.product-sidebar').evaluate(n=>n.inert),true);
@@ -26,5 +26,5 @@ while(!uploadRoute)await new Promise(resolve=>setTimeout(resolve,10));
 await uploadRoute.fulfill({json:{status:'completed',filename:'background.txt',text:'Background extraction lesson.',pageCount:1}});
 await page.waitForFunction(()=>OmniProduct.snapshot().sources.some(s=>s.name==='background.txt' && s.meta.uploadState==='completed'));
 assert.match(page.url(),/view=profile/);assert.deepEqual(errors,[]);
-console.log('Navigation checks passed: eight primary routes, history, desktop collapse, inert mobile drawer, focus trap/return, contextual tools and old URL alias.');
+console.log('Navigation checks passed: nine primary routes, history, desktop collapse, inert mobile drawer, focus trap/return, contextual tools and old URL alias.');
 }finally{await browser.close();}
