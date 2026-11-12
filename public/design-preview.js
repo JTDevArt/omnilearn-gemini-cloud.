@@ -108,7 +108,15 @@ function renderLanding(){
     '<p>Bangun kebiasaan belajar, simpan materimu, dan siapkan latihan dalam satu ruang yang konsisten.</p>'+
     '<div class="actions">'+linkButton('Mulai jelajahi UI →','#home','button-primary')+
     linkButton('Buka dashboard','#dashboard')+'</div>'+
-    '<div class="hero-orbit"></div>'+robot()+
+    '<div class="hero-orbit"></div>'+
+    '<div class="landing-device" aria-hidden="true">'+
+    '<div class="device-topbar"><span class="device-dot"></span><span class="device-dot"></span><span class="device-dot"></span><b>OmniLearn</b></div>'+
+    '<div class="device-ui"><div class="device-side"><span class="active">▦</span><span>▤</span><span>▣</span><span>◉</span><span>✦</span></div>'+
+    '<div class="device-main">'+
+    '<span class="device-kicker">SELAMAT DATANG</span><strong>Belajar lebih cerdas.</strong>'+
+    '<div class="device-prompt">✦ Tanyakan apa yang ingin kamu pelajari… <i>➜</i></div>'+
+    '<div class="device-row"><span><em>▤</em> Catatan</span><span><em>✦</em> Tutor AI</span><span><em>◉</em> Ujian</span></div>'+
+    '</div></div></div>'+
     '<div class="brand-features"><span>✦ AI Assistant</span><span>▣ Catatan</span><span>✓ Latihan & Ujian</span><span>▤ Pantau Progres</span></div></div>'+
     '<div class="subhead"><div><h2>Rangka produk</h2><p>Komponen awal berdasarkan showcase; bukan pengganti aplikasi produksi.</p></div>'+tag+'</div>'+
     '<div class="quick-grid">'+[
