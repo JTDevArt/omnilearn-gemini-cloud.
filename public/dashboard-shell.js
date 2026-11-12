@@ -399,6 +399,56 @@
         e.target.querySelector('[role=status]').textContent = '';
       };
       const identity = section("Identitas akun", "<p>Memeriksa akun…</p>");
+      const usage = section("Penggunaan nyata",
+        `<div class="profile-usage-grid">
+          <article><strong>${sources.length}</strong><span>Materi tersimpan</span></article>
+          <article><strong>${sources.filter(s => typeof s.notes === 'string' && s.notes.trim()).length}</strong><span>Catatan terisi</span></article>
+          <article><strong>${sources.filter(s => s.hasOriginal).length}</strong><span>File asli tersimpan</span></article>
+          <article><strong>${metrics.cardsReviewed}</strong><span>Ulangan flashcard</span></article>
+          <article><strong>${summary.answered}</strong><span>Jawaban kuis tercatat</span></article>
+          <article><strong>${metrics.xp}</strong><span>XP tercatat</span></article>
+        </div><p>Hanya aktivitas yang tercatat di perangkat ini. Batas langganan atau kuota API tidak ditampilkan karena belum diverifikasi.</p>`);
+      host.insertBefore(usage, identity);
+      const profileSections = [preferences, usage, identity];
+      const profileTabs = document.createElement('div');
+      profileTabs.className = 'profile-tabs';
+      profileTabs.setAttribute('role', 'tablist');
+      profileTabs.setAttribute('aria-label', 'Bagian profil');
+      const tabButtons = ['Preferensi', 'Penggunaan', 'Akun'].map((label, index) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.id = 'profile-tab-' + index;
+        button.setAttribute('role', 'tab');
+        button.setAttribute('aria-controls', 'profile-panel-' + index);
+        button.textContent = label;
+        profileTabs.append(button);
+        const section = profileSections[index];
+        section.id = 'profile-panel-' + index;
+        section.setAttribute('role', 'tabpanel');
+        section.setAttribute('aria-labelledby', button.id);
+        return button;
+      });
+      const activateProfileTab = index => {
+        profileSections.forEach((panel, i) => { panel.hidden = i !== index; });
+        tabButtons.forEach((button, i) => {
+          button.setAttribute('aria-selected', String(i === index));
+          button.tabIndex = i === index ? 0 : -1;
+        });
+      };
+      tabButtons.forEach((button, index) => {
+        button.addEventListener('click', () => activateProfileTab(index));
+        button.addEventListener('keydown', e => {
+          const delta = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+          const next = e.key === 'Home' ? 0 : e.key === 'End' ? tabButtons.length - 1 :
+            delta ? (index + delta + tabButtons.length) % tabButtons.length : null;
+          if (next === null) return;
+          e.preventDefault();
+          activateProfileTab(next);
+          tabButtons[next].focus();
+        });
+      });
+      host.insertBefore(profileTabs, preferences);
+      activateProfileTab(0);
       try {
         const response = await fetch("/api/account/me");
         const result = await response.json();
@@ -409,6 +459,20 @@
       } catch {
         if (identity.isConnected)
           identity.textContent = "Identitas akun belum dapat diperiksa.";
+      }
+      if (identity.isConnected) {
+        const links = document.createElement('div');
+        links.className = 'panel-actions';
+        const accountButton = document.createElement('button');
+        accountButton.type = 'button';
+        accountButton.textContent = 'Akun & sinkronisasi';
+        accountButton.onclick = () => api.navigate('account');
+        const backupButton = document.createElement('button');
+        backupButton.type = 'button';
+        backupButton.textContent = 'Cadangan & sumber';
+        backupButton.onclick = () => api.navigate('sources');
+        links.append(accountButton, backupButton);
+        identity.append(links);
       }
     }
     if (view === "help") {
