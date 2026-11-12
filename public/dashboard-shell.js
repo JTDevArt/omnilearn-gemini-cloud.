@@ -441,5 +441,5 @@
       }
     }
   }
-  window.OmniDashboard = { render, releases };
+  window.OmniDashboard = { render };
 })();
