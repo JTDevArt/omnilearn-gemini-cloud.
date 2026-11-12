@@ -23,11 +23,13 @@
       profile = state.profile || {};
     const { activitySummary, activityDay } =
       await import("./learning-activity.js");
+    const { progressMetrics } = await import("./progress-metrics.js");
     if (!host.isConnected || host.dashboardRenderId !== renderId || host.hidden)
       return;
     host.classList.remove("video-learning");
     const summary = activitySummary(state.activity);
-    const stats = `<div class="master-stats"><article><strong>${summary.xp}</strong><span>XP tercatat</span></article><article><strong>${summary.level}</strong><span>Level</span></article><article><strong>${summary.streak}</strong><span>Streak hari</span></article><article><strong>${sources.length}</strong><span>Materi</span></article></div>`;
+    const metrics = progressMetrics(sources, state.activity);
+    const stats = `<div class="master-stats"><article><strong>${sources.length}</strong><span>Materi</span></article><article><strong>${summary.streak}</strong><span>Streak hari</span></article><article><strong>${metrics.cardsDue}</strong><span>Flashcard perlu diulang</span></article><article><strong>${metrics.xp}</strong><span>XP tercatat · Level ${metrics.level}</span></article></div>`;
     const top = document.querySelector(".product-top");
     let badge = top.querySelector(".master-profile");
     if (!badge) {
@@ -184,6 +186,7 @@
       };
       api.mountDashboardChat(chat);
       host.insertAdjacentHTML("beforeend", stats);
+      section("Progres belajar", `<div class="progress-level"><div><strong>Level ${metrics.level}</strong><span>${metrics.xp} / ${metrics.nextLevelXp} XP</span></div><progress max="100" value="${metrics.levelProgress}" aria-label="Progres level ${metrics.level}">${metrics.levelProgress}%</progress><p>Streak terpanjang: ${metrics.longestStreak} hari · Flashcard jatuh tempo: ${metrics.cardsDue}</p></div>`);
       const recent = [...sources].filter(s => s.text?.trim()).sort((a,b) => (b.lastOpenedAt || b.createdAt) - (a.lastOpenedAt || a.createdAt)).slice(0,4);
       const continuation = section('Lanjutkan belajar', recent.length ? `<div class="master-library">${recent.map(s => {
         const chapters = s.journey?.chapters || [];
@@ -311,19 +314,11 @@
     }
     if (view === "streaks") {
       host.insertAdjacentHTML("beforeend", stats);
-      const events = state.activity?.events || [],
-        days = [...new Set(events.map((e) => e.day))].sort();
-      let longest = 0,
-        run = 0,
-        previous = "";
-      for (const day of days) {
-        run = Date.parse(day) - Date.parse(previous) === 86400000 ? run + 1 : 1;
-        longest = Math.max(longest, run);
-        previous = day;
-      }
+      const events = state.activity?.events || [];
+      const longest = metrics.longestStreak;
       section(
         "Aktivitas nyata",
-        `<p>Streak terpanjang: ${longest} hari · ${events.filter((e) => e.type === "review").length} tinjauan flashcard · ${summary.answered} jawaban kuis</p><div class="master-calendar" aria-label="Kalender aktivitas 365 hari">${Array.from(
+        `<p>Streak terpanjang: ${longest} hari · ${metrics.cardsReviewed} tinjauan flashcard · ${summary.answered} jawaban kuis</p><div class="master-calendar" aria-label="Kalender aktivitas 365 hari">${Array.from(
           { length: 365 },
           (_, i) => {
             const day = activityDay(Date.now() - (364 - i) * 86400000);
@@ -349,6 +344,7 @@
       );
     if (view === "profile") {
       host.insertAdjacentHTML("beforeend", stats);
+      section("Ringkasan belajar", `<p>Total XP: ${metrics.xp} · Level: ${metrics.level} · Streak terpanjang: ${metrics.longestStreak} hari · Flashcard diulang: ${metrics.cardsReviewed}</p><progress max="100" value="${metrics.levelProgress}" aria-label="Progres XP">${metrics.levelProgress}%</progress>`);
       section(
         escape(profile.name || "Pelajar OmniLearn"),
         `<p>${sources.filter((s) => s.notes).length} catatan · ${sources.filter((s) => s.hasOriginal).length} file asli tersimpan</p><p>Email dan identitas terverifikasi tersedia melalui pengaturan akun.</p>${action("Preferensi AI, bahasa & tema", "settings")}${action("Akun & sinkronisasi", "account")}${action("Cadangan dan pustaka", "sources")}`,
