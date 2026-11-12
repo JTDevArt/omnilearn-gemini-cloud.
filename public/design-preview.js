@@ -12,6 +12,8 @@ const routes = [
   ['notes','▣','Catatan'],
   ['exams','◉','Ujian'],
   ['streaks','♨','Streaks'],
+  ['leaderboard','♜','Leaderboard'],
+  ['pinned','◇','Disematkan'],
   ['lesson','▧','Ruang Belajar'],
   ['profile','♙','Profil'],
   ['updates','↻','Update List']
@@ -255,6 +257,18 @@ function renderLesson(){
     [['✦','Ringkas dengan AI','summary'],['▤','Buat Catatan','notes'],['▣','Buat Flashcard','cards'],['◉','Latihan Soal','quiz'],['☏','Tanya AI','chat']]
       .map(x=>'<a class="tool-link" href="/dashboard?view='+x[2]+'">'+x[0]+' '+x[1]+' ↗</a>').join('')+'</aside></div>';
 }
+function renderLeaderboard(){
+  page.innerHTML=titleBlock('Leaderboard','Peringkat hanya boleh menggunakan data pengguna nyata yang mengizinkan tampil di papan peringkat.',tag)+
+    '<div class="empty"><div class="empty-art">🏆</div><h2>Belum ada peringkat terverifikasi</h2>'+
+    '<p>Prototipe tidak membuat akun atau pesaing palsu. Sambungkan leaderboard asli hanya setelah sistem opt-in dan privasi tersedia.</p>'+
+    linkButton('Buka leaderboard aplikasi ↗','/dashboard?view=leaderboard')+'</div>';
+}
+function renderPinned(){
+  page.innerHTML=titleBlock('Disematkan','Area khusus materi favorit dan catatan penting.',tag)+
+    '<div class="empty"><div class="empty-art">◇</div><h2>Belum ada pin di prototipe</h2>'+
+    '<p>Astra perlu memakai status pinned dari local-library yang sudah ada, bukan membuat penyimpanan baru.</p>'+
+    linkButton('Buka pin aplikasi asli ↗','/dashboard?view=pinned')+'</div>';
+}
 function renderProfile(){
   const tab=Number(state.profileTab)||0;
   const tabs=['Preferensi','Penggunaan','Akun'];
@@ -318,7 +332,8 @@ function render(){
   closeMenu();
   const renderer={landing:renderLanding,home:renderHome,dashboard:renderDashboard,
     subjects:renderSubjects,notes:renderNotes,exams:renderExams,streaks:renderStreaks,
-    lesson:renderLesson,profile:renderProfile,updates:renderUpdates}[route];
+    lesson:renderLesson,leaderboard:renderLeaderboard,pinned:renderPinned,
+    profile:renderProfile,updates:renderUpdates}[route];
   renderer();
 }
 function openAddDialog(kind){
