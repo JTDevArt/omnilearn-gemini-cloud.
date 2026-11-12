@@ -15,6 +15,7 @@ Updated 12 November 2026. Work continues through the remaining roadmap as reques
 | 08 — Exams and subjects | Complete locally | [Report](08-exams-subjects.md) |
 | 08A — AI Home ↔ Dashboard | Implemented locally; browser checks pending | [Dual-home changes](08A-dual-dashboard.md) |
 | UI-01 — Production shell | Partial; browser checks blocked | [Shell increment and verification](UI-01-production-shell.md) |
+| UI-02 — AI Learning Home | Partial; browser checks blocked | [Home increment and verification](UI-02-ai-home.md) |
 | 09 — Progress and personalization | Partial; real XP, due cards and streaks integrated | [Progress report](09-progress-personalization.md) |
 | 10 — Multimedia and research | Partial; safe durable research saving implemented | [Implementation and external gates](10-multimedia-research.md) |
 | 11 — Update List | Implemented locally; release still in development | [Changelog report](11-update-list.md) |

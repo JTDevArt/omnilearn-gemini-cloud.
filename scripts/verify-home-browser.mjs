@@ -5,7 +5,7 @@ const base=process.env.DASHBOARD_TEST_URL || 'http://127.0.0.1:3109';
 try {
  const page=await browser.newPage(); const errors=[]; page.on('pageerror',e=>errors.push(e.message));
  await page.route('https://www.youtube-nocookie.com/**',route=>route.fulfill({contentType:'text/html',body:'<!doctype html><title>Player transport fixture</title>'}));
- await page.goto(base+'/dashboard'); await page.locator('[data-paste-material]').click();
+ await page.goto(base+'/dashboard?view=home'); await page.locator('[data-paste-material]').click();
  await page.locator('dialog [name=title]').fill('Biologi');
  await page.locator('dialog [name=text]').fill('Sel adalah unit dasar kehidupan. Sel memiliki membran.');
  await page.getByRole('button',{name:'Simpan materi',exact:true}).click();

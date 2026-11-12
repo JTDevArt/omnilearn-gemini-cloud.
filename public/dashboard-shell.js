@@ -43,7 +43,7 @@
     }
     badge.textContent = `${profile.name || "Profil"} · Level ${summary.level} · ${summary.xp} XP · ${summary.streak} hari`;
     const title = {
-      home: "Mau belajar apa hari ini?",
+      home: "Halo, siap belajar hari ini?",
       dashboard: "Ringkasan belajarmu",
       subjects: "Mata Pelajaran",
       streaks: "Streak & Aktivitas",
@@ -53,7 +53,7 @@
       pinned: "Disematkan",
       updates: "Update List",
     }[view];
-    host.innerHTML = `<div class="master-heading">${view === "home" ? '<img src="/mascot.svg" alt="Maskot OmniLearn">' : ""}<div><p class="master-eyebrow">OMNILEARN · RUANG BELAJAR PRIBADI</p><h1>${title}</h1><p>${view === "home" ? "Tanyakan apa saja, unggah materi, atau mulai belajar dengan AI." : "Belajar dengan sumber dan progres milikmu sendiri."}</p></div></div>`;
+    host.innerHTML = `<div class="master-heading">${view === "home" ? '<img src="/mascot.svg" alt="Maskot OmniLearn">' : ""}<div>${view === "home" ? '' : '<p class="master-eyebrow">OMNILEARN · RUANG BELAJAR PRIBADI</p>'}<h1>${title}</h1><p>${view === "home" ? "Tanyakan apa saja, unggah materi, atau gunakan tautan YouTube untuk mulai belajar bersama AI." : "Belajar dengan sumber dan progres milikmu sendiri."}</p></div></div>`;
     const section = (heading, html) => {
       const node = document.createElement("section");
       node.className = "master-section";
@@ -148,10 +148,6 @@
       draw();
     }
     if (view === "home") {
-      const hour = new Date().getHours();
-      const greeting = document.createElement('p');
-      greeting.textContent = `Selamat ${hour < 11 ? 'pagi' : hour < 15 ? 'siang' : hour < 18 ? 'sore' : 'malam'}, ${profile.name || 'teman belajar'}. ${sources.length} materi tersimpan · ${summary.streak} hari streak.`;
-      host.append(greeting);
       const chat = section(
         "Tanya, pahami, lanjutkan",
         `<form class="master-composer"><textarea aria-label="Pertanyaan untuk tutor" placeholder="Rangkum bab, jelaskan konsep, atau buat pelajaran dari materi apa pun..." required maxlength="12000"></textarea><div class="panel-actions"><button type="button" data-record-audio>● Rekam</button><button type="button" data-upload>＋ Unggah</button><button type="button" data-paste-material>Tempel materi</button><button type="button" data-open="sources">▶ YouTube</button><button class="primary" type="submit">Kirim ↑</button></div><span id="recordStatus" role="status"></span></form>`,
@@ -166,13 +162,16 @@
       chat.querySelector("form").onsubmit = (e) => {
         e.preventDefault();
         const input = chat.querySelector("textarea");
+        const submitted = input.value;
         const button = chat.querySelector('button[type="submit"]');
         button.disabled = true;
-        Promise.resolve(api.submitDashboardChat(input.value))
-          .then(result => {
+        Promise.resolve(api.submitDashboardChat(submitted))
+          .then(async result => {
             if (result?.ok !== true) return;
-            input.value = '';
-            try { sessionStorage.removeItem(HOME_DRAFT_KEY); } catch {}
+            const {clearSubmittedDraft} = await import('./home-draft.js');
+            let cleared = false;
+            try { cleared = clearSubmittedDraft(sessionStorage, HOME_DRAFT_KEY, submitted); } catch {}
+            if (input.value === submitted && (cleared || input.isConnected)) input.value = '';
           })
           .catch(error => {
             const status = chat.querySelector('[role="status"]') ||
@@ -207,7 +206,18 @@
         };
       };
       api.mountDashboardChat(chat);
-      // Management statistics are visible on the dedicated Dashboard view.
+    }
+    if (view === "dashboard") {
+      const hour = new Date().getHours();
+      const greeting = document.createElement('p');
+      greeting.textContent = `Selamat ${hour < 11 ? 'pagi' : hour < 15 ? 'siang' : hour < 18 ? 'sore' : 'malam'}, ${profile.name || 'pelajar'}! Lanjutkan belajarmu hari ini.`;
+      host.append(greeting);
+      host.insertAdjacentHTML('beforeend', stats);
+      section('Progres level', `<div class="progress-level"><div><strong>Level ${metrics.level}</strong><span>${metrics.xp} / ${metrics.nextLevelXp} XP</span></div><progress max="100" value="${metrics.levelProgress}" aria-label="Progres XP">${metrics.levelProgress}%</progress><p>Streak terpanjang: ${metrics.longestStreak} hari · Flashcard jatuh tempo: ${metrics.cardsDue}</p></div>`);
+      const timer = section('Timer fokus', '<div class="focus-timer"></div>');
+      import('./focus-timer.js').then(({ mountTimer }) => {
+        if (timer.isConnected) mountTimer(timer.querySelector('.focus-timer'), api);
+      }).catch(() => { timer.querySelector('.focus-timer').textContent = 'Timer belum tersedia.'; });
       const recent = [...sources].filter(s => s.text?.trim()).sort((a,b) => (b.lastOpenedAt || b.createdAt) - (a.lastOpenedAt || a.createdAt)).slice(0,4);
       const continuation = section('Lanjutkan belajar', recent.length ? `<div class="master-library">${recent.map(s => {
         const chapters = s.journey?.chapters || [];
@@ -215,8 +225,6 @@
         return `<article class="master-note"><h3>${escape(s.name)}</h3><p>${escape(s.subject || 'Tanpa pelajaran')}</p><p>${chapters.length ? `${done}/${chapters.length} bab ditandai selesai` : 'Belum ada jalur belajar'}</p>${chapters.length ? `<progress aria-label="Progres ${escape(s.name)}" max="${chapters.length}" value="${done}"></progress>` : ''}<button data-resume="${escape(s.id)}">Lanjutkan belajar</button></article>`;
       }).join('')}</div>` : '<p class="master-empty">Unggah atau tempel materi untuk memulai pelajaran pertama.</p>');
       continuation.onclick = event => { const id = event.target.closest('[data-resume]')?.dataset.resume; if (id && api.selectSource(id)) api.navigate('journey'); };
-      const timer = section('Timer fokus', '<div class="focus-timer"></div>');
-      import('./focus-timer.js').then(({mountTimer}) => { if (timer.isConnected) mountTimer(timer.querySelector('.focus-timer'),api); });
       const video = section(
         "Lanjutkan dari video",
         `<p>Video, transkrip, dan ide penting dalam satu tempat.</p><div class="panel-actions"><button data-upload>Unggah video</button>${action("YouTube & transkrip", "sources")}</div><div class="master-video"></div>`,
@@ -242,41 +250,6 @@
       else
         video.querySelector(".master-video").innerHTML =
           '<p class="master-empty">Belum ada video. Tambahkan video atau transkrip YouTube untuk melanjutkan belajar.</p>';
-      library();
-      section(
-        "Satu materi, banyak cara memahami",
-        `<div class="master-features">${[
-          ["Ringkasan Otomatis", "summary", "Temukan ide utama dari sumbermu."],
-          [
-            "Tutor AI 24/7",
-            "chat",
-            "Tanyakan konsep dan lanjutkan percakapan.",
-          ],
-          ["Smart Flashcards", "cards", "Ulangi konsep dengan latihan aktif."],
-          [
-            "Kuis Interaktif",
-            "quiz",
-            "Uji pemahaman dan pelajari umpan balik.",
-          ],
-        ]
-          .map(
-            ([name, route, copy]) =>
-              `<article><h3>${name}</h3><p>${copy}</p>${action("Mulai →", route)}</article>`,
-          )
-          .join("")}</div>`,
-      );
-    }
-    if (view === "dashboard") {
-      const hour = new Date().getHours();
-      const greeting = document.createElement('p');
-      greeting.textContent = `Selamat ${hour < 11 ? 'pagi' : hour < 15 ? 'siang' : hour < 18 ? 'sore' : 'malam'}, ${profile.name || 'pelajar'}! Lanjutkan belajarmu hari ini.`;
-      host.append(greeting);
-      host.insertAdjacentHTML('beforeend', stats);
-      section('Progres level', `<div class="progress-level"><div><strong>Level ${metrics.level}</strong><span>${metrics.xp} / ${metrics.nextLevelXp} XP</span></div><progress max="100" value="${metrics.levelProgress}" aria-label="Progres XP">${metrics.levelProgress}%</progress><p>Streak terpanjang: ${metrics.longestStreak} hari · Flashcard jatuh tempo: ${metrics.cardsDue}</p></div>`);
-      const timer = section('Timer fokus', '<div class="focus-timer"></div>');
-      import('./focus-timer.js').then(({ mountTimer }) => {
-        if (timer.isConnected) mountTimer(timer.querySelector('.focus-timer'), api);
-      }).catch(() => { timer.querySelector('.focus-timer').textContent = 'Timer belum tersedia.'; });
       library();
     }
     if (view === "pinned") library(true);
