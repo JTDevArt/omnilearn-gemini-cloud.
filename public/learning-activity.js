@@ -8,7 +8,8 @@ export function activityDay(time = Date.now()) {
 }
 export function recordActivity(state, event, now = Date.now()) {
   const next = { events: [], ...state };
-  if (!event?.id || next.events.some((item) => item.id === event.id))
+  const id = String(event?.id || '').slice(0, 250);
+  if (!id || !['lesson', 'quiz', 'review', 'note'].includes(event.type) || next.events.some((item) => item.id === id))
     return next;
   const points =
     { lesson: 15, quiz: event.correct ? 10 : 2, review: 3, note: 2 }[
@@ -17,7 +18,7 @@ export function recordActivity(state, event, now = Date.now()) {
   next.events = [
     ...next.events,
     {
-      id: String(event.id).slice(0, 250),
+      id,
       type: event.type,
       correct: event.correct,
       topic: String(event.topic || '').slice(0, 180),

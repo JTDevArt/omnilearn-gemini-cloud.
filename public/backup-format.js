@@ -64,6 +64,8 @@ export function validateLibrary(raw) {
         (typeof s[key] !== 'string' || s[key].length > 1000000)
       )
         throw new Error('Catatan sumber tidak valid.');
+    if (s.lessonTitle !== undefined && (typeof s.lessonTitle !== 'string' || s.lessonTitle.length > 180))
+      throw new Error('Judul topik sumber tidak valid.');
     for (const key of ['pinned', 'hasOriginal'])
       if (s[key] !== undefined && typeof s[key] !== 'boolean')
         throw new Error('Status sumber tidak valid.');

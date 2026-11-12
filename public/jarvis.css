@@ -98,7 +98,7 @@
 }
 .journey-workspace {
   display: grid;
-  grid-template-columns: minmax(180px, 250px) 1fr;
+  grid-template-columns: minmax(160px, 220px) minmax(0, 1fr) minmax(150px, 200px);
   gap: 28px;
   margin: 25px 0;
 }
@@ -117,6 +117,10 @@
 .journey-workspace article {
   min-width: 0;
 }
+.journey-tools{display:grid;gap:9px;align-content:start}
+.journey-tools h2{font-size:18px}
+.journey-tools button{text-align:left}
+@media (min-width:701px) and (max-width:1050px){.journey-workspace{grid-template-columns:minmax(150px,200px) minmax(0,1fr)}.journey-tools{grid-column:1/-1;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}.journey-tools h2{grid-column:1/-1}}
 .journey-workspace h2 {
   font-size: 28px;
 }

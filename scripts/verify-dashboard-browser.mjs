@@ -44,11 +44,11 @@ try {
   await page.getByRole("button", { name: "Sematkan", exact: true }).click();
   await page.goto(`${base}/dashboard?view=pinned`);
   await page
-    .getByRole("heading", { name: "Biologi <script>.txt", exact: true })
+    .getByRole("heading", { name: "Materi belum diberi judul", exact: true })
     .waitFor();
   await page.reload();
   await page
-    .getByRole("heading", { name: "Biologi <script>.txt", exact: true })
+    .getByRole("heading", { name: "Materi belum diberi judul", exact: true })
     .waitFor();
   for (const theme of ["light", "dark"]) {
     await page.evaluate(

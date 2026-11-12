@@ -55,9 +55,9 @@ try {
   await other.evaluate(async () => { const value = await OmniLocalLibrary.load(); value.profile.name = 'Other tab'; await OmniLocalLibrary.save(value); });
   assert.match(await page.evaluate(async () => { try { await OmniLocalLibrary.save({schemaVersion:1,sources:[]}); } catch(e) { return e.message; } }), /tab lain/);
   await other.close();
-  await page.goto(`${base}/dashboard?view=notes`);
+  await page.goto(`${base}/dashboard?view=note-editor`);
   await page.waitForFunction(() => !!window.OmniProduct);
-  await page.evaluate(() => { OmniProduct.selectSource('lesson'); OmniProduct.navigate('notes'); });
+  await page.evaluate(() => { OmniProduct.selectSource('lesson'); OmniProduct.navigate('note-editor'); });
   await page.locator('#noteEditor').fill('Notes survive navigation and reload');
   await page.evaluate(async () => { await OmniLocalLibrary.flush(); OmniProduct.navigate('subjects'); });
   await page.reload();

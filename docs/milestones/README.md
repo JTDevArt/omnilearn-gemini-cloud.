@@ -16,6 +16,9 @@ Updated 12 November 2026. Work continues through the remaining roadmap as reques
 | 08A — AI Home ↔ Dashboard | Implemented locally; browser checks pending | [Dual-home changes](08A-dual-dashboard.md) |
 | UI-01 — Production shell | Partial; browser checks blocked | [Shell increment and verification](UI-01-production-shell.md) |
 | UI-02 — AI Learning Home | Partial; browser checks blocked | [Home increment and verification](UI-02-ai-home.md) |
+| UI-03–05 — Dashboard and saved materials | Partial; structured notes and browser acceptance remain | [Dashboard and notes increment](UI-03-05-dashboard-notes.md) |
+| 09A — Free LLM evaluation | Partial; account and region checks remain | [Provider evaluation](../research/free-llm-provider-evaluation.md) |
+| 09B — Optional text pilot | Fixture-tested and disconnected; live tests blocked | [Provider evaluation and pilot gates](../research/free-llm-provider-evaluation.md#pilot-and-production-boundary) |
 | 09 — Progress and personalization | Partial; real XP, due cards and streaks integrated | [Progress report](09-progress-personalization.md) |
 | 10 — Multimedia and research | Partial; safe durable research saving implemented | [Implementation and external gates](10-multimedia-research.md) |
 | 11 — Update List | Implemented locally; release still in development | [Changelog report](11-update-list.md) |

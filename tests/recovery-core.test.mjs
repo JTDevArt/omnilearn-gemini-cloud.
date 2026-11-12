@@ -68,6 +68,9 @@ test('library validation rejects malformed dashboard fields and retains older op
   const legacy = { ...library, profile: { customPreference: { keep: true } } };
   assert.deepEqual(validateLibrary(legacy), legacy);
   assert.notEqual(validateLibrary(legacy).sources[0], legacy.sources[0]);
+  const titled = { ...library, sources: [{...source, name:'scan.pdf', lessonTitle:'Sistem Pencernaan'}] };
+  assert.equal(validateLibrary(titled).sources[0].lessonTitle, 'Sistem Pencernaan');
+  assert.throws(() => validateLibrary({...library,sources:[{...source,lessonTitle:[]}]}), /valid/);
 });
 test('mindmap preserves hierarchy and removes incident edges on subtree deletion', () => {
   let graph = graphFromMap({

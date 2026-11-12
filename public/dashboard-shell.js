@@ -25,12 +25,15 @@
     const { activitySummary, activityDay } =
       await import("./learning-activity.js");
     const { progressMetrics } = await import("./progress-metrics.js");
+    const { lessonTitle } = await import('./lesson-label.js');
+    const { dashboardMetrics } = await import('./dashboard-metrics.js');
     if (!host.isConnected || host.dashboardRenderId !== renderId || host.hidden)
       return;
     host.classList.remove("video-learning");
     host.classList.toggle('master-home-mode', view === 'home');
     const summary = activitySummary(state.activity);
     const metrics = progressMetrics(sources, state.activity);
+    const dashboard = dashboardMetrics(sources, profile, state.activity);
     const stats = `<div class="master-stats"><article><strong>${sources.length}</strong><span>Materi</span></article><article><strong>${summary.streak}</strong><span>Streak hari</span></article><article><strong>${metrics.cardsDue}</strong><span>Flashcard perlu diulang</span></article><article><strong>${metrics.xp}</strong><span>XP tercatat · Level ${metrics.level}</span></article></div>`;
     const top = document.querySelector(".product-top");
     let badge = top.querySelector(".master-profile");
@@ -45,6 +48,7 @@
     const title = {
       home: "Halo, siap belajar hari ini?",
       dashboard: "Ringkasan belajarmu",
+      notes: "Catatan",
       subjects: "Mata Pelajaran",
       streaks: "Streak & Aktivitas",
       leaderboard: "Leaderboard",
@@ -102,7 +106,7 @@
           .filter(
             (s) =>
               (!pinned || s.pinned) &&
-              s.name.toLowerCase().includes(search.value.toLowerCase()) &&
+              (lessonTitle(s).toLowerCase().includes(search.value.toLowerCase())) &&
               (type.value === "all" || kind(s) === type.value) &&
               (!subject.value || s.subject === subject.value),
           )
@@ -114,14 +118,14 @@
           ? list
               .map(
                 (s) =>
-                  `<article class="master-note"><div class="master-preview" aria-hidden="true">${escape((s.notes || s.text || "").slice(0, 180))}</div><p>${escape(kind(s))} · ${escape(s.subject || "Tanpa pelajaran")}</p><h3>${escape(s.name)}</h3><time>${escape(new Date(s.createdAt).toLocaleDateString("id-ID"))}</time><div class="panel-actions"><button data-source-id="${escape(s.id)}">Buka</button><button data-pin-id="${escape(s.id)}" aria-pressed="${!!s.pinned}">${s.pinned ? "Lepas pin" : "Sematkan"}</button></div></article>`,
+                  `<article class="master-note"><div class="master-preview" aria-hidden="true">${escape((s.notes || s.text || "").slice(0, 180))}</div><p>${escape(kind(s))} · ${escape(s.subject || "Tanpa pelajaran")}</p><h3>${escape(lessonTitle(s))}</h3><p>${Array.isArray(s.journey?.chapters) ? `${s.journey.chapters.length} bab` : 'Bab belum disusun'}</p><time>${escape(new Date(s.lastOpenedAt || s.createdAt).toLocaleDateString("id-ID"))}</time><details><summary>Sumber asli</summary><p>${escape(s.name)}</p></details><div class="panel-actions"><button data-source-id="${escape(s.id)}">Buka</button><button data-edit-note="${escape(s.id)}">Edit catatan</button><button data-rename-id="${escape(s.id)}">Ubah judul</button><button data-pin-id="${escape(s.id)}" aria-pressed="${!!s.pinned}">${s.pinned ? "Lepas pin" : "Sematkan"}</button></div></article>`,
               )
               .join("")
           : '<p class="master-empty">Belum ada materi di sini. Unggah sumber pertama untuk mulai belajar.</p>';
       }
       node.oninput = draw;
       node.onchange = draw;
-      node.onclick = (e) => {
+      node.onclick = async (e) => {
         const b = e.target.closest("button");
         if (!b) return;
         if (b.dataset.layout) {
@@ -132,7 +136,29 @@
         }
         if (b.dataset.sourceId) {
           api.selectSource(b.dataset.sourceId);
-          api.navigate("notes");
+          api.navigate("journey");
+        }
+        if (b.dataset.editNote) {
+          api.selectSource(b.dataset.editNote);
+          api.navigate('note-editor');
+        }
+        if (b.dataset.renameId) {
+          const item = api.getSource(b.dataset.renameId);
+          if (!item) return;
+          const value = prompt('Judul topik materi', item.lessonTitle || (lessonTitle(item) === 'Materi belum diberi judul' ? '' : lessonTitle(item)));
+          if (value === null || !value.trim()) return;
+          const old = item.lessonTitle;
+          const next = value.trim().slice(0, 180);
+          b.disabled = true;
+          try {
+            await api.updateDashboard(s => { const target=s.sources.find(x => x.id === item.id); if(!target)throw new Error('Materi tidak ditemukan.'); target.lessonTitle = next; });
+            const local=sources.find(x=>x.id===item.id); if(local)local.lessonTitle=next;
+            saveStatus.textContent='Judul tersimpan di perangkat.'; draw();
+          } catch(error) {
+            if(item.lessonTitle===next) { if(old === undefined) delete item.lessonTitle; else item.lessonTitle=old; }
+            saveStatus.textContent='Judul belum tersimpan: '+error.message;
+            b.disabled=false;
+          }
         }
         if (b.dataset.pinId) {
           commit((s) => {
@@ -212,12 +238,15 @@
       const greeting = document.createElement('p');
       greeting.textContent = `Selamat ${hour < 11 ? 'pagi' : hour < 15 ? 'siang' : hour < 18 ? 'sore' : 'malam'}, ${profile.name || 'pelajar'}! Lanjutkan belajarmu hari ini.`;
       host.append(greeting);
-      host.insertAdjacentHTML('beforeend', stats);
+      host.insertAdjacentHTML('beforeend', `<div class="master-stats"><article><strong>${dashboard.subjects}</strong><span>Mata pelajaran</span></article><article><strong>${dashboard.notes}</strong><span>Catatan</span></article><article><strong>${dashboard.exams}</strong><span>Ujian selesai</span></article><article><strong>${metrics.xp}</strong><span>Total XP</span></article></div>`);
       section('Progres level', `<div class="progress-level"><div><strong>Level ${metrics.level}</strong><span>${metrics.xp} / ${metrics.nextLevelXp} XP</span></div><progress max="100" value="${metrics.levelProgress}" aria-label="Progres XP">${metrics.levelProgress}%</progress><p>Streak terpanjang: ${metrics.longestStreak} hari · Flashcard jatuh tempo: ${metrics.cardsDue}</p></div>`);
       const timer = section('Timer fokus', '<div class="focus-timer"></div>');
       import('./focus-timer.js').then(({ mountTimer }) => {
         if (timer.isConnected) mountTimer(timer.querySelector('.focus-timer'), api);
       }).catch(() => { timer.querySelector('.focus-timer').textContent = 'Timer belum tersedia.'; });
+      const weekMax=Math.max(1,...dashboard.week.map(day=>day.count));
+      section('Progres mingguan', `<div class="dashboard-week">${dashboard.week.map(day=>`<div><meter min="0" max="${weekMax}" value="${day.count}" aria-label="${day.day}: ${day.count} aktivitas"></meter><strong>${day.count}</strong><time datetime="${day.day}">${escape(new Date(day.day+'T00:00:00Z').toLocaleDateString('id-ID',{weekday:'short',timeZone:'UTC'}))}</time></div>`).join('')}</div><p>Aktivitas tujuh hari terakhir · Waktu Jakarta</p>`);
+      section('Aktivitas terbaru', dashboard.recent.length ? `<ul>${dashboard.recent.map(event=>`<li>${escape(event.day)} · ${escape(({lesson:'Pelajaran',quiz:'Kuis',review:'Flashcard',note:'Catatan'})[event.type] || 'Aktivitas')} · ${escape(event.topic || 'Belajar')}</li>`).join('')}</ul>` : '<p class="master-empty">Belum ada aktivitas. Mulai belajar untuk melihat progresmu.</p>');
       const recent = [...sources].filter(s => s.text?.trim()).sort((a,b) => (b.lastOpenedAt || b.createdAt) - (a.lastOpenedAt || a.createdAt)).slice(0,4);
       const continuation = section('Lanjutkan belajar', recent.length ? `<div class="master-library">${recent.map(s => {
         const chapters = s.journey?.chapters || [];
@@ -253,6 +282,10 @@
       library();
     }
     if (view === "pinned") library(true);
+    if (view === "notes") {
+      section('Materi tersimpan', `<div class="panel-actions">${action('Tambah sumber','sources')}${action('Buka editor catatan','note-editor')}</div>`);
+      library();
+    }
     if (view === "subjects") {
       const names = [
         ...new Set([

@@ -13,10 +13,10 @@ await page.setViewportSize({width:390,height:844});assert.equal(await page.locat
 await page.locator('#productMenu').click();assert.equal(await page.locator('.product-sidebar').getAttribute('aria-modal'),'true');
 await page.keyboard.press('Shift+Tab');assert.equal(await page.evaluate(()=>document.activeElement.id),'shellLogout');await page.keyboard.press('Tab');assert.equal(await page.evaluate(()=>document.activeElement.classList.contains('menu-product')),true);
 await page.keyboard.press('Escape');assert.equal(await page.locator('#productMenu').getAttribute('aria-expanded'),'false');assert.equal(await page.evaluate(()=>document.activeElement.id),'productMenu');
-await page.evaluate(()=>{OmniProduct.addSource({name:'Lesson',text:'This lesson explains a radius and diameter.'});OmniProduct.navigate('notes');});
+await page.evaluate(()=>{OmniProduct.addSource({name:'Lesson',text:'This lesson explains a radius and diameter.'});OmniProduct.navigate('note-editor');});
 assert.equal(await page.locator('.material-navigation [data-view=journey]').textContent(),'Belajar');assert.equal(await page.locator('.material-navigation [data-view=video]').isVisible(),false);
 await page.locator('#noteEditor').fill('Keep my lesson notes.');await page.evaluate(()=>OmniProduct.persistAsync());
-for(const view of ['notes','sources','journey','sticky','podcast','recovery','settings','learn']){await page.evaluate(v=>OmniProduct.navigate(v),view);assert.ok(await page.locator('.product-panel').isVisible());}
+for(const view of ['notes','note-editor','sources','journey','sticky','podcast','recovery','settings','learn']){await page.evaluate(v=>OmniProduct.navigate(v),view);assert.ok(await page.locator('.product-panel').isVisible());}
 await page.goto(base+'/dashboard?view=home');await page.locator('.master-composer').waitFor();
 assert.equal(await page.evaluate(()=>OmniProduct.snapshot().sources.find(s=>s.name==='Lesson').notes),'Keep my lesson notes.');let uploadRoute;await page.route('**/api/upload',route=>{uploadRoute=route;});
 await page.evaluate(()=>{void OmniUploads.enqueue([new File(['Background extraction lesson.'],'background.txt',{type:'text/plain'})]);});

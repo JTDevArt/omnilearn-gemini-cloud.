@@ -54,3 +54,9 @@ test('streak uses Jakarta days and breaks on missed days', () => {
     0
   );
 });
+test('long event IDs deduplicate after truncation and unknown events do not create streaks', () => {
+  const event={id:'x'.repeat(300),type:'lesson'};
+  const once=recordActivity({},event,0);
+  assert.equal(recordActivity(once,event,0).events.length,1);
+  assert.equal(recordActivity(once,{id:'other',type:'invented'},0).events.length,1);
+});

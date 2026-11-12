@@ -15,6 +15,7 @@
     journey: ['↝', 'Jalur belajar'],
     exams: ['◷', 'Ujian'],
     notes: ['☷', 'Catatan'],
+    'note-editor': ['☷', 'Edit catatan'],
     map: ['⌘', 'Mindmap'],
     quiz: ['✓', 'Kuis'],
     cards: ['▣', 'Flashcard'],
@@ -268,7 +269,7 @@
   const materialNav = document.createElement('nav');
   materialNav.className = 'material-navigation';
   materialNav.setAttribute('aria-label', 'Workspace materi');
-  materialNav.innerHTML = ['journey','notes','map','quiz','cards','sources','chat','podcast','sticky','video'].map(id => `<a href="/dashboard?view=${id}" data-view="${id}">${id === 'journey' ? 'Belajar' : views[id][1]}</a>`).join('');
+  materialNav.innerHTML = ['journey','note-editor','map','quiz','cards','sources','chat','podcast','sticky','video'].map(id => `<a href="/dashboard?view=${id}" data-view="${id}">${id === 'journey' ? 'Belajar' : id === 'note-editor' ? 'Catatan' : views[id][1]}</a>`).join('');
   materialNav.insertAdjacentHTML('beforeend','<details class=more-tools><summary>Alat lainnya</summary><div>'+['summary','research','translate','plan','recovery'].map(id=>`<a href="/dashboard?view=${id}" data-view="${id}">${({summary:'Ringkasan',research:'Riset',translate:'Terjemahan',plan:'Rencana belajar',recovery:'Permintaan tersimpan'})[id]}</a>`).join('')+'</div></details>');
   const mobile = matchMedia('(max-width:700px)');
   sidebar.id='primarySidebar';
@@ -1372,14 +1373,14 @@
     });
     setDrawer(false);
     document.body.classList.toggle('has-lesson',!!materialId);
-    materialNav.hidden = !materialId || ![...tools,'journey','notes','sources','podcast','sticky','video'].includes(view);
+    materialNav.hidden = !materialId || ![...tools,'journey','note-editor','sources','podcast','sticky','video'].includes(view);
     const selected=sources.find(s=>s.id===materialId);
     materialNav.querySelector('[data-view=video]').hidden=!(/video/.test(selected?.meta?.extractionMode || '') || selected?.meta?.youtubeUrl);
     panel.tabIndex=-1;panel.setAttribute('aria-label',views[view]?.[1] || view);
     if(push)panel.focus({preventScroll:true});
     workspace.hidden = !tools.has(view);
     panel.hidden = tools.has(view);
-    if (['home','dashboard','subjects','streaks','leaderboard','profile','help','pinned','updates'].includes(view)) {
+    if (['home','dashboard','notes','subjects','streaks','leaderboard','profile','help','pinned','updates'].includes(view)) {
       window.OmniDashboard.render(panel, view, window.OmniProduct);
       return;
     }
@@ -1394,7 +1395,7 @@
       return;
     }
     if (view === 'learn' || view === 'sources') sourcesView(view === 'learn');
-    if (view === 'notes') notesView();
+    if (view === 'note-editor') notesView();
     if (view === 'settings') settingsView();
     if (view === 'podcast') podcastView();
     if (view === 'exams') window.OmniExams.render(panel, window.OmniProduct);
