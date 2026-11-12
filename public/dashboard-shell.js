@@ -169,7 +169,8 @@
         const button = chat.querySelector('button[type="submit"]');
         button.disabled = true;
         Promise.resolve(api.submitDashboardChat(input.value))
-          .then(() => {
+          .then(result => {
+            if (result?.ok !== true) return;
             input.value = '';
             try { sessionStorage.removeItem(HOME_DRAFT_KEY); } catch {}
           })
