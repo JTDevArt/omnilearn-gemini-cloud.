@@ -505,10 +505,14 @@
     storageStatus: () => ({pendingWrites, unsavedChanges}),
     openRecorder(button) { return recordAudio(button); },
     mountDashboardChat(host) { host.append(chatMessages, chatFeedback, $('chatRequestActions')); },
-    submitDashboardChat(message) {
+    async submitDashboardChat(message) {
+      const completedBefore = chatHistory.length;
       if (isConceptMapCommand(message)) navigate('chat');
       chatInput.value = message;
-      return sendChat();
+      await sendChat();
+      // sendChat handles failures internally; a resolved promise alone does not
+      // mean that Gemini answered. Only clear the Home draft after a saved reply.
+      return { ok: chatHistory.length > completedBefore };
     },
     capture,
     record,
