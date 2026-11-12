@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b1220">
+  <meta name="description" content="Pratinjau rancangan OmniLearn AI: sembilan halaman, navigasi interaktif, dan contoh data terpisah dari akun asli.">
+  <title>OmniLearn AI · Design Preview</title>
+  <link rel="stylesheet" href="/design-preview.css">
+  <script type="module" src="/design-preview.js"></script>
+</head>
+<body>
+  <div class="app" id="app">
+    <aside class="sidebar" id="sidebar" aria-label="Navigasi prototipe">
+      <a href="#home" class="brand"><span class="brand-mark" aria-hidden="true"><i></i><i></i></span><span>OmniLearn <b>AI</b></span></a>
+      <div class="sidebar-head">WORKSPACE</div>
+      <nav id="sideNav" aria-label="Menu utama"></nav>
+      <div class="sidebar-bottom">
+        <span class="demo-tag">● DATA CONTOH · UI SAJA</span>
+        <a href="/dashboard?view=home" class="external-link">↗ Buka aplikasi asli</a>
+        <button type="button" class="nav-utility" id="resetDemo">↺ Reset data contoh</button>
+      </div>
+    </aside>
+    <div class="main-column">
+      <header class="topbar">
+        <button class="icon-button mobile-menu" id="mobileMenu" type="button" aria-label="Buka menu" aria-expanded="false" aria-controls="sidebar">☰</button>
+        <a href="#home" class="compact-brand"><span class="brand-mark" aria-hidden="true"><i></i><i></i></span>OmniLearn AI</a>
+        <button type="button" id="modeSwitch" class="icon-button switch-button" title="Ganti Beranda AI dan Dashboard" aria-label="Beralih ke Dashboard">⇄</button>
+        <span class="top-title" id="topTitle">Beranda AI</span>
+        <div class="top-actions">
+          <span class="preview-pill">DESIGN PREVIEW</span>
+          <button class="icon-button" id="themeToggle" type="button" aria-label="Ganti tema" title="Ganti tema">☾</button>
+          <a class="avatar" href="#profile" aria-label="Buka profil contoh">O</a>
+        </div>
+      </header>
+      <main class="page" id="page" tabindex="-1" aria-live="polite"></main>
+    </div>
+    <button id="backdrop" class="backdrop" type="button" aria-label="Tutup menu" hidden></button>
+  </div>
+  <dialog id="editDialog" class="edit-dialog" aria-labelledby="dialogTitle">
+    <form id="editForm" method="dialog">
+      <div class="dialog-head">
+        <div><p class="eyebrow">PROTOTIPE · HANYA DATA CONTOH</p><h2 id="dialogTitle">Tambah</h2></div>
+        <button id="closeDialog" class="icon-button" type="button" aria-label="Tutup dialog">×</button>
+      </div>
+      <label for="itemName">Nama</label>
+      <input id="itemName" maxlength="90" required autocomplete="off" placeholder="Masukkan nama">
+      <div class="dialog-actions">
+        <button id="cancelDialog" type="button" class="button button-ghost">Batal</button>
+        <button type="submit" class="button button-primary">Simpan contoh</button>
+      </div>
+    </form>
+  </dialog>
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+</body>
+</html>
