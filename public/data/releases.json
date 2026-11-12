@@ -6,7 +6,7 @@
       "title": "OmniLearn AI — rilis awal",
       "releasedAt": null,
       "status": "in-development",
-      "summary": "Milestone 00–08 sudah masuk GitHub main. Dashboard AI dan manajemen kini dipisahkan, progres XP/flashcard dihitung dari data nyata, dan Update List memakai manifest berversi. Ini masih rilis pengembangan; penerimaan layanan live dan verifikasi build belum selesai.",
+      "summary": "Milestone 00–08 lengkap di GitHub main; AI Home/Dashboard terpisah, progres dan profil menggunakan data asli, Update List berfungsi, riset memiliki penanganan penyimpanan yang benar, serta unit/lint/build diuji melalui GitHub Actions. v1.0.0 belum dirilis resmi.",
       "changes": [
         {
           "title": "Audit dan baseline repo",
@@ -127,12 +127,71 @@
             "tests/release-history.test.mjs"
           ],
           "commit": "d899365ac32f17b26d5816218bd083e05f0ecee0"
+        },
+        {
+          "title": "Profil interaktif dengan tab preferensi, penggunaan, dan akun",
+          "category": "Added",
+          "status": "implemented-local",
+          "files": [
+            "public/dashboard-shell.js",
+            "public/product.css"
+          ],
+          "commit": "65b7f2add4472975ac814add23bb5cf50714bcdb"
+        },
+        {
+          "title": "AI Home terpisah dari dashboard, sidebar tersembunyi dan komposer lebih fokus",
+          "category": "UI/UX",
+          "status": "implemented-local",
+          "files": [
+            "public/product.js",
+            "public/dashboard-shell.js",
+            "public/product.css"
+          ],
+          "commit": "4a54e44f26b8181707e83b16c12755049926b8b4"
+        },
+        {
+          "title": "Draft chat dipertahankan saat Gemini gagal, sibuk, atau dibatalkan",
+          "category": "Fixed",
+          "status": "implemented-local",
+          "files": [
+            "public/product.js",
+            "public/dashboard-shell.js"
+          ],
+          "commit": "5de2a806006dc19ef0927a23d092dd8f9ef45c66"
+        },
+        {
+          "title": "Penyimpanan referensi riset menunggu konfirmasi durable dan rollback saat gagal",
+          "category": "Fixed",
+          "status": "implemented-local",
+          "files": [
+            "public/research-workspace.js"
+          ],
+          "commit": "5718b648babbcceb165a19bda8a1c9e10a0b9989"
+        },
+        {
+          "title": "GitHub Actions menjalankan unit tests, lint dan build tanpa panggilan Gemini",
+          "category": "Infrastructure",
+          "status": "implemented-local",
+          "files": [
+            ".github/workflows/ci.yml"
+          ],
+          "commit": "f6f80a4af6f9b55c8fe6a0ba3b134512655e91f8"
+        },
+        {
+          "title": "Fixture PDF campuran memakai nomor halaman OCR yang diminta",
+          "category": "Fixed",
+          "status": "implemented-local",
+          "files": [
+            "tests/fixtures/provider-preload.mjs"
+          ],
+          "commit": "70ac0851a3ae1449da74e18ddcc3f6a53feda085"
         }
       ],
       "knownLimitations": [
-        "Kode baru sudah disimpan ke main, tetapi suite npm dan uji browser belum dijalankan dalam sesi ini.",
-        "Gemini langsung, Firebase dan deployment tetap memerlukan verifikasi layanan nyata.",
-        "Milestone 09 dan 11 sudah diimplementasikan sebagian; multimedia, penyelesaian fitur lain dan gate rilis akhir masih tertunda."
+        "GitHub Actions sudah pernah lulus penuh pada commit 70ac085; CI terbaru setelah semua perubahan perlu ditinjau terpisah.",
+        "Pengujian browser dua-mode, profil, research dan media pada host belum dilakukan dalam sesi ini.",
+        "Gemini langsung, Firebase/cloud, YouTube OAuth dan hosted AI Studio masih membutuhkan pengujian layanan nyata dan/atau kredensial.",
+        "Milestone 09 dan 10 belum sepenuhnya diterima, dan gerbang rilis Milestone 12 masih terbuka."
       ]
     }
   ]
