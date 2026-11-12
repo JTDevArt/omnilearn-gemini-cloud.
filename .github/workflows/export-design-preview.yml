@@ -1,0 +1,37 @@
+name: Export OmniLearn design preview
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'public/design-preview.html'
+      - 'public/design-preview.css'
+      - 'public/design-preview.js'
+      - 'public/data/releases.json'
+      - 'scripts/export-design-preview.mjs'
+      - '.github/workflows/export-design-preview.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate and export offline preview
+        run: |
+          node --check public/design-preview.js
+          node scripts/export-design-preview.mjs
+      - name: Publish downloadable preview artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: omnilearn-design-preview
+          path: dist/omnilearn-design-preview.html
+          retention-days: 14
+          if-no-files-found: error
