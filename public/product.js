@@ -2,6 +2,7 @@
 (async () => {
   document.body.classList.add('product-dashboard');
   const views = {
+    home: ['✧', 'Beranda AI'],
     dashboard: ['⌂', 'Dashboard'],
     subjects: ['▤', 'Mata Pelajaran'],
     streaks: ['◴', 'Streaks'],
@@ -122,6 +123,7 @@
         'omnilearn-free-note',
         'omnilearn-library-epoch',
         'omnilearn-tool-options',
+        'omnilearn-home-draft',
       ])
         sessionStorage.removeItem(name);
       window.OmniProductSourceChange?.();
@@ -239,7 +241,7 @@
     )
     .join(
       ''
-    )}</nav><div class="sidebar-bottom"><a href="/dashboard?view=help" data-view="help">Bantuan</a><a href="/dashboard?view=account" data-view="account">Akun</a><label>Tema <select data-theme-select aria-label="Tema"><option value="system">Ikuti perangkat</option><option value="light">Terang</option><option value="dark">Gelap</option></select></label><button id="shellTheme" hidden>◐ Tema</button><button id="shellLayout">Coba tampilan baru</button><button id="shellLogout">Keluar</button><p>Pustaka pribadi · OmniLearn v1.01</p></div>`;
+    )}</nav><div class="sidebar-bottom"><a href="/dashboard?view=help" data-view="help">Bantuan</a><a href="/dashboard?view=account" data-view="account">Akun</a><label>Tema <select data-theme-select aria-label="Tema"><option value="system">Ikuti perangkat</option><option value="light">Terang</option><option value="dark">Gelap</option></select></label><button id="shellTheme" hidden>◐ Tema</button><button id="shellLayout">Coba tampilan baru</button><button id="shellLogout">Keluar</button><p>Pustaka pribadi · v1.0.0 dalam pengembangan</p></div>`;
   document.body.prepend(sidebar);
   const closeSidebar = document.createElement('button');
   closeSidebar.className = 'menu-product secondary';
@@ -252,10 +254,11 @@
   const top = document.createElement('header');
   top.className = 'product-top';
   top.innerHTML =
-    '<button class="secondary" id="productMenu" aria-label="Buka atau tutup sidebar" aria-expanded="true">☰</button><span>Ruang belajar saya</span><input type="search" id="sourceSearch" aria-label="Cari sumber belajar" placeholder="Cari sumber belajarmu…"><button class="secondary" id="productTheme" aria-label="Ganti tema">◐</button><a class="secondary" href="/dashboard?view=settings" data-view="settings">Perangkat ini</a>';
+    '<button class="secondary" id="productMenu" aria-label="Buka atau tutup sidebar" aria-expanded="true">☰</button><button class="secondary home-mode-switch" id="homeModeSwitch" type="button" aria-label="Buka beranda AI" title="Beralih antara beranda AI dan dashboard">⇄</button><span>Ruang belajar saya</span><input type="search" id="sourceSearch" aria-label="Cari sumber belajar" placeholder="Cari sumber belajarmu…"><button class="secondary" id="productTheme" aria-label="Ganti tema">◐</button><a class="secondary" href="/dashboard?view=settings" data-view="settings">Perangkat ini</a>';
   document.body.insertBefore(top, document.querySelector('main'));
   sidebar.querySelector('#shellTheme').onclick = () => window.OmniTheme?.cycle();
-  sidebar.querySelector('#shellLayout').onclick = () => navigate(current === 'learn' ? 'dashboard' : 'learn');
+  sidebar.querySelector('#shellLayout').onclick = () => navigate(current === 'home' ? 'dashboard' : 'home');
+  top.querySelector('#homeModeSwitch').onclick = () => navigate(current === 'home' ? 'dashboard' : 'home');
   sidebar.querySelector('#shellLogout').onclick = async () => {
     try {
       await persistAsync();
@@ -1339,20 +1342,23 @@
       toast('Tunggu proses saat ini selesai.');
       return;
     }
-    view=({home:'dashboard',ujian:'exams',flashcards:'cards',mindmap:'map',update:'updates'})[view] || view;
+    view=({ujian:'exams',flashcards:'cards',mindmap:'map',update:'updates'})[view] || view;
     if (current === 'podcast') disposePodcast();
     panel.dashboardRenderId = null;
     chatHome.after(chatMessages);
     feedbackHome.after(chatFeedback, $('chatRequestActions'));
     if (!views[view] && !tools.has(view)) view = 'dashboard';
     current = view;
-    sidebar.querySelector('#shellLayout').textContent = view === 'learn' ? 'Coba tampilan baru' : 'Tampilan klasik';
+    sidebar.querySelector('#shellLayout').textContent = view === 'home' ? 'Buka Dashboard' : 'Beranda AI';
+    top.querySelector('#homeModeSwitch').setAttribute('aria-label',view === 'home' ? 'Buka Dashboard' : 'Buka Beranda AI');
+    top.querySelector('#homeModeSwitch').setAttribute('aria-pressed',String(view === 'home'));
     if (push)
       history.pushState({}, '', `/dashboard?view=${encodeURIComponent(view)}`);
     document.querySelectorAll('[data-view]').forEach((a) => {
       a.classList.toggle(
         'active',
         a.dataset.view === view ||
+          (view === 'home' && a.dataset.view === 'dashboard') ||
           (view === 'summary' && a.dataset.view === 'notes')
       );
       if (a.classList.contains('active'))
@@ -1368,7 +1374,7 @@
     if(push)panel.focus({preventScroll:true});
     workspace.hidden = !tools.has(view);
     panel.hidden = tools.has(view);
-    if (['dashboard','subjects','streaks','leaderboard','profile','help','pinned','updates'].includes(view)) {
+    if (['home','dashboard','subjects','streaks','leaderboard','profile','help','pinned','updates'].includes(view)) {
       window.OmniDashboard.render(panel, view, window.OmniProduct);
       return;
     }
