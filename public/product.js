@@ -1350,6 +1350,9 @@
     feedbackHome.after(chatFeedback, $('chatRequestActions'));
     if (!views[view] && !tools.has(view)) view = 'dashboard';
     current = view;
+    document.body.classList.toggle('ai-home-view', view === 'home');
+    const modeLabel = top.querySelector(':scope > span');
+    if (modeLabel) modeLabel.textContent = view === 'home' ? 'Beranda AI' : 'Ruang belajar saya';
     sidebar.querySelector('#shellLayout').textContent = view === 'home' ? 'Buka Dashboard' : 'Beranda AI';
     top.querySelector('#homeModeSwitch').setAttribute('aria-label',view === 'home' ? 'Buka Dashboard' : 'Buka Beranda AI');
     top.querySelector('#homeModeSwitch').setAttribute('aria-pressed',String(view === 'home'));
