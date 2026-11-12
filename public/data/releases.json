@@ -6,7 +6,7 @@
       "title": "OmniLearn AI — rilis awal",
       "releasedAt": null,
       "status": "in-development",
-      "summary": "Milestone 00–08 telah masuk ke GitHub main; penerimaan layanan Gemini, Firebase, dan hosting belum diverifikasi secara live. Versi ini belum dirilis.",
+      "summary": "Milestone 00–08 sudah masuk GitHub main. Dashboard AI dan manajemen kini dipisahkan, progres XP/flashcard dihitung dari data nyata, dan Update List memakai manifest berversi. Ini masih rilis pengembangan; penerimaan layanan live dan verifikasi build belum selesai.",
       "changes": [
         {
           "title": "Audit dan baseline repo",
@@ -93,11 +93,46 @@
             "public/exam-builder.js"
           ],
           "commit": "65d1da51d25a54a746bb9dd60c079f184ed64a74"
+        },
+        {
+          "title": "Dua tampilan Beranda AI dan Dashboard dengan tombol perpindahan",
+          "category": "UI/UX",
+          "status": "implemented-local",
+          "files": [
+            "public/product.js",
+            "public/dashboard-shell.js",
+            "public/product.css"
+          ],
+          "commit": "22acf68bd2f25f672171568f47b618d325e0d278"
+        },
+        {
+          "title": "Statistik XP, level, streak terpanjang dan kartu jatuh tempo dari data sumber",
+          "category": "Improved",
+          "status": "implemented-local",
+          "files": [
+            "public/progress-metrics.js",
+            "public/dashboard-shell.js",
+            "tests/progress-metrics.test.mjs"
+          ],
+          "commit": "21881888870ad58eae6c1ce2da56bbd360ccb4b7"
+        },
+        {
+          "title": "Halaman Update List berfilter dan riwayat perubahan terstruktur",
+          "category": "Added",
+          "status": "implemented-local",
+          "files": [
+            "public/data/releases.json",
+            "public/release-history.js",
+            "public/dashboard-shell.js",
+            "tests/release-history.test.mjs"
+          ],
+          "commit": "d899365ac32f17b26d5816218bd083e05f0ecee0"
         }
       ],
       "knownLimitations": [
-        "Integrasi Gemini langsung, Firebase, dan deployment masih memerlukan uji layanan nyata.",
-        "Milestone 09–12 dan penyempurnaan tampilan dua mode masih dalam pengembangan."
+        "Kode baru sudah disimpan ke main, tetapi suite npm dan uji browser belum dijalankan dalam sesi ini.",
+        "Gemini langsung, Firebase dan deployment tetap memerlukan verifikasi layanan nyata.",
+        "Milestone 09 dan 11 sudah diimplementasikan sebagian; multimedia, penyelesaian fitur lain dan gate rilis akhir masih tertunda."
       ]
     }
   ]
