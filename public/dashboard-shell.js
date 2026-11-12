@@ -12,22 +12,7 @@
           "'": "&#39;",
         })[c],
     );
-  const releases = [
-    {
-      version: "1.01",
-      date: "2026-11-07",
-      title: "Master Proficiency Release",
-      status: "Validasi lokal; integrasi live belum diuji",
-      features: [
-        "Dashboard terpadu dan navigasi materi",
-        "Mata pelajaran, pin, dan aktivitas nyata",
-      ],
-      fixes: [],
-      improvements: [
-        "Mesin pembelajaran dan penyimpanan lama digunakan kembali",
-      ],
-    },
-  ];
+  // Update List loads the versioned public release manifest on demand.
   const action = (label, view) =>
     `<button data-open="${view}">${label}</button>`;
   async function render(host, view, api) {
@@ -61,7 +46,7 @@
       profile: "Profil",
       help: "Bantuan",
       pinned: "Disematkan",
-      updates: "Patch Updates",
+      updates: "Update List",
     }[view];
     host.innerHTML = `<div class="master-heading">${view === "dashboard" ? '<img src="/mascot.svg" alt="Maskot OmniLearn">' : ""}<div><p class="master-eyebrow">OMNILEARN · RUANG BELAJAR PRIBADI</p><h1>${title}</h1><p>${view === "dashboard" ? "Mulai dari satu pertanyaan, satu materi, atau satu video. OmniLearn akan membantumu memahami semuanya." : "Belajar dengan sumber dan progres milikmu sendiri."}</p></div></div>`;
     const section = (heading, html) => {
@@ -425,7 +410,7 @@
         if (diagnostic.isConnected) {
           diagnostic.replaceChildren();
           const h = document.createElement("h2");
-          h.textContent = "Diagnostik aman · UI v1.01";
+          h.textContent = "Diagnostik aman · versi pengembangan";
           const pre = document.createElement("pre");
           pre.textContent = JSON.stringify(data, null, 2);
           diagnostic.append(h, pre);
@@ -434,12 +419,27 @@
         diagnostic.textContent = error.message;
       }
     }
-    if (view === "updates")
-      for (const release of releases)
-        section(
-          `v${release.version} — ${release.title}`,
-          `<time>${escape(release.date)}</time><p>Status: ${escape(release.status)}</p><h3>Fitur baru</h3><ul>${release.features.map((item) => `<li>${escape(item)}</li>`).join("")}</ul><h3>Bug fixes</h3><p>${release.fixes.length ? release.fixes.map(escape).join(" · ") : "Tidak ada klaim perbaikan Gemini live pada rilis ini."}</p><h3>Improvements</h3><ul>${release.improvements.map((item) => `<li>${escape(item)}</li>`).join("")}</ul>`,
-        );
+    if (view === "updates") {
+      const updates = section("Riwayat versi", '<p role="status">Memuat riwayat perubahan…</p>');
+      try {
+        const [module, response] = await Promise.all([
+          import('./release-history.js'),
+          fetch('/data/releases.json', { cache: 'no-store' })
+        ]);
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+        const manifest = module.validateReleaseManifest(await response.json());
+        if (host.isConnected && host.dashboardRenderId === renderId)
+          module.mountReleaseHistory(updates, manifest);
+      } catch (error) {
+        if (host.isConnected && host.dashboardRenderId === renderId) {
+          updates.replaceChildren();
+          const message = document.createElement('p');
+          message.setAttribute('role', 'alert');
+          message.textContent = 'Riwayat versi belum bisa dimuat: ' + error.message;
+          updates.append(message);
+        }
+      }
+    }
   }
   window.OmniDashboard = { render, releases };
 })();
