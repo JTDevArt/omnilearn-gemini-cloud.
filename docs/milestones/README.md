@@ -15,8 +15,8 @@ Updated 12 November 2026. Work continues through the remaining roadmap as reques
 | 08 — Exams and subjects | Complete locally | [Report](08-exams-subjects.md) |
 | 08A — AI Home ↔ Dashboard | Implemented locally; browser checks pending | [Dual-home changes](08A-dual-dashboard.md) |
 | 09 — Progress and personalization | Partial; real XP, due cards and streaks integrated | [Progress report](09-progress-personalization.md) |
-| 10 — Multimedia and research | Pending additional improvements | Existing playback is retained; live services need acceptance |
+| 10 — Multimedia and research | Partial; safe durable research saving implemented | [Implementation and external gates](10-multimedia-research.md) |
 | 11 — Update List | Implemented locally; release still in development | [Changelog report](11-update-list.md) |
 | 12 — Final QA and release | Pending | Run the full suite and live acceptance before marking v1.0.0 shipped |
 
-Last executed baseline verification before the new changes: **135 tests passed**, build/lint passed, and workspace, storage, navigation, AI recovery and home browser suites passed. Milestone 01 also has a dedicated real-IndexedDB browser suite. These counts refer to local code and explicit fixtures, not live AI quality or deployed-service health. Detailed reports preserve the limits and reproduction commands.
+Latest independently observed CI result at commit `70ac085`: install, lint, tests and build succeeded without Gemini calls. Earlier local baseline: **135 tests passed**, build/lint passed, and workspace, storage, navigation, AI recovery and home browser suites passed. Milestone 01 also has a dedicated real-IndexedDB browser suite. These counts refer to local code and explicit fixtures, not live AI quality or deployed-service health. Detailed reports preserve the limits and reproduction commands.
