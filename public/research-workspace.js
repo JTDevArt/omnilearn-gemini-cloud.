@@ -46,7 +46,7 @@ export function mountResearch(host, api) {
           item.abstract || 'Abstrak tidak disediakan oleh penyedia.';
         citation.textContent = item.citation;
         save.textContent = 'Simpan referensi ke sumber aktif';
-        save.onclick = () => {
+        save.onclick = async () => {
           const source = api.getCurrentSource();
           if (!source) {
             status.textContent =
@@ -54,11 +54,21 @@ export function mountResearch(host, api) {
             return;
           }
           source.researchSources ||= [];
-          if (!source.researchSources.some((r) => r.url === item.url))
-            source.researchSources.push(item);
-          api.persist();
+          const alreadySaved = source.researchSources.some(r => r.url === item.url);
+          if (!alreadySaved) source.researchSources.push(item);
           save.disabled = true;
-          save.textContent = 'Referensi disimpan';
+          save.textContent = 'Menyimpan…';
+          try {
+            await api.persistAsync();
+            save.textContent = 'Referensi tersimpan';
+            status.textContent = 'Referensi berhasil tersimpan di perangkat.';
+          } catch (error) {
+            if (!alreadySaved)
+              source.researchSources = source.researchSources.filter(r => r !== item);
+            save.disabled = false;
+            save.textContent = 'Coba simpan lagi';
+            status.textContent = 'Referensi belum tersimpan: ' + error.message;
+          }
         };
         const label = document.createElement('label'),
           pick = document.createElement('input');
@@ -155,8 +165,14 @@ export function mountResearch(host, api) {
             add(ref.evidenceId, ref.citation);
           window.OmniRecovery?.notice(result);
           if (source) {
+            const previous = source.researchSynthesis;
             source.researchSynthesis = result.synthesis;
-            api.persist();
+            try { await api.persistAsync(); }
+            catch (error) {
+              if (previous === undefined) delete source.researchSynthesis;
+              else source.researchSynthesis = previous;
+              throw new Error('Ringkasan belum tersimpan: ' + error.message);
+            }
           }
           status.textContent =
             'Ringkasan mengacu pada registry penyedia; artikel lengkap belum diverifikasi.';
