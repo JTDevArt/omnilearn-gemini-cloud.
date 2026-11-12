@@ -28,6 +28,7 @@
     if (!host.isConnected || host.dashboardRenderId !== renderId || host.hidden)
       return;
     host.classList.remove("video-learning");
+    host.classList.toggle('master-home-mode', view === 'home');
     const summary = activitySummary(state.activity);
     const metrics = progressMetrics(sources, state.activity);
     const stats = `<div class="master-stats"><article><strong>${sources.length}</strong><span>Materi</span></article><article><strong>${summary.streak}</strong><span>Streak hari</span></article><article><strong>${metrics.cardsDue}</strong><span>Flashcard perlu diulang</span></article><article><strong>${metrics.xp}</strong><span>XP tercatat · Level ${metrics.level}</span></article></div>`;
@@ -155,6 +156,7 @@
         "Tanya, pahami, lanjutkan",
         `<form class="master-composer"><textarea aria-label="Pertanyaan untuk tutor" placeholder="Rangkum bab, jelaskan konsep, atau buat pelajaran dari materi apa pun..." required maxlength="12000"></textarea><div class="panel-actions"><button type="button" data-record-audio>● Rekam</button><button type="button" data-upload>＋ Unggah</button><button type="button" data-paste-material>Tempel materi</button><button type="button" data-open="sources">▶ YouTube</button><button class="primary" type="submit">Kirim ↑</button></div><span id="recordStatus" role="status"></span></form>`,
       );
+      chat.classList.add('home-composer-panel');
       const draftInput = chat.querySelector("textarea");
       try { draftInput.value = sessionStorage.getItem(HOME_DRAFT_KEY) || ''; }
       catch { /* Session storage can be unavailable in private mode. */ }
@@ -204,8 +206,7 @@
         };
       };
       api.mountDashboardChat(chat);
-      host.insertAdjacentHTML("beforeend", stats);
-      section("Progres belajar", `<div class="progress-level"><div><strong>Level ${metrics.level}</strong><span>${metrics.xp} / ${metrics.nextLevelXp} XP</span></div><progress max="100" value="${metrics.levelProgress}" aria-label="Progres level ${metrics.level}">${metrics.levelProgress}%</progress><p>Streak terpanjang: ${metrics.longestStreak} hari · Flashcard jatuh tempo: ${metrics.cardsDue}</p></div>`);
+      // Management statistics are visible on the dedicated Dashboard view.
       const recent = [...sources].filter(s => s.text?.trim()).sort((a,b) => (b.lastOpenedAt || b.createdAt) - (a.lastOpenedAt || a.createdAt)).slice(0,4);
       const continuation = section('Lanjutkan belajar', recent.length ? `<div class="master-library">${recent.map(s => {
         const chapters = s.journey?.chapters || [];
