@@ -1337,7 +1337,8 @@
       toast('Selesaikan rekaman mikrofon sebelum pindah menu.');
       return;
     }
-    if (busy && !uploadInFlight) {
+    // Home/dashboard switching preserves the shared chat request and its DOM anchor.
+    if (busy && !uploadInFlight && !['home', 'dashboard'].includes(view)) {
       if(!push) history.replaceState({},'',`/dashboard?view=${encodeURIComponent(current)}`);
       toast('Tunggu proses saat ini selesai.');
       return;
