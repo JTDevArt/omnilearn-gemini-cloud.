@@ -92,3 +92,13 @@ Refer to public/design-preview.css rather than guessing. Dark base #0B1220, side
 
 ## Final instruction
 The requested look is already scaffolded. **Implement missing production bindings and real behavior before creating more mockups or lengthy audits.** Keep change sets narrow, reversible, tested, and documented.
+
+## Latest owner feedback — SAVED MATERIALS FIRST (Milestone 08B)
+
+The newest user request prioritizes the **Catatan → specific structured lesson** journey. The revised demo is committed in `public/design-preview.js` and `public/design-preview.css`; see `docs/milestones/08B-saved-lessons-prototype.md` for exact target behavior and tests.
+
+**Astra must not replace the lesson title with a raw `.pdf` filename.** Show a semantic title confirmed by extracted document content or provided by the user, plus a short verified summary, chapters, and original source metadata in a disclosure. Opening different cards must render different source-specific chapters; the former hardcoded Limit Fungsi page is no longer acceptable. Preserve sources, archived versions, notes and backups. No fabricated OCR/AI results and no new unrelated widgets.
+
+Private/friends-only use does not automatically grant copying rights. Keep independently written OmniLearn UI/brand assets, not third-party source code, logos, mascots, or distinctive copied illustrations. The offline demo has no actual OCR; production integration must reuse the current verified pipeline.
+
+**Execute UI-03 next** before additional visual research. Use offline/fixture tests rather than consuming live Gemini quota for UI checks. GitHub CI and hosted Google AI Studio publication remain separate.
