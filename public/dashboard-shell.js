@@ -13,6 +13,7 @@
         })[c],
     );
   // Update List loads the versioned public release manifest on demand.
+  const HOME_DRAFT_KEY = 'omnilearn-home-draft';
   const action = (label, view) =>
     `<button data-open="${view}">${label}</button>`;
   async function render(host, view, api) {
@@ -41,7 +42,8 @@
     }
     badge.textContent = `${profile.name || "Profil"} · Level ${summary.level} · ${summary.xp} XP · ${summary.streak} hari`;
     const title = {
-      dashboard: "Mulai belajar dari mana hari ini?",
+      home: "Mau belajar apa hari ini?",
+      dashboard: "Ringkasan belajarmu",
       subjects: "Mata Pelajaran",
       streaks: "Streak & Aktivitas",
       leaderboard: "Leaderboard",
@@ -50,7 +52,7 @@
       pinned: "Disematkan",
       updates: "Update List",
     }[view];
-    host.innerHTML = `<div class="master-heading">${view === "dashboard" ? '<img src="/mascot.svg" alt="Maskot OmniLearn">' : ""}<div><p class="master-eyebrow">OMNILEARN · RUANG BELAJAR PRIBADI</p><h1>${title}</h1><p>${view === "dashboard" ? "Mulai dari satu pertanyaan, satu materi, atau satu video. OmniLearn akan membantumu memahami semuanya." : "Belajar dengan sumber dan progres milikmu sendiri."}</p></div></div>`;
+    host.innerHTML = `<div class="master-heading">${view === "home" ? '<img src="/mascot.svg" alt="Maskot OmniLearn">' : ""}<div><p class="master-eyebrow">OMNILEARN · RUANG BELAJAR PRIBADI</p><h1>${title}</h1><p>${view === "home" ? "Tanyakan apa saja, unggah materi, atau mulai belajar dengan AI." : "Belajar dengan sumber dan progres milikmu sendiri."}</p></div></div>`;
     const section = (heading, html) => {
       const node = document.createElement("section");
       node.className = "master-section";
@@ -144,7 +146,7 @@
       };
       draw();
     }
-    if (view === "dashboard") {
+    if (view === "home") {
       const hour = new Date().getHours();
       const greeting = document.createElement('p');
       greeting.textContent = `Selamat ${hour < 11 ? 'pagi' : hour < 15 ? 'siang' : hour < 18 ? 'sore' : 'malam'}, ${profile.name || 'teman belajar'}. ${sources.length} materi tersimpan · ${summary.streak} hari streak.`;
@@ -153,15 +155,32 @@
         "Tanya, pahami, lanjutkan",
         `<form class="master-composer"><textarea aria-label="Pertanyaan untuk tutor" placeholder="Rangkum bab, jelaskan konsep, atau buat pelajaran dari materi apa pun..." required maxlength="12000"></textarea><div class="panel-actions"><button type="button" data-record-audio>● Rekam</button><button type="button" data-upload>＋ Unggah</button><button type="button" data-paste-material>Tempel materi</button><button type="button" data-open="sources">▶ YouTube</button><button class="primary" type="submit">Kirim ↑</button></div><span id="recordStatus" role="status"></span></form>`,
       );
+      const draftInput = chat.querySelector("textarea");
+      try { draftInput.value = sessionStorage.getItem(HOME_DRAFT_KEY) || ''; }
+      catch { /* Session storage can be unavailable in private mode. */ }
+      draftInput.addEventListener('input', () => {
+        try { sessionStorage.setItem(HOME_DRAFT_KEY, draftInput.value); } catch {}
+      });
       chat.querySelector("form").onsubmit = (e) => {
         e.preventDefault();
         const input = chat.querySelector("textarea");
         const button = chat.querySelector('button[type="submit"]');
         button.disabled = true;
-        api.submitDashboardChat(input.value).finally(() => {
-          button.disabled = false;
-          if (input.isConnected) input.focus();
-        });
+        Promise.resolve(api.submitDashboardChat(input.value))
+          .then(() => {
+            input.value = '';
+            try { sessionStorage.removeItem(HOME_DRAFT_KEY); } catch {}
+          })
+          .catch(error => {
+            const status = chat.querySelector('[role="status"]') ||
+              chat.appendChild(document.createElement('p'));
+            status.setAttribute('role','status');
+            status.textContent = error?.message || 'Pesan belum terkirim.';
+          })
+          .finally(() => {
+            button.disabled = false;
+            if (input.isConnected) input.focus();
+          });
       };
       const youtube = chat.querySelector('[data-open="sources"]');
       delete youtube.dataset.open;
@@ -244,6 +263,19 @@
           )
           .join("")}</div>`,
       );
+    }
+    if (view === "dashboard") {
+      const hour = new Date().getHours();
+      const greeting = document.createElement('p');
+      greeting.textContent = `Selamat ${hour < 11 ? 'pagi' : hour < 15 ? 'siang' : hour < 18 ? 'sore' : 'malam'}, ${profile.name || 'pelajar'}! Lanjutkan belajarmu hari ini.`;
+      host.append(greeting);
+      host.insertAdjacentHTML('beforeend', stats);
+      section('Progres level', `<div class="progress-level"><div><strong>Level ${metrics.level}</strong><span>${metrics.xp} / ${metrics.nextLevelXp} XP</span></div><progress max="100" value="${metrics.levelProgress}" aria-label="Progres XP">${metrics.levelProgress}%</progress><p>Streak terpanjang: ${metrics.longestStreak} hari · Flashcard jatuh tempo: ${metrics.cardsDue}</p></div>`);
+      const timer = section('Timer fokus', '<div class="focus-timer"></div>');
+      import('./focus-timer.js').then(({ mountTimer }) => {
+        if (timer.isConnected) mountTimer(timer.querySelector('.focus-timer'), api);
+      }).catch(() => { timer.querySelector('.focus-timer').textContent = 'Timer belum tersedia.'; });
+      library();
     }
     if (view === "pinned") library(true);
     if (view === "subjects") {
