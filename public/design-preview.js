@@ -307,9 +307,14 @@ async function renderUpdates(){
     '<div id="releaseResults" class="panel panel-pad"><p role="status">Mengambil manifest versi asli…</p></div>';
   const container=$('#releaseResults');
   try{
-    const response=await fetch('/data/releases.json',{cache:'no-store'});
-    if(!response.ok)throw new Error('HTTP '+response.status);
-    const manifest=await response.json();
+    const inlineManifest=document.querySelector('#previewReleaseData');
+    let manifest;
+    if(inlineManifest) manifest=JSON.parse(inlineManifest.textContent);
+    else {
+      const response=await fetch('/data/releases.json',{cache:'no-store'});
+      if(!response.ok)throw new Error('HTTP '+response.status);
+      manifest=await response.json();
+    }
     if(!Array.isArray(manifest.releases))throw new Error('Data versi tidak lengkap');
     if(activeRoute()!=='updates')return;
     container.className='';container.replaceChildren();
