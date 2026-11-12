@@ -1721,6 +1721,12 @@ const templates={landing:readFileSync(path.join(__dirname,'public/landing.html')
 const sendHtml=(name)=>(_req,res)=>res.type('html').send(templates[name].replace(/<script(?=[\s>])/g,`<script nonce="${res.locals.cspNonce}"`));
 app.get('/',sendHtml('landing'));
 app.get('/dashboard',sendHtml('dashboard'));
+// Explicit, isolated design-preview route: this remains separate from user data,
+// AI calls, and the production dashboard. A published runtime must contain
+// these assets; a GitHub commit alone never updates an existing deployment.
+app.get(['/design-preview', '/design-preview.html'], (_req, res) =>
+  res.sendFile(path.join(__dirname, 'public/design-preview.html'))
+);
 app.get('/index.html',(_req,res)=>res.redirect('/dashboard'));
 app.get('/landing.html',(_req,res)=>res.redirect('/'));
 
