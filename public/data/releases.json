@@ -1,0 +1,104 @@
+{
+  "schemaVersion": 1,
+  "releases": [
+    {
+      "version": "1.0.0",
+      "title": "OmniLearn AI — rilis awal",
+      "releasedAt": null,
+      "status": "in-development",
+      "summary": "Milestone 00–08 telah masuk ke GitHub main; penerimaan layanan Gemini, Firebase, dan hosting belum diverifikasi secara live. Versi ini belum dirilis.",
+      "changes": [
+        {
+          "title": "Audit dan baseline repo",
+          "category": "Infrastructure",
+          "status": "implemented-local",
+          "files": [
+            "docs/milestones/00-repository-audit.md"
+          ],
+          "commit": "2ef06ab8796f0d3b62c4e43bf9fc0758373c6c0e"
+        },
+        {
+          "title": "Penyimpanan dan pemulihan data",
+          "category": "Fixed",
+          "status": "implemented-local",
+          "files": [
+            "public/local-library.js"
+          ],
+          "commit": "9094514799ed8b2511fb37e6dcc983da7b48d030"
+        },
+        {
+          "title": "Gemini error handling dan validasi sumber",
+          "category": "AI & OCR",
+          "status": "implemented-local",
+          "files": [
+            "lib/provider-manager.js",
+            "lib/source-intelligence.js"
+          ],
+          "commit": "dbcfdffbfbe6a2bc835a709fb1ee48b4ff480197"
+        },
+        {
+          "title": "Proses unggah dan OCR yang bisa dilanjutkan",
+          "category": "AI & OCR",
+          "status": "implemented-local",
+          "files": [
+            "server.js",
+            "lib/ocr-preprocess.js"
+          ],
+          "commit": "9d7412e461e83f415c53487409bf7818222a9b2b"
+        },
+        {
+          "title": "Komponen visual responsif",
+          "category": "UI/UX",
+          "status": "implemented-local",
+          "files": [
+            "public/product.css"
+          ],
+          "commit": "600c5385623ecf00560deb5264ab3ee7ff237570"
+        },
+        {
+          "title": "Navigasi sidebar dan workspace",
+          "category": "UI/UX",
+          "status": "implemented-local",
+          "files": [
+            "public/product.js"
+          ],
+          "commit": "b5ae41684d69f67c2925c0b32b3407ed5ad2fac3"
+        },
+        {
+          "title": "Dashboard, video, dan timer fokus",
+          "category": "Added",
+          "status": "implemented-local",
+          "files": [
+            "public/dashboard-shell.js",
+            "public/focus-timer.js"
+          ],
+          "commit": "e9d638300f36e79f6c825d0777978c7bfb56cd97"
+        },
+        {
+          "title": "Editor pelajaran dan alat belajar",
+          "category": "Improved",
+          "status": "implemented-local",
+          "files": [
+            "public/product.js",
+            "public/dashboard-shell.js"
+          ],
+          "commit": "376ca64a8d0e5129764b8a2192bd121f9ef538d2"
+        },
+        {
+          "title": "Bank soal dan pengelolaan mata pelajaran",
+          "category": "Added",
+          "status": "implemented-local",
+          "files": [
+            "public/exam-engine.js",
+            "public/exam-builder.js"
+          ],
+          "commit": "65d1da51d25a54a746bb9dd60c079f184ed64a74"
+        }
+      ],
+      "knownLimitations": [
+        "Integrasi Gemini langsung, Firebase, dan deployment masih memerlukan uji layanan nyata.",
+        "Milestone 09–12 dan penyempurnaan tampilan dua mode masih dalam pengembangan."
+      ]
+    }
+  ]
+}
