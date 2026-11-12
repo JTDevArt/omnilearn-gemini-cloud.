@@ -58,9 +58,9 @@ globalThis.fetch = async (input, options = {}) => {
     // Derive the requested OCR pages from the actual extraction instruction.
     // A PDF-only fallback has no rendered page marker, and defaulting to page
     // one makes mixed-PDF tests fail for the wrong reason on CI machines.
-    const requested = prompt.match(/Read ONLY pages ([\\d,\\s]+) of this \\d+-page PDF\\./i);
-    const explicit = requested?.[1]?.match(/\\d+/g)?.map(Number) || [];
-    const markers = [...prompt.matchAll(/\\[Halaman (\\d+)\\]/g)].map(m => Number(m[1]));
+    const requested = prompt.match(/Read ONLY pages ([\d,\s]+) of this \d+-page PDF\./i);
+    const explicit = requested?.[1]?.match(/\d+/g)?.map(Number) || [];
+    const markers = [...prompt.matchAll(/\[Halaman (\d+)\]/g)].map(m => Number(m[1]));
     const unique = [...new Set(explicit.length ? explicit : markers.length ? markers : [1])];
     text = unique
       .map(
