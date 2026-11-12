@@ -433,3 +433,31 @@ button, input, textarea, select { color: inherit; }
 .profile-usage-grid strong{display:block;font-size:24px;color:var(--primary);line-height:1.3}
 .profile-usage-grid span{font-size:12px;color:var(--text-secondary)}
 @media(max-width:700px){.profile-usage-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.profile-usage-grid article{padding:12px}}
+
+
+/* AI Learning Home: distraction-free entry, management remains in the separate sidebar view. */
+body.product-dashboard.ai-home-view .product-sidebar{display:none}
+body.product-dashboard.ai-home-view .product-top{margin-left:0}
+body.product-dashboard.ai-home-view .workspace-wrap{margin-left:0;padding:18px 24px 72px}
+body.product-dashboard.ai-home-view .workspace-wrap>.shell{max-width:1120px}
+body.product-dashboard.ai-home-view #productMenu,
+body.product-dashboard.ai-home-view #sourceSearch{display:none}
+body.product-dashboard.ai-home-view .product-top{justify-content:flex-start;min-height:70px}
+body.product-dashboard.ai-home-view .product-top>a{margin-left:auto}
+.master-home-mode>.master-heading{justify-content:center;text-align:center;flex-direction:column;gap:10px;padding:34px 10px 12px}
+.master-home-mode>.master-heading img{width:86px;height:86px}
+.master-home-mode>.master-heading h1{font-size:clamp(30px,4vw,46px);letter-spacing:-1.3px}
+.master-home-mode>.master-heading p{margin-left:auto;margin-right:auto}
+.master-home-mode .home-composer-panel{width:min(100%,850px);margin:10px auto 28px;padding:18px;border:1px solid var(--edge);background:var(--surface);box-shadow:var(--shadow)}
+.master-home-mode .home-composer-panel h2{font-size:16px;color:var(--text-secondary);margin:0 0 8px}
+.master-home-mode .master-composer textarea{min-height:135px!important;resize:vertical;box-shadow:none;border-radius:14px}
+.master-home-mode .master-composer>.panel-actions{margin:12px 0 0}
+.master-home-mode .home-composer-panel .primary{margin-left:auto}
+.master-home-mode .master-section{scroll-margin-top:92px}
+@media(max-width:700px){
+ body.product-dashboard.ai-home-view .workspace-wrap{padding:12px 14px 50px}
+ body.product-dashboard.ai-home-view .product-top{padding:12px 14px}
+ .master-home-mode>.master-heading{padding:20px 4px 8px}
+ .master-home-mode .home-composer-panel{padding:14px}
+ .master-home-mode .master-composer>.panel-actions{gap:8px}
+}
