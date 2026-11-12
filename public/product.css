@@ -408,3 +408,16 @@ button, input, textarea, select { color: inherit; }
 .release-files{font:12px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;overflow-wrap:anywhere;color:var(--text-secondary)!important}
 .release-card a{color:var(--primary);text-decoration:underline;text-underline-offset:3px}
 @media(max-width:700px){.release-card{padding:15px}.release-filters>*{width:100%;flex:1 1 100%}}
+
+
+/* Two-mode learning home and management dashboard controls. */
+.home-mode-switch{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;padding:0!important;border-radius:50%!important;font-size:21px!important;line-height:1}
+.home-mode-switch[aria-pressed="true"]{background:var(--primary-soft)!important;color:var(--primary)!important;border-color:var(--primary)!important}
+.progress-level{display:grid;gap:12px}
+.progress-level>div{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px}
+.progress-level strong{color:var(--text-primary);font-size:19px}
+.progress-level span{color:var(--text-secondary)}
+.progress-level progress,.master-section>progress{display:block;width:100%;height:15px;accent-color:var(--primary);border:0;border-radius:10px;overflow:hidden}
+.progress-level progress::-webkit-progress-bar,.master-section>progress::-webkit-progress-bar{background:var(--surface-elevated);border-radius:10px}
+.progress-level progress::-webkit-progress-value,.master-section>progress::-webkit-progress-value{background:var(--primary);border-radius:10px}
+@media(max-width:700px){.home-mode-switch{width:38px;height:38px;flex:none}.progress-level>div{align-items:flex-start}}
