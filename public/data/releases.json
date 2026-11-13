@@ -9,6 +9,13 @@
       "summary": "Milestone 00–08 lengkap di GitHub main; AI Home/Dashboard terpisah, progres dan profil menggunakan data asli, Update List berfungsi, riset memiliki penanganan penyimpanan yang benar, serta unit/lint/build diuji melalui GitHub Actions. v1.0.0 belum dirilis resmi.",
       "changes": [
         {
+          "title": "Validasi bukti sumber menangani escape dan baris PDF tanpa mengubah isi; kutipan terlalu panjang ditolak sebelum terpotong",
+          "category": "AI & OCR",
+          "status": "implemented-local",
+          "files": ["lib/source-intelligence.js", "tests/source-intelligence.test.mjs"],
+          "commit": "dcc957202154f528c81b2a5b28e316589cce04da"
+        },
+        {
           "title": "Workspace alat belajar berbasis sumber: daftar bab, hasil dan alat kontekstual; pembuatan AI lewat aksi eksplisit",
           "category": "UI/UX",
           "status": "partial",

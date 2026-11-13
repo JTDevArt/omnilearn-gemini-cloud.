@@ -1,5 +1,11 @@
 # OmniLearn continuation checkpoint
 
+## Latest source-validation bug fix
+
+Implementation main `dcc957202154f528c81b2a5b28e316589cce04da`; read `docs/milestones/SOURCE-EVIDENCE-FIX.md`. Fixed false evidence rejection for prompt HTML escapes and layout whitespace, plus silent truncation that could discard an unsupported suffix before validation. Matching always resolves to an original contiguous source substring and offsets. No fuzzy matching, altered-number/operator tolerance, missing-page content, arbitrary entity decoding or extra Gemini calls were introduced. Existing schema/storage and original files are unchanged.
+
+Two regressions failed before the fix. Final local source suite: 10 passed; full unit/HTTP suite: 162 passed; clean install, lint and build passed. No screenshot recapture for this backend-only change. The owner's original PDF/provider output and live Gemini access were not tested; do not claim every evidence rejection is fixed or bypass genuine unsupported output. Sync/restart the reviewed backend in the existing AI Studio project before live document acceptance; GitHub delivery is not deployment.
+
 ## Latest study workspace correction
 
 User's next screenshot exposed a legacy flashcard tool screen outside the earlier Home/Dashboard gate. Main implementation `93c093ab084d642e4e0cce8bddd1777c61c025fd` replaces shared tool chrome; `f76e0d6de7c426099d18c55646ecaf19c9b59055` corrects mobile ordering and unifies chapter panels. Read `docs/milestones/STUDY-WORKSPACE.md` first. Do not claim the earlier Home gate certified this screen or that full showcase parity is complete.
