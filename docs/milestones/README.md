@@ -4,6 +4,8 @@ Updated 13 November 2026. [Latest Dashboard/motion increment](AU-05-dashboard-mo
 
 Latest focused update: [Home/Dashboard visual QA](HOME-VISUAL-QA.md) passes on code `8599404` using a GitHub browser runner, three reviewed final images and 28 viewport/theme assertions. This supersedes the local-browser blocker for that focused gate only. Overall directive completion and hosted release acceptance remain open.
 
+Subsequent complaint correction: [Shared study workspace](STUDY-WORKSPACE.md) replaces the old flashcard/tool chrome, makes generation explicit, preserves per-source chapters/decks, and corrects mobile ordering. Final code `f76e0d6` passed browser/CI checks with three targeted images reviewed. This is still not full showcase/product acceptance.
+
 | Milestone | Status | Evidence |
 | --- | --- | --- |
 | 00 — Audit and baseline | Complete | [Audit](00-repository-audit.md), [research](00-research-notes.md) |

@@ -1,5 +1,15 @@
 # OmniLearn continuation checkpoint
 
+## Latest study workspace correction
+
+User's next screenshot exposed a legacy flashcard tool screen outside the earlier Home/Dashboard gate. Main implementation `93c093ab084d642e4e0cce8bddd1777c61c025fd` replaces shared tool chrome; `f76e0d6de7c426099d18c55646ecaf19c9b59055` corrects mobile ordering and unifies chapter panels. Read `docs/milestones/STUDY-WORKSPACE.md` first. Do not claim the earlier Home gate certified this screen or that full showcase parity is complete.
+
+Actual nodes, IDs and existing engines were retained. Shared study shell provides source-specific chapters, center content and contextual tools; source/language/upload settings are secondary, chat composer appears only in chat. Existing source decks are reused. Uncached tab navigation and settings changes now show/reuse state without automatic generation; explicit creation/retry buttons use the existing provider path. Source validation remains strict, with safe error and source-review actions. Legacy learn links open the selected lesson's real chapters when available. Data schema unchanged.
+
+Final browser run 43436069433 passed 98 study route/theme/width combinations plus 28 Home/Dashboard combinations and interaction assertions. Three study images were opened and reviewed, including rejection, real source/chapter isolation and saved deck on mobile. An initial mobile ordering defect was corrected before final review. CI 43436069412 passed; local lint/build and 159 unit/HTTP tests passed. Artifacts are synthetic browser-local data; no real Gemini/OCR/model/student-data quality benchmark or hosted publication is claimed.
+
+Next: use the actual rendered study screens as evidence, retain the optimized three-image policy, complete remaining reference-detail gaps and page-specific UX without replacing storage/engines. The owner's live invalid-evidence response cannot be diagnosed further from the screenshot alone; do not weaken source evidence checks or pretend it is solved by presentation changes. Hosting still needs separate verification/publication.
+
 ## Latest Home visual correction, 13 November 2026
 
 Implementation: main `5fb92d5a42c539abc5240054ddf56122d37e87c3`. Screenshot-led header correction: `3488618e665d6bbf48506bf89d44a0401fc8a613`. Start with `docs/milestones/HOME-VISUAL-QA.md`; older V5 notes below are historical.
