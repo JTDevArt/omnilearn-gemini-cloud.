@@ -1,0 +1,38 @@
+name: Capture live OmniLearn screenshots
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/live-screenshots.yml'
+      - 'scripts/capture-live-screenshots.cjs'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install isolated browser dependencies
+        run: |
+          npm install --prefix /tmp/omnilearn-capture playwright@1.56.1 --no-audit --no-fund --ignore-scripts
+          /tmp/omnilearn-capture/node_modules/.bin/playwright install --with-deps chromium
+      - name: Capture nine public live routes
+        env:
+          NODE_PATH: /tmp/omnilearn-capture/node_modules
+        run: node scripts/capture-live-screenshots.cjs
+      - name: Upload screenshots and access report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: omnilearn-live-9-screenshots
+          path: live-ui-screenshots/
+          if-no-files-found: warn
+          retention-days: 7
