@@ -2,6 +2,8 @@
 
 Date: 13 November 2026. Baseline: main `6691a2e88455ce09c07bf2d63c2840fc58c557d2`. Overall status: PARTIAL pending browser and hosted acceptance.
 
+Implementation delivered to main: [`d9086a17bc3ebe66272df6bc6cf110a25a59dad0`](https://github.com/JTDevArt/omnilearn-gemini-cloud./commit/d9086a17bc3ebe66272df6bc6cf110a25a59dad0). Its tree matches the locally tested tree `cb557c6d2d7e656d1647db7d40c1b6ab200fb959`.
+
 | Area | Status | Evidence / remaining work |
 | --- | --- | --- |
 | Existing source store and learning engines | COMPLETE for preservation in this increment | No schema migration, storage replacement or Gemini endpoint change |

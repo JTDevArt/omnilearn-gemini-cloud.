@@ -1,6 +1,6 @@
 # OmniLearn continuation checkpoint
 
-13 November 2026. Repository `JTDevArt/omnilearn-gemini-cloud.`, target `main`. Starting commit `6691a2e88455ce09c07bf2d63c2840fc58c557d2`; the Git commit containing this checkpoint identifies the increment. Read `docs/milestones/AU-05-dashboard-motion.md` and inspect current remote HEAD before editing.
+13 November 2026. Repository `JTDevArt/omnilearn-gemini-cloud.`, target `main`. Starting commit `6691a2e88455ce09c07bf2d63c2840fc58c557d2`. Implementation delivered to main as `d9086a17bc3ebe66272df6bc6cf110a25a59dad0`; its tree matches the locally tested tree `cb557c6d2d7e656d1647db7d40c1b6ab200fb959`. Read `docs/milestones/AU-05-dashboard-motion.md` and inspect current remote HEAD before editing.
 
 Implemented: production Dashboard grid, real summary navigation, vertical weekly activity bars, smaller shared shell, consistent system typography, cool light theme, source-topic titles on resume cards, contextual video/library disclosure, layout-class cleanup on navigation, cancelable/reduced-motion-aware native view entrance, dialog/composer/press/hover transitions, health UI build marker. Existing storage, original files, backups and Gemini routes are preserved.
 
@@ -17,6 +17,6 @@ Exact next work:
 3. Complete Catatan's in-gallery subject editing, source-specific chapter/edit/backup acceptance, and remaining page-specific Ujian, Mata Pelajaran, Streaks and Profile visual work. Preserve all existing engines. Audit accessibility and real state handling.
 4. Only after an approved provider account/privacy gate, benchmark synthetic Indonesian/English structured output before considering Gemini-to-free-provider routing. Never silently forward student sources.
 5. Sync the reviewed main files into the existing AI Studio project, restart, check `/api/health.uiBuild` equals `algorithmic-v5-dashboard-1`, then publish via the owner's authorized platform flow. The marker identifies code presence, not full UI acceptance.
-6. Keep v1.0.0 in development until full release acceptance. Update List entries for this increment have null commit references until a later metadata commit can reference the real implementation SHA.
+6. Keep v1.0.0 in development until full release acceptance. Update List entries reference the real implementation commit; metadata delivery is separate from AI Studio publication.
 
 Do not restart milestones 00–08 or regenerate disconnected prototypes. Visual acceptance and full directive completion are still open.

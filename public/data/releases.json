@@ -13,14 +13,14 @@
           "category": "UI/UX",
           "status": "partial",
           "files": ["public/dashboard-shell.js", "public/design-system.css", "public/product.js", "public/ui-motion.js"],
-          "commit": null
+          "commit": "d9086a17bc3ebe66272df6bc6cf110a25a59dad0"
         },
         {
           "title": "Validasi JSON fallback pilot dan penanda UI build untuk pemeriksaan deployment",
           "category": "Fixed",
           "status": "implemented-local",
           "files": ["lib/text-provider-pilot.js", "server.js", "tests/text-provider-pilot.test.mjs", "tests/design-preview-http.test.mjs"],
-          "commit": null
+          "commit": "d9086a17bc3ebe66272df6bc6cf110a25a59dad0"
         },
         {
           "title": "Audit dan baseline repo",
