@@ -22,6 +22,7 @@
 <link rel="stylesheet" href="/upload-queue.css">
 <link rel="stylesheet" href="/design-system.css">
 <link rel="stylesheet" href="/home.css">
+<link rel="stylesheet" href="/study-workspace.css">
 </head>
 <body>
 <header class="shell topbar" id="home">
@@ -1501,8 +1502,16 @@ async function runTool(task, customTopic = '', forceRegenerate = false) {
     }
     window.OmniProduct?.deferTask('/api/study',{task,materialId,sourceVersion:window.OmniProduct?.sourceRequest().sourceVersion,topic,summaryStyle,difficulty:quizDifficulty,questionType:document.querySelector('#quizQuestionType')?.value,outputLanguage,count,targetLanguage:$('targetLanguage').value},error);
     toolOutput.classList.remove('md-rendered');
-    toolOutput.textContent = error.message;
-    chatFeedback.textContent = error.message;
+    toolOutput.replaceChildren();
+    const notice=document.createElement('section');notice.className='study-error';notice.setAttribute('role','alert');
+    const title=document.createElement('h2');title.textContent='Hasil belum bisa digunakan';
+    const reason=document.createElement('p');reason.textContent=error.message;
+    const actions=document.createElement('div');actions.className='panel-actions';
+    const retry=document.createElement('button');retry.type='button';retry.textContent='Coba buat kembali';
+    retry.onclick=()=>runTool(task,customTopic,true);
+    const review=document.createElement('button');review.type='button';review.textContent='Tinjau sumber';review.onclick=()=>window.OmniProduct?.navigate('sources');
+    actions.append(retry,review);notice.append(title,reason,actions);toolOutput.append(notice);
+    chatFeedback.textContent = 'Permintaan belum selesai. Periksa penjelasan pada area hasil.';
   } finally {
     if (activeStudyAbortController === abortController) {
       activeStudyAbortController = null;
@@ -1535,7 +1544,17 @@ function selectTab(tab, customTopic = '') {
     restoreCachedTabView(tabViewCache.get(cacheKey), tab);
     return;
   }
-  runTool(tab, customTopic, false);
+  const savedDeck=window.OmniProduct?.getCurrentSource()?.deck;
+  if(tab==='cards' && Array.isArray(savedDeck) && savedDeck.length && window.OmniProduct.renderDeck(savedDeck))return;
+  toolOutput.classList.remove('md-rendered');
+  toolOutput.replaceChildren();
+  const title=document.createElement('h2');title.textContent=({summary:'Ringkasan',cards:'Flashcard',quiz:'Latihan soal',map:'Mindmap',plan:'Rencana belajar',translate:'Terjemahan'})[tab] || 'Alat belajar';
+  const text=document.createElement('p');text.textContent='Belum ada hasil untuk sumber dan pengaturan ini. Buat saat kamu siap; berpindah alat tidak menjalankan AI.';
+  toolOutput.append(title,text);
+  if(!['summary','cards','quiz','translate'].includes(tab)) {
+    const generate=document.createElement('button');generate.className='primary';generate.textContent='Buat '+title.textContent.toLowerCase();
+    generate.onclick=()=>runTool(tab,customTopic,false);toolOutput.append(generate);
+  }
 }
 document.querySelectorAll('.tab').forEach(button => button.addEventListener('click', () => selectTab(button.dataset.tab)));
 $('outputLanguage')?.addEventListener('change', () => {
@@ -2056,6 +2075,7 @@ checkAI();
 <script type="module" src="/recovery-workspace.js"></script>
 <script src="/vendor/jszip.min.js"></script>
 <script src="/dashboard-shell.js"></script>
+<script src="/study-shell.js"></script>
 <script src="/upload-queue.js"></script>
 <script src="/product.js" defer></script>
 </body>

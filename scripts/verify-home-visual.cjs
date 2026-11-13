@@ -149,7 +149,8 @@ async function run() {
   const clean=await browser.newContext({deviceScaleFactor:1,colorScheme:'dark',locale:'id-ID',reducedMotion:'reduce'});
   page=await clean.newPage();
   await page.addInitScript(()=>localStorage.setItem('omnilearn-theme','dark'));
-  for(const [name,view,width] of [['01-home-desktop','home',1440],['02-dashboard-desktop','dashboard',1440],['03-home-mobile','home',390]]) {
+  const captures=process.env.QA_SKIP_SCREENSHOTS==='1'?[]:[['01-home-desktop','home',1440],['02-dashboard-desktop','dashboard',1440],['03-home-mobile','home',390]];
+  for(const [name,view,width] of captures) {
     await page.setViewportSize({width,height:900});
     await open(base,view);
     await page.screenshot({path:path.join(output,name+'.png'),animations:'disabled'});

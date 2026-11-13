@@ -224,6 +224,8 @@
   }
   const shell = document.querySelector('#ruang-belajar > .shell');
   const workspace = shell.querySelector('.workspace');
+  const studyShell = window.OmniStudyShell.mount(workspace);
+  const {lessonTitle} = await import('/lesson-label.js');
   const panel = document.createElement('div');
   const chatHome = document.createComment('Conversation workspace anchor');
   const feedbackHome = document.createComment('Diagnostics workspace anchor');
@@ -1360,6 +1362,7 @@
     feedbackHome.after(chatFeedback, $('chatRequestActions'));
     if (!views[view] && !tools.has(view)) view = 'dashboard';
     current = view;
+    if (!tools.has(view)) delete document.body.dataset.studyTool;
     document.body.classList.toggle('ai-home-view', view === 'home');
     const modeLabel = top.querySelector(':scope > span');
     if (modeLabel) modeLabel.textContent = view === 'home' ? 'Beranda AI' : 'Ruang belajar saya';
@@ -1371,7 +1374,7 @@
       a.classList.toggle(
         'active',
         a.dataset.view === view ||
-          (view === 'summary' && a.dataset.view === 'notes')
+          (materialId && (tools.has(view) || ['journey','note-editor'].includes(view)) && a.dataset.view === 'notes')
       );
       if (a.classList.contains('active'))
         a.setAttribute('aria-current', 'page');
@@ -1392,6 +1395,8 @@
       return;
     }
     if (tools.has(view)) {
+      studyShell.update(view,selected,selected?lessonTitle(selected):'',window.OmniProduct);
+      window.scrollTo({top:0,left:0,behavior:'instant'});
       if (view === 'research')
         window.OmniResearch?.mount(workspace, window.OmniProduct);
       else
@@ -1401,7 +1406,9 @@
       selectTab(view);
       return;
     }
-    if (view === 'learn' || view === 'sources') sourcesView(view === 'learn');
+    if (view === 'learn' && selected?.journey?.chapters?.length)
+      window.OmniJarvis?.renderJourney(panel, window.OmniProduct);
+    else if (view === 'learn' || view === 'sources') sourcesView(view === 'learn');
     if (view === 'note-editor') notesView();
     if (view === 'settings') settingsView();
     if (view === 'podcast') podcastView();

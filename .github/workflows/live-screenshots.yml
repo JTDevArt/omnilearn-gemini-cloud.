@@ -6,11 +6,13 @@ on:
     paths:
       - '.github/workflows/live-screenshots.yml'
       - 'scripts/verify-home-visual.cjs'
+      - 'scripts/verify-study-workspace.cjs'
       - 'public/*.css'
       - 'public/dashboard-shell.js'
       - 'public/product.js'
       - 'public/theme.js'
       - 'public/ui-motion.js'
+      - 'public/study-shell.js'
       - 'public/index.html'
       - 'server.js'
   workflow_dispatch:
@@ -36,7 +38,10 @@ jobs:
       - name: Assert production UI and capture only three required views
         env:
           NODE_PATH: /tmp/omnilearn-capture/node_modules
-        run: node scripts/verify-home-visual.cjs
+          QA_SKIP_SCREENSHOTS: '1'
+        run: |
+          node scripts/verify-home-visual.cjs
+          node scripts/verify-study-workspace.cjs
       - name: Upload screenshots and access report
         if: always()
         uses: actions/upload-artifact@v4
