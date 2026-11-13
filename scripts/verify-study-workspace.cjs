@@ -55,6 +55,9 @@ async function run() {
   assert.equal(await page.locator('#dropzone').isVisible(),false);
   assert.equal(await page.locator('.study-chapters').isVisible(),true);
   assert.equal(await page.locator('.study-tools').isVisible(),true);
+  await page.locator('#cardsCount').selectOption('12');
+  await page.locator('#cardsCount').selectOption('10');
+  assert.equal(calls,0,'Changing generation settings must not spend AI quota');
   for(const theme of ['dark','light']) for(const width of [1440,1280,1024,820,768,390,360]) {
     await page.setViewportSize({width,height:900});await page.evaluate(theme=>OmniTheme.setPreference(theme),theme);
     for(const view of ['cards','summary','quiz','map','plan','translate','chat']) {await navigate(view);await overflow();}
@@ -75,6 +78,8 @@ async function run() {
   assert.equal(await page.getByRole('heading',{name:'Lambung dan usus',exact:true}).count(),0);
   await page.setViewportSize({width:390,height:900});await navigate('cards');
   await page.getByText('Apa yang berpindah pada ikatan ion?',{exact:true}).waitFor();await overflow();
+  const positions=await page.evaluate(()=>({content:document.querySelector('.study-workspace .content-panel').getBoundingClientRect().y,tools:document.querySelector('.study-tools').getBoundingClientRect().y}));
+  assert.ok(positions.content<positions.tools,'Mobile study content must precede the tools panel');
   assert.equal(calls,1,'Saved flashcards must not regenerate');
   await page.evaluate(()=>OmniProduct.persistAsync());await page.reload();await page.getByText('Apa yang berpindah pada ikatan ion?',{exact:true}).waitFor();
   assert.equal(calls,1);await overflow();await shot('03-saved-flashcards-mobile');

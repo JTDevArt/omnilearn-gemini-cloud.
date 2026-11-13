@@ -259,6 +259,7 @@
   top.innerHTML =
     '<button class="secondary" id="productMenu" aria-label="Buka atau tutup sidebar" aria-expanded="true">☰</button><button class="secondary home-mode-switch" id="homeModeSwitch" type="button" aria-label="Buka beranda AI" title="Beralih antara beranda AI dan dashboard">⇄</button><span>Ruang belajar saya</span><input type="search" id="sourceSearch" aria-label="Cari sumber belajar" placeholder="Cari sumber belajarmu…"><button class="secondary" id="productTheme" aria-label="Ganti tema">◐</button>';
   document.body.insertBefore(top, document.querySelector('main'));
+  const profileLink=document.createElement('a');profileLink.className='master-profile';profileLink.href='/dashboard?view=profile';profileLink.dataset.view='profile';profileLink.textContent=profile.name || 'Profil';top.append(profileLink);
   sidebar.querySelector('#shellTheme').onclick = () => window.OmniTheme?.cycle();
   top.querySelector('#homeModeSwitch').onclick = () => navigate(current === 'home' ? 'dashboard' : 'home');
   sidebar.querySelector('#shellLogout').onclick = async () => {

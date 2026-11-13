@@ -32,17 +32,33 @@
 body[data-study-tool] .material-navigation { display:none; }
 body[data-study-tool=chat] .study-workspace #toolOutput { display:none; }
 body[data-study-tool]:not([data-study-tool=chat]) .study-workspace :is(#chatMessages,#chatForm,#clearChat) { display:none; }
+.product-panel .journey-workspace { grid-template-columns:190px minmax(0,1fr) 180px; gap:16px; }
+.journey-workspace>nav,.journey-workspace>article,.journey-workspace>.journey-tools { padding:18px; border:1px solid var(--border); border-radius:var(--radius-card); background:var(--surface); }
+.journey-workspace .journey-tools h2 { font-size:15px; margin:0 0 8px; }
+.journey-workspace article h2 { font-size:22px; margin:0 0 12px; }
+.journey-workspace article h3 { font-size:17px; }
+.product-panel .journey-workspace textarea { min-height:120px; border-radius:12px; padding:14px; }
+.product-panel:has(.journey-workspace)>progress { display:block; width:100%; height:8px; border:0; border-radius:8px; overflow:hidden; accent-color:var(--primary); }
+.product-panel:has(.journey-workspace)>progress::-webkit-progress-bar { background:var(--surface-elevated); }
+.product-panel:has(.journey-workspace)>progress::-webkit-progress-value { background:var(--primary); }
 @media(max-width:1150px) {
  .product-dashboard .study-workspace .workspace-body { grid-template-columns:minmax(0,1fr) 170px; }
  .study-chapters { grid-column:1/-1; }
  .study-chapters button { display:inline-block; width:auto; max-width:100%; margin-right:6px; }
+ .product-panel .journey-workspace { grid-template-columns:170px minmax(0,1fr); }
+ .journey-tools { grid-column:1/-1; }
 }
 @media(max-width:700px) {
  .study-workspace .workspace-head { flex-direction:column; align-items:stretch; padding:20px 0; gap:12px; }
  .product-dashboard .study-workspace .workspace-body { grid-template-columns:minmax(0,1fr); }
  .study-workspace .content-panel,.study-chapters,.study-tools { padding:16px; }
+ .study-workspace .content-panel { order:0; }
+ .study-chapters { display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
+ .study-chapters h2 { width:100%; margin:0; }
+ .study-chapters button,.study-chapters a { width:auto; margin:0; }
  .study-tools { display:flex; flex-wrap:wrap; gap:6px; }
  .study-tools h2,.study-tools details { width:100%; }
  .study-tools>a { width:auto; margin:0; }
  .study-settings[open] .dropzone span { overflow-wrap:anywhere; }
+ .product-panel .journey-workspace { grid-template-columns:minmax(0,1fr); }
 }

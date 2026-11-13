@@ -1561,32 +1561,32 @@ $('outputLanguage')?.addEventListener('change', () => {
   renderMaterialBadgeAndSidebar();
   if (activeTab === 'research') { selectTab('research'); return; }
   if (activeTab !== 'chat' && activeTab !== 'translate' && !busy && !uploadInFlight) {
-    runTool(activeTab, '', false);
+    selectTab(activeTab);
   }
 });
 $('summaryStyle')?.addEventListener('change', () => {
-  if (activeTab === 'summary' && !busy && !uploadInFlight) runTool('summary', '', false);
+  if (activeTab === 'summary' && !busy && !uploadInFlight) selectTab('summary');
 });
 $('regenSummaryBtn')?.addEventListener('click', () => {
   if (!busy && !uploadInFlight) runTool('summary', '', true);
 });
 $('quizDifficulty').addEventListener('change', () => {
-  if (activeTab === 'quiz' && !busy && !uploadInFlight) runTool('quiz', '', false);
+  if (activeTab === 'quiz' && !busy && !uploadInFlight) selectTab('quiz');
 });
 $('quizCount')?.addEventListener('change', () => {
-  if (activeTab === 'quiz' && !busy && !uploadInFlight) runTool('quiz', '', false);
+  if (activeTab === 'quiz' && !busy && !uploadInFlight) selectTab('quiz');
 });
 $('regenQuizBtn')?.addEventListener('click', () => {
   if (!busy && !uploadInFlight) runTool('quiz', '', true);
 });
 $('cardsCount')?.addEventListener('change', () => {
-  if (activeTab === 'cards' && !busy && !uploadInFlight) runTool('cards', '', false);
+  if (activeTab === 'cards' && !busy && !uploadInFlight) selectTab('cards');
 });
 $('regenCardsBtn')?.addEventListener('click', () => {
   if (!busy && !uploadInFlight) runTool('cards', '', true);
 });
 $('targetLanguage').addEventListener('change', () => {
-  if (activeTab === 'translate' && !busy && !uploadInFlight && (materialText.trim() || chatInput.value.trim())) runTool('translate', '', false);
+  if (activeTab === 'translate' && !busy && !uploadInFlight) selectTab('translate');
 });
 $('regenTranslateBtn')?.addEventListener('click', () => {
   if (!busy && !uploadInFlight) runTool('translate', '', true);
