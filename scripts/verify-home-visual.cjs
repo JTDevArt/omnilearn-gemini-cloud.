@@ -26,6 +26,7 @@ async function startServer() {
 async function open(base,view) {
   await page.goto(base+'/dashboard?view='+view);
   await page.locator(view==='home'?'.home-composer':'.dashboard-focus [data-clock]').waitFor();
+  if(view==='home') await page.locator('.home-hero img').evaluate(image=>image.decode());
   await page.evaluate(()=>document.fonts.ready);
   await page.evaluate(()=>scrollTo(0,0));
 }
@@ -90,6 +91,7 @@ async function run() {
       for(const view of ['home','dashboard']) {
         await page.evaluate(value=>OmniProduct.navigate(value),view);
         await page.locator(view==='home'?'.home-composer':'.dashboard-focus [data-clock]').waitFor();
+        if(view==='home') await page.locator('.home-hero img').evaluate(image=>image.decode());
         await checkLayout(view,width,theme);
       }
     }
