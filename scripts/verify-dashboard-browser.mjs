@@ -69,10 +69,6 @@ try {
         ),
         false,
       );
-      await page.screenshot({
-        path: `/tmp/master-verified-${theme}-${width}.png`,
-        fullPage: true,
-      });
     }
   }
   await page.locator("#productMenu").click();
@@ -119,7 +115,7 @@ try {
     .first()
     .waitFor();
   assert.equal(
-    await page.locator(".master-section #chatMessages").isVisible(),
+    await page.locator(".home-session #chatMessages").isVisible(),
     true,
   );
   for (const view of [

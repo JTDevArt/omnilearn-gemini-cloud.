@@ -6,15 +6,9 @@ const { chromium } = require('playwright');
 
 const base = 'https://omnilearnid.ai.studio';
 const routes = [
-  ['01-landing', '/'],
-  ['02-ai-home', '/dashboard?view=home'],
-  ['03-catatan', '/dashboard?view=notes'],
-  ['04-dashboard', '/dashboard?view=dashboard'],
-  ['05-mata-pelajaran', '/dashboard?view=subjects'],
-  ['06-streaks', '/dashboard?view=streaks'],
-  ['07-ujian', '/dashboard?view=exams'],
-  ['08-learning-workspace', '/dashboard?view=learn'],
-  ['09-profil', '/dashboard?view=profile']
+  ['01-ai-home', '/dashboard?view=home', 1440],
+  ['02-dashboard', '/dashboard?view=dashboard', 1440],
+  ['03-ai-home-mobile', '/dashboard?view=home', 390]
 ];
 const target = path.join(process.cwd(), 'live-ui-screenshots');
 const results = [];
@@ -26,15 +20,15 @@ async function run() {
     args: ['--no-sandbox', '--disable-dev-shm-usage']
   });
   try {
-    for (const [name, route] of routes) {
+    for (const [name, route, width] of routes) {
       const page = await browser.newPage({
-        viewport: { width: 1440, height: 900 },
+        viewport: { width, height: 900 },
         deviceScaleFactor: 1,
         colorScheme: 'dark',
         locale: 'id-ID',
         reducedMotion: 'reduce'
       });
-      const record = { name, route, checkedAt: new Date().toISOString() };
+      const record = { name, route, viewport: {width, height:900}, checkedAt: new Date().toISOString() };
       try {
         const response = await page.goto(base + route, {
           waitUntil: 'domcontentloaded',
@@ -72,7 +66,7 @@ async function run() {
     await fs.writeFile(path.join(target, 'STATUS.json'), JSON.stringify({
       note: 'Screenshots are from an unauthenticated Chromium session against the public live host. They are NOT evidence of signed-in UI. No application data or credentials were used.',
       testedOrigin: base,
-      viewport: '1440x900',
+      screenshotPolicy: 'Three views: Home desktop, Dashboard desktop, Home mobile. Other checks belong to verify-home-visual.cjs.',
       results
     }, null, 2));
   }

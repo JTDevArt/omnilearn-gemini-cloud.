@@ -47,9 +47,11 @@ async function checkLayout(view,width,theme) {
       inputBorder:input?getComputedStyle(input).borderTopWidth:null,
       imageLoaded:document.querySelector('.home-hero img')?.naturalWidth>0,
       theme:document.documentElement.dataset.theme,scrollY,
+      profileLines:(()=>{const range=document.createRange();range.selectNodeContents(document.querySelector('.master-profile'));return range.getClientRects().length;})(),
     };
   });
   assert.equal(measurements.theme,theme);
+  assert.equal(measurements.profileLines,1,'Profile text must remain on one line');
   assert.equal(measurements.overflow,false,JSON.stringify(measurements));
   assert.deepEqual(measurements.overflowingElements,[],JSON.stringify(measurements));
   if(view==='home') {

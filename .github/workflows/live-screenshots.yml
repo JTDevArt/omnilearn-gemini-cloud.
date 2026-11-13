@@ -5,9 +5,13 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/live-screenshots.yml'
-      - 'scripts/capture-live-screenshots.cjs'
       - 'scripts/verify-home-visual.cjs'
-      - 'public/**'
+      - 'public/*.css'
+      - 'public/dashboard-shell.js'
+      - 'public/product.js'
+      - 'public/theme.js'
+      - 'public/ui-motion.js'
+      - 'public/index.html'
       - 'server.js'
   workflow_dispatch:
 
