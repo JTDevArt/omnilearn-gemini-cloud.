@@ -299,7 +299,8 @@
     }
     if (view === "pinned") library(true);
     if (view === "notes") {
-      section('Materi tersimpan', `<div class="panel-actions">${action('Tambah sumber','sources')}${action('Buka editor catatan','note-editor')}</div>`);
+      host.querySelector('.master-heading p').textContent = 'Materi, bab, dan catatan belajarmu dalam satu koleksi.';
+      host.querySelector('.master-heading').insertAdjacentHTML('beforeend', `<div class="panel-actions">${action('Tambah sumber','sources')}${action('Edit catatan aktif','note-editor')}</div>`);
       library();
     }
     if (view === "subjects") {
