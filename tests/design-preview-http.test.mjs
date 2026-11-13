@@ -31,6 +31,8 @@ async function startFixture() {
 test('design preview routes and public assets respond over HTTP', async () => {
   const fixture = await startFixture();
   try {
+    const health = await (await fetch(fixture.url+'/api/health')).json();
+    assert.equal(health.uiBuild, 'algorithmic-v5-dashboard-1');
     for (const name of ['/design-preview', '/design-preview.html']) {
       const response = await fetch(fixture.url+name);
       assert.equal(response.status, 200, name+' should return HTML');

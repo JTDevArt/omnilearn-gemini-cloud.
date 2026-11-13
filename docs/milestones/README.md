@@ -1,6 +1,6 @@
 # Executable roadmap status
 
-Updated 12 November 2026. Work continues through the remaining roadmap as requested. No production deployment, release tag, model-name change or dependency upgrade.
+Updated 13 November 2026. [Latest Dashboard/motion increment](AU-05-dashboard-motion.md) continues production work from main `6691a2e`. Browser acceptance remains blocked; no production deployment, release tag, model-name change or dependency upgrade.
 
 | Milestone | Status | Evidence |
 | --- | --- | --- |

@@ -31,6 +31,7 @@
       return;
     host.classList.remove("video-learning");
     host.classList.toggle('master-home-mode', view === 'home');
+    host.classList.toggle('master-dashboard-mode', view === 'dashboard');
     const summary = activitySummary(state.activity);
     const metrics = progressMetrics(sources, state.activity);
     const dashboard = dashboardMetrics(sources, profile, state.activity);
@@ -44,7 +45,8 @@
       badge.dataset.view = "profile";
       top.append(badge);
     }
-    badge.textContent = `${profile.name || "Profil"} · Level ${summary.level} · ${summary.xp} XP · ${summary.streak} hari`;
+    badge.textContent = profile.name || 'Profil';
+    badge.setAttribute('aria-label', `Profil ${profile.name || 'pelajar'}, level ${summary.level}`);
     const title = {
       home: "Halo, siap belajar hari ini?",
       dashboard: "Ringkasan belajarmu",
@@ -57,7 +59,7 @@
       pinned: "Disematkan",
       updates: "Update List",
     }[view];
-    host.innerHTML = `<div class="master-heading">${view === "home" ? '<img src="/mascot.svg" alt="Maskot OmniLearn">' : ""}<div>${view === "home" ? '' : '<p class="master-eyebrow">OMNILEARN · RUANG BELAJAR PRIBADI</p>'}<h1>${title}</h1><p>${view === "home" ? "Tanyakan apa saja, unggah materi, atau gunakan tautan YouTube untuk mulai belajar bersama AI." : "Belajar dengan sumber dan progres milikmu sendiri."}</p></div></div>`;
+    host.innerHTML = `<div class="master-heading">${view === "home" ? '<img src="/mascot.svg" width="100" height="100" fetchpriority="high" alt="Maskot OmniLearn">' : ""}<div><h1>${title}</h1><p>${view === "home" ? "Tanyakan apa saja, unggah materi, atau gunakan tautan YouTube untuk mulai belajar bersama AI." : "Belajar dengan sumber dan progres milikmu sendiri."}</p></div></div>`;
     const section = (heading, html) => {
       const node = document.createElement("section");
       node.className = "master-section";
@@ -233,23 +235,23 @@
     }
     if (view === "dashboard") {
       const hour = new Date().getHours();
-      const greeting = document.createElement('p');
-      greeting.textContent = `Selamat ${hour < 11 ? 'pagi' : hour < 15 ? 'siang' : hour < 18 ? 'sore' : 'malam'}, ${profile.name || 'pelajar'}! Lanjutkan belajarmu hari ini.`;
-      host.append(greeting);
-      host.insertAdjacentHTML('beforeend', `<div class="master-stats"><article><strong>${dashboard.subjects}</strong><span>Mata pelajaran</span></article><article><strong>${dashboard.notes}</strong><span>Catatan</span></article><article><strong>${dashboard.exams}</strong><span>Ujian selesai</span></article><article><strong>${metrics.xp}</strong><span>Total XP</span></article></div>`);
-      section('Progres level', `<div class="progress-level"><div><strong>Level ${metrics.level}</strong><span>${metrics.xp} / ${metrics.nextLevelXp} XP</span></div><progress max="100" value="${metrics.levelProgress}" aria-label="Progres XP">${metrics.levelProgress}%</progress><p>Streak terpanjang: ${metrics.longestStreak} hari · Flashcard jatuh tempo: ${metrics.cardsDue}</p></div>`);
+      host.querySelector('h1').textContent = `Selamat ${hour < 11 ? 'pagi' : hour < 15 ? 'siang' : hour < 18 ? 'sore' : 'malam'}${profile.name ? ', ' + profile.name : ''}!`;
+      host.querySelector('.master-heading p').textContent = 'Lanjutkan perjalanan belajarmu di OmniLearn AI.';
+      host.insertAdjacentHTML('beforeend', `<div class="master-stats">${[[dashboard.subjects,'Mata pelajaran','subjects'],[dashboard.notes,'Catatan','notes'],[dashboard.exams,'Ujian selesai','exams'],[metrics.xp,'Total XP','streaks']].map(([value,label,route])=>`<a href="/dashboard?view=${route}" data-view="${route}"><strong>${value}</strong><span>${label}</span></a>`).join('')}</div>`);
+      section('Progres level', `<div class="progress-level"><div><strong>Level ${metrics.level}</strong><span>${metrics.xp} / ${metrics.nextLevelXp} XP</span></div><progress max="100" value="${metrics.levelProgress}" aria-label="Progres XP">${metrics.levelProgress}%</progress><p>Streak terpanjang: ${metrics.longestStreak} hari. Flashcard perlu diulang: ${metrics.cardsDue}.</p>${action('Ulangi flashcard','cards')}</div>`).classList.add('dashboard-level');
       const timer = section('Timer fokus', '<div class="focus-timer"></div>');
+      timer.classList.add('dashboard-focus');
       import('./focus-timer.js').then(({ mountTimer }) => {
         if (timer.isConnected) mountTimer(timer.querySelector('.focus-timer'), api);
       }).catch(() => { timer.querySelector('.focus-timer').textContent = 'Timer belum tersedia.'; });
       const weekMax=Math.max(1,...dashboard.week.map(day=>day.count));
-      section('Progres mingguan', `<div class="dashboard-week">${dashboard.week.map(day=>`<div><meter min="0" max="${weekMax}" value="${day.count}" aria-label="${day.day}: ${day.count} aktivitas"></meter><strong>${day.count}</strong><time datetime="${day.day}">${escape(new Date(day.day+'T00:00:00Z').toLocaleDateString('id-ID',{weekday:'short',timeZone:'UTC'}))}</time></div>`).join('')}</div><p>Aktivitas tujuh hari terakhir · Waktu Jakarta</p>`);
-      section('Aktivitas terbaru', dashboard.recent.length ? `<ul>${dashboard.recent.map(event=>`<li>${escape(event.day)} · ${escape(({lesson:'Pelajaran',quiz:'Kuis',review:'Flashcard',note:'Catatan'})[event.type] || 'Aktivitas')} · ${escape(event.topic || 'Belajar')}</li>`).join('')}</ul>` : '<p class="master-empty">Belum ada aktivitas. Mulai belajar untuk melihat progresmu.</p>');
+      section('Progres mingguan', `<div class="dashboard-week">${dashboard.week.map(day=>`<div><div class="dashboard-bar" aria-hidden="true"><span style="--activity:${day.count / weekMax}"></span></div><strong>${day.count}</strong><time datetime="${day.day}">${escape(new Date(day.day+'T00:00:00Z').toLocaleDateString('id-ID',{weekday:'short',timeZone:'UTC'}))}</time></div>`).join('')}</div><p>Jumlah aktivitas per hari. Waktu Jakarta.</p>`).classList.add('dashboard-weekly');
+      section('Aktivitas terbaru', dashboard.recent.length ? `<ul class="dashboard-activity">${dashboard.recent.map(event=>`<li><span><strong>${escape(({lesson:'Pelajaran',quiz:'Kuis',review:'Flashcard',note:'Catatan'})[event.type] || 'Aktivitas')}</strong><span>${escape(event.topic || 'Belajar')}</span></span><time datetime="${escape(event.day)}">${escape(event.day)}</time></li>`).join('')}</ul>` : '<p class="master-empty">Belum ada aktivitas. Mulai belajar untuk melihat progresmu.</p>').classList.add('dashboard-recent');
       const recent = [...sources].filter(s => s.text?.trim()).sort((a,b) => (b.lastOpenedAt || b.createdAt) - (a.lastOpenedAt || a.createdAt)).slice(0,4);
       const continuation = section('Lanjutkan belajar', recent.length ? `<div class="master-library">${recent.map(s => {
         const chapters = s.journey?.chapters || [];
         const done = chapters.filter(c => s.completedChapters?.includes(c.id)).length;
-        return `<article class="master-note"><h3>${escape(s.name)}</h3><p>${escape(s.subject || 'Tanpa pelajaran')}</p><p>${chapters.length ? `${done}/${chapters.length} bab ditandai selesai` : 'Belum ada jalur belajar'}</p>${chapters.length ? `<progress aria-label="Progres ${escape(s.name)}" max="${chapters.length}" value="${done}"></progress>` : ''}<button data-resume="${escape(s.id)}">Lanjutkan belajar</button></article>`;
+        return `<article class="master-note"><h3>${escape(lessonTitle(s))}</h3><p>${escape(s.subject || 'Tanpa pelajaran')}</p><p>${chapters.length ? `${done}/${chapters.length} bab ditandai selesai` : 'Belum ada jalur belajar'}</p>${chapters.length ? `<progress aria-label="Progres ${escape(lessonTitle(s))}" max="${chapters.length}" value="${done}"></progress>` : ''}<button data-resume="${escape(s.id)}">Lanjutkan belajar</button></article>`;
       }).join('')}</div>` : '<p class="master-empty">Unggah atau tempel materi untuk memulai pelajaran pertama.</p>');
       continuation.onclick = event => { const id = event.target.closest('[data-resume]')?.dataset.resume; if (id && api.selectSource(id)) api.navigate('journey'); };
       const video = section(
@@ -277,7 +279,13 @@
       else
         video.querySelector(".master-video").innerHTML =
           '<p class="master-empty">Belum ada video. Tambahkan video atau transkrip YouTube untuk melanjutkan belajar.</p>';
+      const extras = document.createElement('details');
+      extras.className = 'dashboard-materials';
+      extras.innerHTML = '<summary>Video dan pustaka materi</summary>';
+      host.append(extras);
+      extras.append(video);
       library();
+      extras.append(host.lastElementChild);
     }
     if (view === "pinned") library(true);
     if (view === "notes") {
@@ -537,6 +545,10 @@
           updates.append(message);
         }
       }
+    }
+    if (host.isConnected && host.dashboardRenderId === renderId) {
+      const { enterView } = await import('./ui-motion.js');
+      if (host.dashboardRenderId === renderId) enterView(host);
     }
   }
   window.OmniDashboard = { render };

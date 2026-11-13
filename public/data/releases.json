@@ -9,6 +9,20 @@
       "summary": "Milestone 00–08 lengkap di GitHub main; AI Home/Dashboard terpisah, progres dan profil menggunakan data asli, Update List berfungsi, riset memiliki penanganan penyimpanan yang benar, serta unit/lint/build diuji melalui GitHub Actions. v1.0.0 belum dirilis resmi.",
       "changes": [
         {
+          "title": "Dashboard production dengan ringkasan nyata, panel level dan timer berdampingan, grafik mingguan, serta motion dengan dukungan reduced motion",
+          "category": "UI/UX",
+          "status": "partial",
+          "files": ["public/dashboard-shell.js", "public/design-system.css", "public/product.js", "public/ui-motion.js"],
+          "commit": null
+        },
+        {
+          "title": "Validasi JSON fallback pilot dan penanda UI build untuk pemeriksaan deployment",
+          "category": "Fixed",
+          "status": "implemented-local",
+          "files": ["lib/text-provider-pilot.js", "server.js", "tests/text-provider-pilot.test.mjs", "tests/design-preview-http.test.mjs"],
+          "commit": null
+        },
+        {
           "title": "Audit dan baseline repo",
           "category": "Infrastructure",
           "status": "implemented-local",

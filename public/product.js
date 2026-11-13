@@ -238,7 +238,7 @@
   )
     .map(
       ([id, [icon, label]]) =>
-        `<a href="/dashboard?view=${id}" data-view="${id}" title="${label}"><span aria-hidden="true">${icon}</span>　${label}</a>`
+        `<a href="/dashboard?view=${id}" data-view="${id}" title="${label}"><span aria-hidden="true">${icon}</span>${label}</a>`
     )
     .join(
       ''
@@ -255,7 +255,7 @@
   const top = document.createElement('header');
   top.className = 'product-top';
   top.innerHTML =
-    '<button class="secondary" id="productMenu" aria-label="Buka atau tutup sidebar" aria-expanded="true">☰</button><button class="secondary home-mode-switch" id="homeModeSwitch" type="button" aria-label="Buka beranda AI" title="Beralih antara beranda AI dan dashboard">⇄</button><span>Ruang belajar saya</span><input type="search" id="sourceSearch" aria-label="Cari sumber belajar" placeholder="Cari sumber belajarmu…"><button class="secondary" id="productTheme" aria-label="Ganti tema">◐</button><a class="secondary" href="/dashboard?view=settings" data-view="settings">Perangkat ini</a>';
+    '<button class="secondary" id="productMenu" aria-label="Buka atau tutup sidebar" aria-expanded="true">☰</button><button class="secondary home-mode-switch" id="homeModeSwitch" type="button" aria-label="Buka beranda AI" title="Beralih antara beranda AI dan dashboard">⇄</button><span>Ruang belajar saya</span><input type="search" id="sourceSearch" aria-label="Cari sumber belajar" placeholder="Cari sumber belajarmu…"><button class="secondary" id="productTheme" aria-label="Ganti tema">◐</button>';
   document.body.insertBefore(top, document.querySelector('main'));
   sidebar.querySelector('#shellTheme').onclick = () => window.OmniTheme?.cycle();
   top.querySelector('#homeModeSwitch').onclick = () => navigate(current === 'home' ? 'dashboard' : 'home');
@@ -1355,6 +1355,7 @@
     view=({ujian:'exams',flashcards:'cards',mindmap:'map',update:'updates'})[view] || view;
     if (current === 'podcast') disposePodcast();
     panel.dashboardRenderId = null;
+    panel.classList.remove('master-home-mode', 'master-dashboard-mode');
     chatHome.after(chatMessages);
     feedbackHome.after(chatFeedback, $('chatRequestActions'));
     if (!views[view] && !tools.has(view)) view = 'dashboard';

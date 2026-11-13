@@ -8,7 +8,7 @@ A GitHub commit, local Docker build, and saved development-environment draft are
 - Install `poppler-utils` (`pdftoppm`) for targeted scan-page rendering. Without it, OCR reports fallback to the original PDF.
 - Start with `npm start`. The server listens on `0.0.0.0:$PORT`, default 3000. The container defaults to 8080.
 - Required production secret: `GEMINI_API_KEY`. Missing/placeholder keys and invalid ports fail startup clearly. Key presence does not establish usable quota/model access.
-- `GET /api/health` returns `productVersion: "forge-2.1"`; `ready` reports key presence. `/` is home, `/dashboard` is the application, `/vendor/*` serves local dependencies.
+- `GET /api/health` returns `productVersion: "forge-2.1"` and `uiBuild: "algorithmic-v5-dashboard-1"`; `ready` reports key presence only. The UI build marker identifies this code increment, not a passed deployment or live inference test. `/` is home, `/dashboard` is the application, `/vendor/*` serves local dependencies.
 - The build checks JavaScript, inline scripts and migration invariants; there is no bundler output directory.
 - SIGTERM/SIGINT close HTTP connections with a 10-second deadline.
 - Use HTTPS behind exactly the platform's trusted ingress. The server trusts one proxy; forward the public Host/protocol correctly for mutation Origin checks. Avoid another untrusted proxy hop.
@@ -33,7 +33,7 @@ That CA is optional outside the proxy. Preserve certificate verification. Never 
 1. Open the existing OmniLearn project. Bring the latest `JTDevArt/omnilearn-gemini-cloud.` GitHub `main` files into its code with the import/sync workflow available in that interface. A GitHub toolbar icon is not assumed to exist.
 2. Confirm the new `lib/*`, `public/*`, `package-lock.json`, `Dockerfile` and updated `server.js` are present. Install with `npm ci`; start with `npm start` on the platform-provided `PORT`.
 3. Keep `GEMINI_API_KEY` in the project's **server-side Secrets/environment settings**. Configure optional integrations only when their external prerequisites below are ready.
-4. Restart the preview backend. Verify `/api/health` identifies **forge-2.1**, `/dashboard` opens, a TXT upload works and local exams/maps/backups work. A stale health version means the new backend is not serving that preview.
+4. Restart the preview backend. Verify `/api/health` includes `uiBuild: "algorithmic-v5-dashboard-1"`, then check `/dashboard?view=dashboard`, a TXT upload and local exams/maps/backups. The unchanged `productVersion: "forge-2.1"` alone cannot distinguish dashboard revisions. A missing/different UI build marker means this backend increment is not serving that preview; the matching marker still requires checking that current frontend assets load.
 5. Click **Publish** in the project's upper-right toolbar to update the existing app, and complete any platform deployment settings in the owner's account.
 6. Open the published URL in a fresh tab and repeat health/version and TXT checks. Run one controlled inference only when Gemini quota permits; inspect actual-model/fallback notices.
 

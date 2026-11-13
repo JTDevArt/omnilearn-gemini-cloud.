@@ -27,3 +27,21 @@ test('explicit transient fallback is bounded and cancellation does not replay',a
   const controller=new AbortController();controller.abort();
   await assert.rejects(runTextPilot({...options,signal:controller.signal,fetchImpl:()=>{throw Error('must not call');}}));
 });
+test('malformed message entries return a controlled input error before any provider call',async()=>{
+  let calls=0;
+  for(const entry of [null,undefined,42,'text',{}]){
+    await assert.rejects(runTextPilot({...options,messages:[entry],fetchImpl:async()=>{calls++;return response();}}),error=>error.status===400&&error.code==='TEXT_PILOT_ERROR');
+  }
+  assert.equal(calls,0);
+});
+test('Gemini fallback must pass the same JSON and task validation as Groq',async()=>{
+  const fallbackOptions={...options,json:true,allowFallback:true,fetchImpl:async()=>new Response('',{status:503})};
+  await assert.rejects(runTextPilot({...fallbackOptions,validate:()=>{},geminiFallback:async()=>({text:'not json'})}),error=>error.status===422);
+  let validated=0;
+  await assert.rejects(runTextPilot({...fallbackOptions,validate:async value=>{validated++;assert.ok(Array.isArray(value.questions));},geminiFallback:async()=>({text:'{}'})}));
+  assert.equal(validated,1);
+  const result=await runTextPilot({...fallbackOptions,validate:value=>assert.equal(value.questions.length,1),geminiFallback:async()=>({text:'{"questions":[{"question":"Synthetic"}]}',actualModel:'fixture-gemini'})});
+  assert.equal(result.provider,'gemini');
+  assert.equal(result.actualModel,'fixture-gemini');
+  await assert.rejects(runTextPilot({...fallbackOptions,validate:()=>{},geminiFallback:async()=>({text:'   '})}),error=>error.status===422);
+});

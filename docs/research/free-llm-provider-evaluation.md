@@ -1,4 +1,4 @@
-# Free LLM evaluation — 12 November 2026
+# Free LLM evaluation, rechecked 13 November 2026
 
 Decision: retain Gemini production routing. No additional provider is approved for student data or production. A bounded, server-only Groq text pilot is implemented for synthetic fixture tests; it is not imported by the Express server. Credentials, account quota, region, data-processing approval and live output acceptance remain gates. Catalog availability is not an entitlement or an SLA.
 
@@ -54,3 +54,11 @@ Statuses refer to this project and this verification date. `APPROVED_FOR_TESTING
 `lib/text-provider-pilot.js` accepts chat/summary/quiz text only, a server-held credential, explicit enablement, optional task validation, one fixed HTTPS host and bounded input/output. It reuses `runProviderRequest` for cancellation and a shared deadline. No streaming, file payloads, browser keys, gateway admin key, auto-discovery or new dependency. Explicit Gemini callback fallback is allowed only for errors already eligible under the existing request policy; auth, quota, validation and cancellation do not trigger replay. Fixtures validate routing, metadata, truncation rejection and disabled behavior. This is not a live provider benchmark.
 
 Before wiring it into `generateText`: verify exact model entitlement, quotas, data policy and region; run synthetic Indonesian/English summaries and schema-valid quizzes; benchmark latency and quality; retain source-reference validation; add safe actual-provider UI attribution; set shared abuse/spending controls. Keep OCR, source blueprints, vision, audio and assessment on the existing Gemini path. No gateway deployment is required or approved.
+
+## Recheck on 13 November
+
+The official [Groq model table](https://console.groq.com/docs/models) lists `openai/gpt-oss-20b` with 131,072 context tokens and 65,536 maximum completion tokens. Those are upstream capabilities, not the local pilot's 2,048-token output cap or an account quota. The [rate-limit page](https://console.groq.com/docs/rate-limits) remains account-dependent. The [data policy](https://console.groq.com/docs/your-data) documents default non-retention of inference content with reliability/abuse exceptions up to 30 days (or legal requirements), ZDR controls and US storage for retained customer data. This does not approve forwarding student documents.
+
+[Gemini limits](https://ai.google.dev/gemini-api/docs/rate-limits) apply per project rather than API key. Preserve cooldowns rather than attempting key rotation. No live requests were made for this recheck.
+
+Fixed two pilot-only defects: the Gemini callback previously bypassed structured-output validation, and malformed message entries could throw uncontrolled property-access errors. Both now use controlled validation and regression fixtures. The pilot still runs Groq first with an explicit optional Gemini callback; it is not an implemented production Gemini-quota-to-Groq router.

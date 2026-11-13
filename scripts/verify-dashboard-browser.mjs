@@ -39,7 +39,7 @@ try {
       text: "Sel adalah unit kehidupan.",
       meta: { extractionMode: "native-text" },
     });
-    window.OmniProduct.navigate("dashboard");
+    window.OmniProduct.navigate("notes");
   });
   await page.getByRole("button", { name: "Sematkan", exact: true }).click();
   await page.goto(`${base}/dashboard?view=pinned`);
