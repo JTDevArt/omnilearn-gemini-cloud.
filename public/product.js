@@ -235,12 +235,23 @@
   shell.prepend(panel);
   const sidebar = document.createElement('aside');
   sidebar.className = 'product-sidebar';
+  const navigationIcons = {
+    home: 'm3 10 9-7 9 7v10H3ZM9 20v-7h6v7',
+    dashboard: 'M3 3h7v7H3ZM14 3h7v7h-7ZM3 14h7v7H3ZM14 14h7v7h-7Z',
+    subjects: 'M12 5v16M12 5C8 3 5 3 2 4v15c4-1 7 0 10 2 3-2 6-3 10-2V4c-3-1-6-1-10 1Z',
+    notes: 'M5 3h14v18H5ZM8 8h8M8 12h8M8 16h5',
+    exams: 'M8 5H5v16h14V5h-3M8 3h8v4H8Zm0 11 3 3 5-6',
+    streaks: 'M13 3c1 5-5 5-3 10 2 1 4-1 4-3 4 3 5 5 4 8-2 4-9 4-12 0-3-5 1-10 7-15Z',
+    leaderboard: 'M8 3h8v7a4 4 0 0 1-8 0ZM8 5H3v3c0 3 3 4 5 4M16 5h5v3c0 3-3 4-5 4M12 14v7M7 21h10',
+    updates: 'M5 5h14v16H5ZM8 3v4M16 3v4M8 11h8M8 15h5',
+    profile: 'M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0ZM4 21v-2a8 6 0 0 1 16 0v2',
+  };
   sidebar.innerHTML = `<a class="wordmark" href="/">✳ omni<span>learn</span></a><nav aria-label="Menu utama">${Object.entries(
     Object.fromEntries(['home','dashboard','subjects','notes','exams','streaks','leaderboard','updates','profile'].map(id => [id, views[id]]))
   )
     .map(
-      ([id, [icon, label]]) =>
-        `<a href="/dashboard?view=${id}" data-view="${id}" title="${label}"><span aria-hidden="true">${icon}</span>${label}</a>`
+      ([id, [, label]]) =>
+        `<a href="/dashboard?view=${id}" data-view="${id}" title="${label}"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${navigationIcons[id]}"/></svg>${label}</a>`
     )
     .join(
       ''

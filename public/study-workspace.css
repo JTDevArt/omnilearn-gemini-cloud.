@@ -37,6 +37,15 @@ body[data-study-tool]:not([data-study-tool=chat]) .study-workspace :is(#chatMess
 .journey-workspace .journey-tools h2 { font-size:15px; margin:0 0 8px; }
 .journey-workspace article h2 { font-size:22px; margin:0 0 12px; }
 .journey-workspace article h3 { font-size:17px; }
+.journey-workspace>article { padding:clamp(18px,2.2vw,32px); }
+.journey-workspace>article>:not(details) { max-width:var(--reading-measure); margin-inline:auto; }
+.journey-workspace .md-rendered { font-size:var(--font-body); line-height:var(--reading-leading); overflow-wrap:anywhere; }
+.journey-workspace .md-rendered :is(p,ul,ol) { margin-block:0 1.2em; }
+.journey-workspace .md-rendered :is(h2,h3,h4) { margin-block:1.6em .7em; }
+.journey-workspace .md-rendered :is(pre,table,.katex-display) { max-width:100%; overflow-x:auto; }
+.journey-workspace .md-rendered table { display:block; width:max-content; }
+.journey-workspace nav button { background:transparent; border-color:transparent; text-align:left; font-size:var(--font-label); }
+.journey-workspace nav button.active { color:var(--primary); background:var(--primary-soft); border-color:var(--primary); }
 .product-panel .journey-workspace textarea { min-height:120px; border-radius:12px; padding:14px; }
 .product-panel:has(.journey-workspace)>progress { display:block; width:100%; height:8px; border:0; border-radius:8px; overflow:hidden; accent-color:var(--primary); }
 .product-panel:has(.journey-workspace)>progress::-webkit-progress-bar { background:var(--surface-elevated); }

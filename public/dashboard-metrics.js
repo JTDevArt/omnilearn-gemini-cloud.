@@ -1,4 +1,5 @@
 import {activityDay} from './learning-activity.js';
+import {reviewStats} from './review-scheduler.js';
 export function dashboardMetrics(sources = [], profile = {}, activity = {}, now = Date.now()) {
   const items=Array.isArray(sources)?sources:[];
   const names=new Set([...(Array.isArray(profile.subjects)?profile.subjects:[]),...items.map(s=>s.subject)].filter(v=>typeof v==='string' && v.trim()));
@@ -10,5 +11,6 @@ export function dashboardMetrics(sources = [], profile = {}, activity = {}, now 
   });
   return {subjects:names.size, notes:items.filter(s=>typeof s.notes==='string' && s.notes.trim()).length,
     exams:items.reduce((n,s)=>n+(Array.isArray(s.exams)?s.exams.filter(e=>e.submittedAt).length:0),0),
-    week,recent:events.slice(-5).reverse()};
+    week,recent:events.slice(-5).reverse(),
+    reviewSourceId:items.find(source=>Array.isArray(source.deck) && reviewStats(source.deck,source.reviews || {},now).due>0)?.id || null};
 }

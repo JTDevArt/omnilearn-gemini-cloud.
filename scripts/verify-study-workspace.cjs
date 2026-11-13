@@ -25,6 +25,7 @@ async function overflow() {
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
 }
 async function shot(name) {
+  if(process.env.QA_SKIP_SCREENSHOTS==='1') return;
   await page.evaluate(()=>scrollTo(0,0));
   await page.screenshot({path:path.join(output,name+'.png'),animations:'disabled'});
   report.screenshots.push({file:name+'.png',viewport:page.viewportSize(),route:new URL(page.url()).searchParams.get('view'),theme:'dark'});
@@ -49,6 +50,48 @@ async function run() {
     const second=make('scan_kimia.pdf','Ikatan Kimia','Ikatan ion melibatkan perpindahan elektron.','Ikatan ion');second.subject='Kimia';second.deck=[{front:'Apa yang berpindah pada ikatan ion?',back:'Elektron.'}];
     await OmniProduct.persistAsync();OmniProduct.selectSource(first.id);return [first.id,second.id];
   });
+  await page.evaluate(()=>OmniProduct.navigate('notes'));
+  await page.locator('.notes-collection').waitFor();
+  assert.equal(await page.locator('.note-title').count(),2);
+  assert.equal(await page.locator('.master-preview').count(),0,'Library must lead with topic titles rather than raw text thumbnails');
+  const search=page.getByRole('searchbox',{name:'Cari catatan',exact:true});
+  await search.fill('elektron');
+  assert.equal(await page.locator('.note-title').textContent(),'Ikatan Kimia');
+  await search.fill('tidak-cocok');
+  assert.match(await page.locator('.notes-collection .master-empty').textContent(),/Tidak ada materi yang cocok/);
+  await search.fill('');
+  await page.getByRole('combobox',{name:'Mata pelajaran',exact:true}).selectOption('Biologi');
+  assert.equal(await page.locator('.note-title').textContent(),'Sistem Pencernaan');
+  await page.getByRole('combobox',{name:'Mata pelajaran',exact:true}).selectOption('');
+  for(const theme of ['dark','light']) for(const width of [1440,1280,1024,820,768,390,360]) {
+    await page.setViewportSize({width,height:900});await page.evaluate(theme=>OmniTheme.setPreference(theme),theme);
+    for(const layout of ['list','grid']) {await page.locator(`[data-layout=${layout}]`).click();await overflow();}
+    report.checks.push({view:'notes',theme,width,layouts:2,overflow:false});
+  }
+  const biology=page.locator('.master-note').filter({has:page.getByRole('button',{name:'Sistem Pencernaan',exact:true})});
+  await biology.locator('.note-actions>summary').click();
+  await biology.locator('[data-pin-id]').click();
+  await biology.locator('.note-pin').waitFor();
+  await biology.locator('.note-actions>summary').click();
+  page.once('dialog',dialog=>dialog.accept('Pencernaan manusia'));
+  await biology.locator('[data-rename-id]').click();
+  await page.getByRole('button',{name:'Pencernaan manusia',exact:true}).waitFor();
+  await page.reload();await page.locator('.notes-collection').waitFor();
+  assert.equal(await page.getByRole('button',{name:'Pencernaan manusia',exact:true}).count(),1);
+  assert.equal(await page.locator('.note-pin').count(),1);
+  await page.getByRole('button',{name:'Pencernaan manusia',exact:true}).click();
+  await page.getByRole('heading',{name:'Lambung dan usus',exact:true}).waitFor();
+  await page.evaluate(()=>OmniProduct.navigate('home'));await page.locator('.home-source-context').waitFor();
+  assert.match(await page.locator('.home-source-context').textContent(),/Pencernaan manusia/);
+  await page.locator('.home-source-context [data-open=learn]').click();
+  await page.getByRole('heading',{name:'Lambung dan usus',exact:true}).waitFor();
+  assert.equal(await page.locator('.journey-workspace .md-rendered').first().evaluate(node=>getComputedStyle(node).lineHeight),'27px');
+  await page.evaluate(()=>OmniProduct.navigate('dashboard'));await page.locator('[data-review-due]').waitFor();
+  await page.locator('[data-review-due]').click();
+  await page.getByText('Apa yang berpindah pada ikatan ion?',{exact:true}).waitFor();
+  assert.equal(await page.evaluate(()=>OmniProduct.getCurrentSource().id),ids[1]);
+  assert.equal(calls,0,'Library, reading and due-review navigation must reuse source data');
+  await page.evaluate(async id=>{await OmniProduct.renameLesson(id,'Sistem Pencernaan');OmniProduct.selectSource(id);},ids[0]);
   await navigate('cards');
   await page.getByRole('heading',{name:'Sistem Pencernaan',exact:true}).waitFor();
   assert.equal(await page.locator('#chatForm').isVisible(),false);

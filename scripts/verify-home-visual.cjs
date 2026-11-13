@@ -83,7 +83,7 @@ async function run() {
     return route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({error:'Synthetic provider unavailable',code:'AI_DEFERRED'})});
   });
   await open(base,'home');
-  assert.equal((await (await page.request.get(base+'/api/health')).json()).uiBuild,'algorithmic-v8-home-1');
+  assert.equal((await (await page.request.get(base+'/api/health')).json()).uiBuild,'algorithmic-v9.1-1');
   for(const theme of ['dark','light']) {
     for(const width of [1440,1280,1024,820,768,390,360]) {
       await page.setViewportSize({width,height:900});

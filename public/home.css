@@ -14,6 +14,11 @@
 .home-hero h1 { font-size:clamp(26px,2.8vw,36px); margin:0 0 12px; }
 .home-hero p { max-width:570px; margin:0 auto; font-size:14px; line-height:1.65; }
 .home-session { width:min(100%,740px); margin:0 auto; min-width:0; }
+.home-source-context { display:flex; gap:8px; align-items:center; padding:0 4px 14px; }
+.home-source-context>div { flex:1; min-width:0; }
+.home-source-context span { display:block; font-size:12px; color:var(--text-muted); }
+.home-source-context strong { display:block; font-size:var(--font-label); font-weight:500; overflow-wrap:anywhere; }
+.home-source-context button { flex:none; min-height:var(--control-height); font-size:12px; padding:8px 10px; background:transparent; border:0; color:var(--secondary); }
 .home-composer {
   padding:16px;
   border:1px solid var(--border);
@@ -66,4 +71,6 @@
   .home-composer { padding:12px; border-radius:18px; }
   .home-composer-actions { gap:6px; }
   .home-composer-actions button { padding:9px 10px; font-size:12px; }
+  .home-source-context { flex-wrap:wrap; }
+  .home-source-context>div { flex-basis:50%; }
 }
