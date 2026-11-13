@@ -1384,6 +1384,7 @@
     materialNav.querySelector('[data-view=video]').hidden=!(/video/.test(selected?.meta?.extractionMode || '') || selected?.meta?.youtubeUrl);
     panel.tabIndex=-1;panel.setAttribute('aria-label',views[view]?.[1] || view);
     if(push)panel.focus({preventScroll:true});
+    if (['home', 'dashboard'].includes(view)) window.scrollTo({top:0,left:0,behavior:'instant'});
     workspace.hidden = !tools.has(view);
     panel.hidden = tools.has(view);
     if (['home','dashboard','notes','subjects','streaks','leaderboard','profile','help','pinned','updates'].includes(view)) {
@@ -1737,8 +1738,6 @@
       navigate(button.dataset.open);
     }
     if (button.hasAttribute('data-upload')) {
-      workspace.hidden = false;
-      panel.hidden = true;
       $('materialFile').accept = (
         window.OmniCapabilities?.extensions || [
           '.pdf',

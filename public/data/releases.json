@@ -9,6 +9,13 @@
       "summary": "Milestone 00–08 lengkap di GitHub main; AI Home/Dashboard terpisah, progres dan profil menggunakan data asli, Update List berfungsi, riset memiliki penanganan penyimpanan yang benar, serta unit/lint/build diuji melalui GitHub Actions. v1.0.0 belum dirilis resmi.",
       "changes": [
         {
+          "title": "Composer Home tunggal tanpa border bertumpuk, penempatan maskot, dan pembatalan file picker yang mempertahankan Home",
+          "category": "UI/UX",
+          "status": "partial",
+          "files": ["public/dashboard-shell.js", "public/home.css", "public/product.css", "public/design-system.css", "public/product.js", "scripts/verify-home-visual.cjs"],
+          "commit": null
+        },
+        {
           "title": "Dashboard production dengan ringkasan nyata, panel level dan timer berdampingan, grafik mingguan, serta motion dengan dukungan reduced motion",
           "category": "UI/UX",
           "status": "partial",

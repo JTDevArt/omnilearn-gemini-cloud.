@@ -174,11 +174,12 @@
       draw();
     }
     if (view === "home") {
-      const chat = section(
-        "Tanya, pahami, lanjutkan",
-        `<form class="master-composer"><textarea aria-label="Pertanyaan untuk tutor" placeholder="Rangkum bab, jelaskan konsep, atau buat pelajaran dari materi apa pun..." required maxlength="12000"></textarea><div class="panel-actions"><button type="button" data-record-audio>● Rekam</button><button type="button" data-upload>＋ Unggah</button><button type="button" data-paste-material>Tempel materi</button><button type="button" data-open="sources">▶ YouTube</button><button class="primary" type="submit">Kirim ↑</button></div><span id="recordStatus" role="status"></span></form>`,
-      );
-      chat.classList.add('home-composer-panel');
+      host.querySelector('.master-heading').classList.add('home-hero');
+      const chat = document.createElement('section');
+      chat.className = 'home-session';
+      chat.setAttribute('aria-label', 'Tutor AI');
+      chat.innerHTML = `<form class="home-composer master-composer"><label class="home-input-label" for="homeQuestion">Pertanyaan untuk tutor</label><textarea id="homeQuestion" placeholder="Tanyakan materi, minta penjelasan, atau berikan instruksi…" required maxlength="12000" rows="3"></textarea><div class="home-composer-actions"><button type="button" data-record-audio>Rekam</button><button type="button" data-upload>Unggah</button><button type="button" data-open="sources">YouTube</button><button class="primary" type="submit">Kirim</button></div><span id="recordStatus" role="status"></span></form><details class="home-secondary-tools"><summary>Tambahkan materi teks</summary><button type="button" data-paste-material>Tempel materi</button></details>`;
+      host.append(chat);
       const draftInput = chat.querySelector("textarea");
       try { draftInput.value = sessionStorage.getItem(HOME_DRAFT_KEY) || ''; }
       catch { /* Session storage can be unavailable in private mode. */ }
@@ -217,7 +218,7 @@
         const dialog = document.createElement('dialog');
         dialog.innerHTML = '<form><h2>Tempel materi</h2><label>Judul<input name="title" required maxlength="200"></label><label>Teks sumber<textarea name="text" required minlength="20" maxlength="50000"></textarea></label><p role="status"></p><div class="panel-actions"><button type="submit">Simpan materi</button><button type="button">Batal</button></div></form>';
         document.body.append(dialog); dialog.showModal();
-        dialog.onclose = () => dialog.remove();
+        dialog.onclose = () => { dialog.remove(); chat.querySelector('[data-paste-material]')?.focus(); };
         dialog.querySelector('[type=button]').onclick = () => dialog.close();
         dialog.querySelector('form').onsubmit = async event => {
           event.preventDefault();

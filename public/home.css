@@ -1,0 +1,69 @@
+.master-home-mode {
+  padding-block:clamp(20px,6vh,64px) 32px;
+}
+.master-home-mode>.home-hero {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:16px;
+  padding:0 16px 28px;
+  text-align:center;
+  background:radial-gradient(ellipse at 50% 25%,var(--secondary-soft),transparent 72%);
+}
+.home-hero img { width:112px; height:112px; object-fit:contain; flex:none; }
+.home-hero h1 { font-size:clamp(26px,2.8vw,36px); margin:0 0 12px; }
+.home-hero p { max-width:570px; margin:0 auto; font-size:14px; line-height:1.65; }
+.home-session { width:min(100%,740px); margin:0 auto; min-width:0; }
+.home-composer {
+  padding:16px;
+  border:1px solid var(--border);
+  border-radius:20px;
+  background:var(--surface-elevated);
+  transition:border-color var(--motion-fast);
+}
+.home-composer:focus-within { outline:2px solid var(--focus); outline-offset:3px; }
+.home-input-label {
+  position:absolute;
+  width:1px;
+  height:1px;
+  padding:0;
+  overflow:hidden;
+  clip-path:inset(50%);
+  white-space:nowrap;
+}
+.product-panel .home-composer textarea {
+  display:block;
+  width:100%;
+  min-height:88px;
+  max-height:300px;
+  margin:0;
+  padding:8px 4px;
+  resize:vertical;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  color:var(--text-primary);
+  font-size:15px;
+  line-height:1.6;
+  box-shadow:none;
+}
+/* The form provides the single keyboard-focus ring around text and actions. */
+.product-panel .home-composer textarea:focus-visible { outline:none; }
+.home-composer-actions { display:flex; align-items:center; gap:8px; margin-top:12px; }
+.home-composer-actions button { min-height:44px; padding:9px 14px; font-size:13px; }
+.home-composer-actions .primary { margin-left:auto; }
+.home-composer [role=status]:empty { display:none; }
+.home-composer [role=status] { display:block; margin-top:10px; font-size:13px; }
+.home-secondary-tools { border:0; padding:8px 0; font-size:12px; color:var(--text-secondary); }
+.home-secondary-tools summary { min-height:44px; display:list-item; padding:10px 0; font-weight:500; }
+.home-session .chat-messages:empty,.home-session .chat-feedback:empty { display:none; }
+@media(max-width:700px) {
+  .master-home-mode { padding-block:20px; }
+  .master-home-mode>.home-hero { gap:12px; padding:0 0 24px; }
+  .home-hero img { width:92px; height:92px; }
+  .home-hero h1 { font-size:26px; }
+  .home-hero p { font-size:13px; }
+  .home-composer { padding:12px; border-radius:18px; }
+  .home-composer-actions { gap:6px; }
+  .home-composer-actions button { padding:9px 10px; font-size:12px; }
+}

@@ -1,4 +1,4 @@
-name: Capture live OmniLearn screenshots
+name: OmniLearn production UI visual QA
 
 on:
   push:
@@ -6,6 +6,9 @@ on:
     paths:
       - '.github/workflows/live-screenshots.yml'
       - 'scripts/capture-live-screenshots.cjs'
+      - 'scripts/verify-home-visual.cjs'
+      - 'public/**'
+      - 'server.js'
   workflow_dispatch:
 
 permissions:
@@ -24,15 +27,17 @@ jobs:
         run: |
           npm install --prefix /tmp/omnilearn-capture playwright@1.56.1 --no-audit --no-fund --ignore-scripts
           /tmp/omnilearn-capture/node_modules/.bin/playwright install --with-deps chromium
-      - name: Capture nine public live routes
+      - name: Install application dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Assert production UI and capture only three required views
         env:
           NODE_PATH: /tmp/omnilearn-capture/node_modules
-        run: node scripts/capture-live-screenshots.cjs
+        run: node scripts/verify-home-visual.cjs
       - name: Upload screenshots and access report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: omnilearn-live-9-screenshots
-          path: live-ui-screenshots/
+          name: omnilearn-production-visual-qa
+          path: visual-qa/
           if-no-files-found: warn
           retention-days: 7
