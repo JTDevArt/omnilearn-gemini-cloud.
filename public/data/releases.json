@@ -13,7 +13,7 @@
           "category": "UI/UX",
           "status": "partial",
           "files": ["public/dashboard-shell.js", "public/home.css", "public/product.css", "public/design-system.css", "public/product.js", "scripts/verify-home-visual.cjs"],
-          "commit": null
+          "commit": "5fb92d5a42c539abc5240054ddf56122d37e87c3"
         },
         {
           "title": "Dashboard production dengan ringkasan nyata, panel level dan timer berdampingan, grafik mingguan, serta motion dengan dukungan reduced motion",

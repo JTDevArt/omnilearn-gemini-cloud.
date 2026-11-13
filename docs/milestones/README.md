@@ -2,6 +2,8 @@
 
 Updated 13 November 2026. [Latest Dashboard/motion increment](AU-05-dashboard-motion.md) continues production work from main `6691a2e`. Browser acceptance remains blocked; no production deployment, release tag, model-name change or dependency upgrade.
 
+Latest focused update: [Home/Dashboard visual QA](HOME-VISUAL-QA.md) passes on code `8599404` using a GitHub browser runner, three reviewed final images and 28 viewport/theme assertions. This supersedes the local-browser blocker for that focused gate only. Overall directive completion and hosted release acceptance remain open.
+
 | Milestone | Status | Evidence |
 | --- | --- | --- |
 | 00 — Audit and baseline | Complete | [Audit](00-repository-audit.md), [research](00-research-notes.md) |
