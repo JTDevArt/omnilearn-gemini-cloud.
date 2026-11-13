@@ -197,6 +197,13 @@
             "docs/milestones/08B-saved-lessons-prototype.md"
           ],
           "commit": "a91e05b4b3a31a62b3debac41c262e822e0a63f5"
+        },
+        {
+          "title": "Navigasi produksi, dashboard dengan data nyata, judul materi dan akses bab sesuai sumber",
+          "category": "UI/UX",
+          "status": "implemented-local",
+          "files": ["public/product.js", "public/dashboard-shell.js", "public/lesson-label.js", "public/jarvis.js"],
+          "commit": "e13d6c59b4d9df19052aec8af8a59c9cad129f27"
         }
       ],
       "knownLimitations": [
@@ -204,7 +211,7 @@
         "Pengujian browser dua-mode, profil, research dan media pada host belum dilakukan dalam sesi ini.",
         "Gemini langsung, Firebase/cloud, YouTube OAuth dan hosted AI Studio masih membutuhkan pengujian layanan nyata dan/atau kredensial.",
         "Milestone 09 dan 10 belum sepenuhnya diterima, dan gerbang rilis Milestone 12 masih terbuka.",
-        "Prototipe Catatan terbaru berjalan dengan data lokal contoh; OCR asli, Gemini dan penyimpanan dokumen produksi belum diintegrasikan ke desain baru."
+        "Galeri Catatan produksi memakai pustaka nyata; peninjauan judul dan verifikasi browser untuk alur unggah masih perlu dilengkapi."
       ]
     }
   ]

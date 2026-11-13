@@ -501,6 +501,11 @@
     openTranscript: () => transcriptView(),
     selectSource,
     updateDashboard(mutator) { mutator({sources, profile}); return persistAsync(); },
+    async renameLesson(id, title) {
+      const source=sources.find(item=>item.id===id);
+      const {saveLessonTitle}=await import('/lesson-label.js');
+      return saveLessonTitle(source,title,persistAsync);
+    },
     persistAsync,
     storageStatus: () => ({pendingWrites, unsavedChanges}),
     openRecorder(button) { return recordAudio(button); },
@@ -1830,7 +1835,8 @@
           window.OmniProductSourceChange?.();
         }
         await window.OmniLocalLibrary.deleteSourceFiles(id).catch(error => toast(error.message));
-        sourcesView(current === 'learn');
+        if (['notes','pinned','dashboard'].includes(current)) window.OmniDashboard.render(panel,current,window.OmniProduct);
+        else sourcesView(current === 'learn');
         } finally { setBusy(false); }
       } else if (selectSource(id)) navigate(button.dataset.action);
     }

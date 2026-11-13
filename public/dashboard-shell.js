@@ -118,7 +118,7 @@
           ? list
               .map(
                 (s) =>
-                  `<article class="master-note"><div class="master-preview" aria-hidden="true">${escape((s.notes || s.text || "").slice(0, 180))}</div><p>${escape(kind(s))} · ${escape(s.subject || "Tanpa pelajaran")}</p><h3>${escape(lessonTitle(s))}</h3><p>${Array.isArray(s.journey?.chapters) ? `${s.journey.chapters.length} bab` : 'Bab belum disusun'}</p><time>${escape(new Date(s.lastOpenedAt || s.createdAt).toLocaleDateString("id-ID"))}</time><details><summary>Sumber asli</summary><p>${escape(s.name)}</p></details><div class="panel-actions"><button data-source-id="${escape(s.id)}">Buka</button><button data-edit-note="${escape(s.id)}">Edit catatan</button><button data-rename-id="${escape(s.id)}">Ubah judul</button><button data-pin-id="${escape(s.id)}" aria-pressed="${!!s.pinned}">${s.pinned ? "Lepas pin" : "Sematkan"}</button></div></article>`,
+                  `<article class="master-note"><div class="master-preview" aria-hidden="true">${escape((s.notes || s.text || "").slice(0, 180))}</div><p>${escape(kind(s))} · ${escape(s.subject || "Tanpa pelajaran")}</p><h3>${escape(lessonTitle(s))}</h3><p>${Array.isArray(s.journey?.chapters) ? `${s.journey.chapters.length} bab` : 'Bab belum disusun'}</p><p>${s.meta?.uploadState && s.meta.uploadState !== 'completed' ? 'Ekstraksi belum selesai. File asli dapat ditinjau atau dicoba kembali.' : s.meta?.partialRead || s.meta?.truncated ? 'Teks sebagian; periksa sumber asli.' : s.text?.trim() ? 'Teks tersedia untuk ditinjau.' : 'Belum ada teks untuk dipelajari.'}</p><time>${escape(new Date(s.lastOpenedAt || s.createdAt).toLocaleDateString("id-ID"))}</time><details><summary>Sumber asli</summary><p>${escape(s.name)}</p></details><div class="panel-actions"><button data-source-id="${escape(s.id)}">Buka</button><button data-edit-note="${escape(s.id)}">Edit catatan</button><button data-rename-id="${escape(s.id)}">Ubah judul</button><button data-pin-id="${escape(s.id)}" aria-pressed="${!!s.pinned}">${s.pinned ? "Lepas pin" : "Sematkan"}</button><button data-source="${escape(s.id)}" data-action="delete">Hapus</button></div></article>`,
               )
               .join("")
           : '<p class="master-empty">Belum ada materi di sini. Unggah sumber pertama untuk mulai belajar.</p>';
@@ -135,27 +135,25 @@
             .forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
         }
         if (b.dataset.sourceId) {
-          api.selectSource(b.dataset.sourceId);
-          api.navigate("journey");
+          if (api.selectSource(b.dataset.sourceId)) api.navigate(api.getSource(b.dataset.sourceId)?.text?.trim() ? 'journey' : 'sources');
+          else saveStatus.textContent='Materi belum dapat dibuka. Tunggu proses yang sedang berjalan.';
         }
         if (b.dataset.editNote) {
-          api.selectSource(b.dataset.editNote);
-          api.navigate('note-editor');
+          if (api.selectSource(b.dataset.editNote)) api.navigate('note-editor');
+          else saveStatus.textContent='Materi belum dapat dibuka. Tunggu proses yang sedang berjalan.';
         }
         if (b.dataset.renameId) {
           const item = api.getSource(b.dataset.renameId);
           if (!item) return;
           const value = prompt('Judul topik materi', item.lessonTitle || (lessonTitle(item) === 'Materi belum diberi judul' ? '' : lessonTitle(item)));
           if (value === null || !value.trim()) return;
-          const old = item.lessonTitle;
           const next = value.trim().slice(0, 180);
           b.disabled = true;
           try {
-            await api.updateDashboard(s => { const target=s.sources.find(x => x.id === item.id); if(!target)throw new Error('Materi tidak ditemukan.'); target.lessonTitle = next; });
+            await api.renameLesson(item.id, next);
             const local=sources.find(x=>x.id===item.id); if(local)local.lessonTitle=next;
             saveStatus.textContent='Judul tersimpan di perangkat.'; draw();
           } catch(error) {
-            if(item.lessonTitle===next) { if(old === undefined) delete item.lessonTitle; else item.lessonTitle=old; }
             saveStatus.textContent='Judul belum tersimpan: '+error.message;
             b.disabled=false;
           }

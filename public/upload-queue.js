@@ -27,6 +27,26 @@
         if(retry.disabled)row.append(element('p','Coba setelah '+new Date(task.retryAt).toLocaleString('id-ID')));
         retry.onclick=()=>{if(busy && !running){toast('Tunggu proses AI selesai.');return;}task.state='queued';task.cancelled=false;task.message='Menunggu';draw();pump();};row.append(retry);
       }
+      if(['completed','failed','cancelled'].includes(task.state) && window.OmniProduct?.getSource(task.sourceId)) {
+        const source=window.OmniProduct.getSource(task.sourceId);
+        const form=element('form'),label=element('label','Judul topik'),input=element('input'),save=element('button','Simpan judul'),feedback=element('p');
+        input.name='lessonTitle';input.maxLength=180;input.required=true;input.value=source.lessonTitle || '';
+        input.placeholder='Tulis topik setelah memeriksa sumber';label.append(input);save.type='submit';feedback.setAttribute('role','status');
+        if(source.text?.trim()) import('/lesson-label.js').then(({titleSuggestion})=>{
+          const suggestion=titleSuggestion(source.text);
+          if(!suggestion || !form.isConnected)return;
+          const use=element('button','Gunakan baris pertama teks');use.type='button';
+          use.onclick=()=>{input.value=suggestion;input.focus();};
+          const description=element('p','Baris pertama hasil ekstraksi: '+suggestion+' · periksa sebelum menyimpan.');
+          form.insertBefore(description,feedback);form.insertBefore(use,feedback);
+        }).catch(()=>{});
+        form.append(label,save,feedback);form.onsubmit=async event=>{
+          event.preventDefault();save.disabled=true;
+          try {await OmniProduct.renameLesson(task.sourceId,input.value);feedback.textContent='Judul tersimpan.';}
+          catch(error){feedback.textContent='Judul belum tersimpan: '+error.message;}
+          finally {save.disabled=false;}
+        };row.append(form);
+      }
       if(task.state==='completed') {
         const open=element('button','Tinjau sumber');open.type='button';
         open.onclick=()=>{if(OmniProduct.selectSource(task.sourceId))OmniProduct.navigate('sources');};row.append(open);
