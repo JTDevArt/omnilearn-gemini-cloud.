@@ -189,6 +189,24 @@ body.product-dashboard { font-family:var(--font-ui); font-weight:400; }
 .dashboard-materials { border:0; padding:0; }
 .dashboard-materials>summary { min-height:44px; padding:10px 0; color:var(--text-secondary); }
 .master-note { background:var(--surface-elevated); box-shadow:none; }
+.product-panel:not(:has(.master-heading)) { max-width:1180px; }
+.product-panel:not(:has(.master-heading))>h1 { font-size:clamp(30px,4vw,48px); max-width:22ch; margin:10px 0 8px; letter-spacing:-.045em; }
+.product-panel:not(:has(.master-heading))>p { max-width:72ch; color:var(--text-secondary); }
+.product-panel .source-grid { grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:14px; }
+.product-panel .source-card { display:flex; flex-direction:column; gap:10px; padding:18px; border:1px solid var(--border); border-radius:var(--radius-card); background:var(--surface); box-shadow:none; }
+.product-panel .source-card h3 { margin:0; font-size:19px; line-height:1.3; overflow-wrap:anywhere; }
+.source-card-kicker { display:flex; justify-content:space-between; gap:10px; color:var(--secondary); font-size:12px; font-weight:650; }
+.source-card .subject-tag { margin:0; color:var(--text-muted); font-size:12px; }
+.source-card details { margin-top:auto; color:var(--text-secondary); font-size:12px; }
+.source-card details p { overflow-wrap:anywhere; }
+.product-panel .source-card .panel-actions { margin:4px 0 0; gap:6px; }
+.product-panel .source-card .panel-actions button { flex:1 1 auto; min-height:40px; font-size:12px; }
+.product-panel .source-intelligence-controls { margin:24px 0; padding:18px; border:1px solid var(--border); border-radius:var(--radius-card); background:var(--surface-elevated); }
+.product-panel .source-intelligence-controls h2 { margin:0; font-size:17px; }
+.product-panel .source-intelligence-controls .panel-actions { margin:12px 0 0; }
+.product-panel .empty-panel { border:1px solid var(--border); background:var(--surface-elevated); }
+.product-panel .profile-form,.product-panel .transcript-form { display:grid; gap:14px; max-width:720px; padding:20px; border:1px solid var(--border); border-radius:var(--radius-card); background:var(--surface); }
+.product-panel .profile-form label,.product-panel .transcript-form label { display:grid; gap:7px; color:var(--text-secondary); font-size:13px; font-weight:650; }
 .master-note h3 { font-size:17px; line-height:1.4; }
 .master-note .panel-actions { gap:6px; }
 .master-note button { font-size:12px; padding:8px 10px; }
