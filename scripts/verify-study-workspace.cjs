@@ -50,6 +50,13 @@ async function run() {
     const second=make('scan_kimia.pdf','Ikatan Kimia','Ikatan ion melibatkan perpindahan elektron.','Ikatan ion');second.subject='Kimia';second.deck=[{front:'Apa yang berpindah pada ikatan ion?',back:'Elektron.'}];
     await OmniProduct.persistAsync();OmniProduct.selectSource(first.id);return [first.id,second.id];
   });
+  // The source library must use reviewed lesson titles, never raw PDF filenames.
+  await page.evaluate(()=>OmniProduct.navigate('sources'));
+  await page.getByRole('heading',{name:'Pustaka sumbermu'}).waitFor();
+  const sourceTitles=await page.locator('.source-card h3').allTextContents();
+  assert.deepEqual(new Set(sourceTitles),new Set(['Sistem Pencernaan','Ikatan Kimia']));
+  assert.equal(sourceTitles.some(title=>/scan_.*\\.pdf/i.test(title)),false);
+  assert.match(await page.locator('.source-card').first().textContent(),/Sumber asli/);
   await page.evaluate(()=>OmniProduct.navigate('notes'));
   await page.locator('.notes-collection').waitFor();
   assert.equal(await page.locator('.note-title').count(),2);
@@ -111,6 +118,7 @@ async function run() {
   await page.locator('#regenCardsBtn').click();await page.locator('.study-error').waitFor();
   assert.equal(calls,1);
   assert.match(await page.locator('.study-error').textContent(),/Bukti analisis tidak cocok/);
+  assert.match(await page.locator('.study-error').textContent(),/Periksa teks OCR/);
   await page.getByRole('button',{name:'Tinjau sumber',exact:true}).waitFor();
   assert.equal(await page.evaluate(id=>OmniProduct.getSource(id).text,ids[0]),'Lambung mengolah makanan. Usus menyerap zat gizi.');
   await shot('01-flashcard-source-error-desktop');
@@ -126,6 +134,18 @@ async function run() {
   assert.equal(calls,1,'Saved flashcards must not regenerate');
   await page.evaluate(()=>OmniProduct.persistAsync());await page.reload();await page.getByText('Apa yang berpindah pada ikatan ion?',{exact:true}).waitFor();
   assert.equal(calls,1);await overflow();await shot('03-saved-flashcards-mobile');
+  // A rejected journey analysis must retain the source and expose a persistent review path.
+  await page.evaluate(id=>{
+    const source=OmniProduct.getSource(id);
+    delete source.journey;
+    OmniProduct.selectSource(id);
+    OmniProduct.navigate('journey');
+  },ids[0]);
+  await page.getByRole('button',{name:'Susun jalur dari materi ini'}).click();
+  await page.locator('.study-error').waitFor();
+  assert.match(await page.locator('.study-error').textContent(),/Kutipan hasil AI tidak cocok/);
+  assert.equal(await page.getByRole('button',{name:'Periksa teks sumber'}).count(),1);
+  assert.equal(await page.evaluate(id=>OmniProduct.getSource(id).text,ids[0]),'Lambung mengolah makanan. Usus menyerap zat gizi.');
   assert.deepEqual(errors,[]);
   report.status='ASSERTIONS_PASSED_VISUAL_REVIEW_PENDING';report.inferenceCalls=calls;
   report.behavior='PASS: seven tools × seven widths × two themes without AI, source-bound chapter/content isolation, original source retained after rejected analysis, saved deck on refresh, contextual chat, source review action and mobile overflow.';
