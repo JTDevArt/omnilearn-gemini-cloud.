@@ -225,7 +225,7 @@
   const shell = document.querySelector('#ruang-belajar > .shell');
   const workspace = shell.querySelector('.workspace');
   const studyShell = window.OmniStudyShell.mount(workspace);
-  const {lessonTitle} = await import('/lesson-label.js');
+  const {lessonTitle,titleSuggestion} = await import('/lesson-label.js');
   const panel = document.createElement('div');
   const chatHome = document.createComment('Conversation workspace anchor');
   const feedbackHome = document.createComment('Diagnostics workspace anchor');
@@ -842,13 +842,13 @@
     const list = sources
       .filter(
         (s) =>
-          s.name.toLowerCase().includes(query.toLowerCase()) &&
+          [lessonTitle(s),s.name,s.subject || ''].some(value => value.toLowerCase().includes(query.toLowerCase())) &&
           (type === 'all' || kind(s) === type) &&
           (subject === 'all' || s.subject === subject)
       )
       .sort((a, b) =>
         sort === 'title'
-          ? a.name.localeCompare(b.name)
+          ? lessonTitle(a).localeCompare(lessonTitle(b),'id')
           : sort === 'oldest'
             ? a.createdAt - b.createdAt
             : sort === 'subject'
@@ -857,7 +857,7 @@
       );
     if (!list.length)
       return '<div class="empty-panel"><div><h3>Mulai dari satu materi.</h3><p>Upload dokumen atau tempel transkrip. Semua alat belajar memakai sumber yang kamu pilih.</p><button class="primary" data-upload>＋ Tambah sumber</button></div><img src="/mascot.svg" width="140" height="140" alt="Maskot OmniLearn"></div>';
-    return `<div class="source-grid">${list.map((s) => `<article class="source-card"><span>▤ ${{ audio: 'Audio', video: 'Video', transcript: 'Transkrip', document: 'Dokumen' }[kind(s)]}</span><h3>${html(s.name)}</h3><p>${Number(s.meta?.pageCount || 1)} bagian · ${s.text.length.toLocaleString('id-ID')} karakter<br>${new Date(s.createdAt).toLocaleDateString('id-ID')}</p><p class="subject-tag">${html(s.subject || '')} · ${s.meta?.uploadState && s.meta.uploadState !== 'completed' ? 'Ekstraksi belum selesai; file asli tersimpan jika tersedia' : s.meta?.partialRead || s.meta?.truncated ? 'Teks sebagian; periksa sumber asli' : 'Teks siap dipakai'}</p><div class="panel-actions"><button data-source="${html(s.id)}" data-action="preview">Pratinjau</button><button data-source="${html(s.id)}" data-action="download">Unduh teks</button><button data-source="${html(s.id)}" data-action="chat">Buka</button><button data-source="${html(s.id)}" data-action="summary">Ringkas</button><button data-source="${html(s.id)}" data-action="quiz">Kuis</button><button data-source="${html(s.id)}" data-action="cards">Kartu</button><button data-source="${html(s.id)}" data-action="map">Mindmap</button><button data-source="${html(s.id)}" data-action="delete">Hapus</button></div></article>`).join('')}</div>`;
+    return `<div class="source-grid">${list.map((s) => `<article class="source-card"><span>▤ ${{ audio: 'Audio', video: 'Video', transcript: 'Transkrip', document: 'Dokumen' }[kind(s)]}</span><h3>${html(lessonTitle(s))}</h3><p>${Number(s.meta?.pageCount || 1)} bagian · ${s.text.length.toLocaleString('id-ID')} karakter<br>${new Date(s.createdAt).toLocaleDateString('id-ID')}</p><p class="subject-tag">${html(s.subject || '')} · ${s.meta?.uploadState && s.meta.uploadState !== 'completed' ? 'Ekstraksi belum selesai; file asli tersimpan jika tersedia' : s.meta?.partialRead || s.meta?.truncated ? 'Teks sebagian; periksa sumber asli' : 'Teks siap dipakai'}</p><details class="source-original"><summary>Sumber asli</summary><p>${html(s.name)}</p></details><div class="panel-actions"><button data-source="${html(s.id)}" data-action="rename">Ubah judul</button><button data-source="${html(s.id)}" data-action="preview">Pratinjau</button><button data-source="${html(s.id)}" data-action="download">Unduh teks</button><button data-source="${html(s.id)}" data-action="chat">Buka</button><button data-source="${html(s.id)}" data-action="summary">Ringkas</button><button data-source="${html(s.id)}" data-action="quiz">Kuis</button><button data-source="${html(s.id)}" data-action="cards">Kartu</button><button data-source="${html(s.id)}" data-action="map">Mindmap</button><button data-source="${html(s.id)}" data-action="delete">Hapus</button></div></article>`).join('')}</div>`;
   }
   function sourcesView(home = false, query = '') {
     panel.innerHTML = `<span class="handwriting">${home ? 'selangkah lebih paham hari ini' : 'semua materi, satu tempat'}</span><h1>${home ? 'Mau belajar apa hari ini?' : 'Pustaka sumbermu'}</h1><p>${home ? 'Lanjutkan materimu, atau mulai dari rasa ingin tahu yang baru.' : 'Dokumen dan transkrip disimpan di browser perangkat ini. Pilih sumber untuk menghubungkannya ke seluruh alat belajar.'}</p><div class="panel-actions"><button data-explorer>Jelajahi bidang ilmu</button><button data-free-chat data-open="chat">Tanya tanpa dokumen ↗</button></div><div id="sourceResults">${sourceCards(query)}</div>`;
@@ -867,7 +867,7 @@
     sourceControls.className = 'source-intelligence-controls';
     const caption = document.createElement('h2');
     caption.textContent = active
-      ? `${active.name} · versi ${active.version}`
+      ? `${lessonTitle(active)} · versi ${active.version}`
       : 'Cadangan pustaka';
     const actions = document.createElement('div');
     actions.className = 'panel-actions';
@@ -976,7 +976,7 @@
         conceptMapState = structuredClone(
           window.OmniProduct.getSavedTool(getTabCacheKey('map'))
             ?.conceptMapState || {
-            centralTopic: active.name,
+            centralTopic: lessonTitle(active),
             summary: '',
             branches: [],
             relationships: [],
@@ -1118,7 +1118,7 @@
       });
       return;
     }
-    panel.innerHTML = `<span class="handwriting">tulis dengan bahasamu sendiri</span><h1>Catatan belajarmu</h1><p>${html(source?.name || 'Catatan bebas dalam sesi ini')}</p><div class="panel-actions"><button data-fill-note>Ambil hasil AI terakhir</button><button data-export-note>Ekspor .txt</button><button data-open="summary">Buat ringkasan AI ↗</button></div><textarea id="noteEditor" aria-label="Editor catatan" placeholder="Tulis atau tempel catatan di sini…"></textarea><p class="note-status" id="noteStatus">Tersimpan dalam sesi tab ini.</p>`;
+    panel.innerHTML = `<span class="handwriting">tulis dengan bahasamu sendiri</span><h1>Catatan belajarmu</h1><p>${html(source ? lessonTitle(source) : 'Catatan bebas dalam sesi ini')}</p><div class="panel-actions"><button data-fill-note>Ambil hasil AI terakhir</button><button data-export-note>Ekspor .txt</button><button data-open="summary">Buat ringkasan AI ↗</button></div><textarea id="noteEditor" aria-label="Editor catatan" placeholder="Tulis atau tempel catatan di sini…"></textarea><p class="note-status" id="noteStatus">Tersimpan dalam sesi tab ini.</p>`;
     const editor = panel.querySelector('#noteEditor');
     try {
       editor.value =
@@ -1802,6 +1802,27 @@
     }
     if (button.dataset.source && !button.dataset.inputKind) {
       const id = button.dataset.source;
+      if (button.dataset.action === 'rename') {
+        const source = sources.find(item => item.id === id);
+        if (!source || busy || uploadInFlight) return;
+        // A literal extracted heading is only a suggestion, never an AI-certified title.
+        const suggested = source.lessonTitle || titleSuggestion(source.text) ||
+          (lessonTitle(source) === 'Materi belum diberi judul' ? '' : lessonTitle(source));
+        const chosen = prompt('Judul topik materi (periksa sesuai isi dokumen)', suggested);
+        if (chosen === null || !chosen.trim()) return;
+        button.disabled = true;
+        try {
+          await window.OmniProduct.renameLesson(id, chosen.trim());
+          if (['notes','pinned','dashboard'].includes(current))
+            window.OmniDashboard.render(panel,current,window.OmniProduct);
+          else sourcesView(current === 'learn');
+          toast('Judul materi tersimpan. Nama file asli tetap dipertahankan.');
+        } catch (error) {
+          toast('Judul belum tersimpan: ' + error.message);
+          button.disabled = false;
+        }
+        return;
+      }
       if (['preview', 'download'].includes(button.dataset.action)) {
         const source = sources.find((s) => s.id === id);
         if (!source) return;
@@ -1818,7 +1839,7 @@
           const dialog = document.createElement('dialog');
           dialog.className = 'map-edit-dialog';
           const title = document.createElement('h2');
-          title.textContent = source.name;
+          title.textContent = lessonTitle(source);
           const text = document.createElement('pre');
           text.style.cssText =
             'white-space:pre-wrap;max-height:55vh;overflow:auto';
