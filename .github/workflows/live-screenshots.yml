@@ -40,7 +40,7 @@ jobs:
           NODE_PATH: /tmp/omnilearn-capture/node_modules
         run: |
           node scripts/verify-home-visual.cjs
-          QA_SKIP_SCREENSHOTS=1 node scripts/verify-study-workspace.cjs
+          node scripts/verify-study-workspace.cjs
       - name: Upload screenshots and access report
         if: always()
         uses: actions/upload-artifact@v4

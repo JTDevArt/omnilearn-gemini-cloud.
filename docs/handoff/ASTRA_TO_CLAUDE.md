@@ -1,5 +1,9 @@
 # OmniLearn continuation checkpoint
 
+## V10 workspace recovery — 14 November 2026
+
+Read `docs/milestones/V10-WORKSPACE-RECOVERY.md` first. This increment restores library functions removed by 882f17f, adds explicit source/general chat using existing state, refines Dashboard/timer and mobile study hierarchy, and extends browser checks. Overall V10 remains PARTIAL. New runtime marker: `algorithmic-v10-workspace-1`. Public runtime observed `algorithmic-v9.1-1`; no AI Studio publish. Preserve strict source validation and all newer main changes when continuing; merge diffs rather than uploading stale complete files.
+
 ## V9.1 design synthesis — 14 November 2026
 
 Final production code on main: `58b436c0deae550ab521236c0df263d1e766f96a`, following `54943935a0dbd6d418128024e1aeb7bad412bb39`. Read `docs/design/V9.1-design-synthesis.md` for the six-reference-to-component mapping and exact changed paths. Preserve the owner's favicon commit `6e9c3a0e966b4891dd293995da9ef276340bce6f` and prior source-validator fix.

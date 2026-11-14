@@ -243,7 +243,13 @@
       const hour = new Date().getHours();
       host.querySelector('h1').textContent = `Selamat ${hour < 11 ? 'pagi' : hour < 15 ? 'siang' : hour < 18 ? 'sore' : 'malam'}${profile.name ? ', ' + profile.name : ''}!`;
       host.querySelector('.master-heading p').textContent = 'Lanjutkan perjalanan belajarmu di OmniLearn AI.';
-      host.insertAdjacentHTML('beforeend', `<div class="master-stats">${[[dashboard.subjects,'Mata pelajaran','subjects'],[dashboard.notes,'Catatan','notes'],[dashboard.exams,'Ujian selesai','exams'],[metrics.xp,'Total XP','streaks']].map(([value,label,route])=>`<a href="/dashboard?view=${route}" data-view="${route}"><strong>${value}</strong><span>${label}</span></a>`).join('')}</div>`);
+      const statIcons = {
+        subjects: '<path d="M4 4h7v16H4zM13 4h7v16h-7zM7 8h1m8 0h1"/>',
+        notes: '<path d="M6 3h12v18H6zM9 8h6m-6 4h6m-6 4h4"/>',
+        exams: '<path d="M8 5H5v16h14V5h-3M8 3h8v4H8zM8 14l3 3 5-6"/>',
+        streaks: '<path d="m12 3 3 6 6 1-4.5 4.5L18 21l-6-3-6 3 1.5-6.5L3 10l6-1z"/>'
+      };
+      host.insertAdjacentHTML('beforeend', `<div class="master-stats">${[[dashboard.subjects,'Mata pelajaran','subjects'],[dashboard.notes,'Catatan','notes'],[dashboard.exams,'Ujian selesai','exams'],[metrics.xp,'Total XP','streaks']].map(([value,label,route])=>`<a href="/dashboard?view=${route}" data-view="${route}"><span class="stat-icon stat-icon-${route}" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${statIcons[route]}</svg></span><div><strong>${value.toLocaleString('id-ID')}</strong><span>${label}</span></div></a>`).join('')}</div>`);
       const level = section('Progres level', `<div class="progress-level"><div><strong>Level ${metrics.level}</strong><span>${metrics.xp} / ${metrics.nextLevelXp} XP</span></div><progress max="100" value="${metrics.levelProgress}" aria-label="Progres XP">${metrics.levelProgress}%</progress><p>${metrics.nextLevelXp - metrics.xp} XP menuju level berikutnya · ${summary.streak} hari streak</p><div class="dashboard-next-step"><span>${metrics.cardsDue ? `${metrics.cardsDue} flashcard siap diulang` : 'Belum ada flashcard jatuh tempo'}</span>${dashboard.reviewSourceId ? '<button data-review-due>Mulai review</button>' : action('Buka materi','notes')}</div></div>`);
       level.classList.add('dashboard-level');
       level.querySelector('[data-review-due]')?.addEventListener('click', () => {

@@ -983,7 +983,7 @@ app.get('/api/health', (_req, res) => {
   res.json({
     version: 'concise-ai-v4',
     productVersion: 'forge-2.1',
-    uiBuild: 'algorithmic-v9.1-1',
+    uiBuild: 'algorithmic-v10-workspace-1',
     ready,
     provider: 'Gemini Cloud',
     model: MODEL,

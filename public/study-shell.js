@@ -10,6 +10,14 @@
     const summary=document.createElement('summary');summary.textContent='Sumber dan bahasa hasil';settings.append(summary);
     settings.append(document.querySelector('#materialLabel'),document.querySelector('#aiStatus'),document.querySelector('#dropzone'),document.querySelector('#languageToolbar'),legacySources);
     center.prepend(settings);
+    const chatMode=document.createElement('section');
+    chatMode.className='study-chat-mode';
+    chatMode.setAttribute('aria-label','Konteks percakapan');
+    const modeDescription=document.createElement('p');
+    const modeAction=document.createElement('button');
+    modeAction.type='button';
+    chatMode.append(modeDescription,modeAction);
+    center.prepend(chatMode);
     const chapters=document.createElement('nav');chapters.className='study-chapters';chapters.setAttribute('aria-label','Daftar bab');
     const tools=document.createElement('aside');tools.className='study-tools';tools.setAttribute('aria-label','Alat belajar');
     const title=document.createElement('h2');title.textContent='Alat belajar';tools.append(title);
@@ -29,6 +37,13 @@
       document.body.dataset.studyTool=view;
       h1.textContent=source?title:'Ruang belajar';
       context.textContent=[labels[view],source?.subject || (source?'Tanpa mata pelajaran':'Pilih sumber atau gunakan pertanyaan bebas')].join(' · ');
+      chatMode.hidden=view!=='chat';
+      modeDescription.textContent=source
+        ? 'Berdasarkan materi: '+title+'. Jawaban harus sesuai sumber ini.'
+        : 'Tanya umum. Dokumen tersimpan tidak dikirim dalam percakapan ini.';
+      modeAction.textContent=source?'Beralih ke tanya umum':'Pilih materi untuk dibahas';
+      modeAction.toggleAttribute('data-free-chat',!!source);
+      modeAction.dataset.open=source?'chat':'notes';
       chapters.replaceChildren();
       const h2=document.createElement('h2');h2.textContent='Daftar bab';chapters.append(h2);
       const items=source?.journey?.chapters;

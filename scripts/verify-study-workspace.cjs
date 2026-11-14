@@ -57,6 +57,30 @@ async function run() {
   assert.deepEqual(new Set(sourceTitles),new Set(['Sistem Pencernaan','Ikatan Kimia']));
   assert.equal(sourceTitles.some(title=>/scan_.*\\.pdf/i.test(title)),false);
   assert.match(await page.locator('.source-card').first().textContent(),/Sumber asli/);
+  const sourceSearch=page.getByRole('searchbox',{name:'Cari sumber belajar',exact:true});
+  await sourceSearch.fill('Pencernaan');
+  assert.deepEqual(await page.locator('.source-card h3').allTextContents(),['Sistem Pencernaan']);
+  await sourceSearch.fill('Kimia');
+  assert.deepEqual(await page.locator('.source-card h3').allTextContents(),['Ikatan Kimia']);
+  await sourceSearch.fill('tak-ada-materi');
+  assert.match(await page.locator('.source-empty').textContent(),/Tidak ada materi yang cocok/);
+  await sourceSearch.fill('');
+  await page.getByRole('combobox',{name:'Urutkan sumber',exact:true}).selectOption('title');
+  assert.deepEqual(await page.locator('.source-card h3').allTextContents(),['Ikatan Kimia','Sistem Pencernaan']);
+  const chemistry=page.locator('.source-card').filter({has:page.getByRole('heading',{name:'Ikatan Kimia',exact:true})});
+  await chemistry.locator('.source-original>summary').click();
+  await chemistry.getByRole('button',{name:'Pratinjau',exact:true}).click();
+  await page.getByRole('dialog').waitFor();
+  assert.match(await page.getByRole('dialog').textContent(),/Ikatan Kimia/);
+  await page.keyboard.press('Escape');
+  const downloadEvent=page.waitForEvent('download');
+  await chemistry.getByRole('button',{name:'Unduh teks',exact:true}).click();
+  assert.ok((await downloadEvent).suggestedFilename().endsWith('.txt'));
+  page.once('dialog',dialog=>dialog.accept('Kimia terverifikasi'));
+  await chemistry.getByRole('button',{name:'Ubah judul',exact:true}).click();
+  await page.getByRole('heading',{name:'Kimia terverifikasi',exact:true}).waitFor();
+  assert.equal(await page.evaluate(id=>OmniProduct.getSource(id).name,ids[1]),'scan_kimia.pdf');
+  await page.evaluate(async id=>{await OmniProduct.renameLesson(id,'Ikatan Kimia');},ids[1]);
   await page.evaluate(()=>OmniProduct.navigate('notes'));
   await page.locator('.notes-collection').waitFor();
   assert.equal(await page.locator('.note-title').count(),2);
@@ -121,19 +145,20 @@ async function run() {
   assert.match(await page.locator('.study-error').textContent(),/Periksa teks OCR/);
   await page.getByRole('button',{name:'Tinjau sumber',exact:true}).waitFor();
   assert.equal(await page.evaluate(id=>OmniProduct.getSource(id).text,ids[0]),'Lambung mengolah makanan. Usus menyerap zat gizi.');
-  await shot('01-flashcard-source-error-desktop');
+
   await navigate('learn');await page.getByRole('heading',{name:'Lambung dan usus',exact:true}).waitFor();
-  await shot('02-lesson-workspace-desktop');
+
   await page.evaluate(id=>OmniProduct.selectSource(id),ids[1]);await navigate('learn');
   await page.getByRole('heading',{name:'Ikatan ion',exact:true}).waitFor();
   assert.equal(await page.getByRole('heading',{name:'Lambung dan usus',exact:true}).count(),0);
-  await page.setViewportSize({width:390,height:900});await navigate('cards');
+  await page.setViewportSize({width:390,height:900});await overflow();await shot('03-learning-workspace-mobile');
+  await navigate('cards');
   await page.getByText('Apa yang berpindah pada ikatan ion?',{exact:true}).waitFor();await overflow();
   const positions=await page.evaluate(()=>({content:document.querySelector('.study-workspace .content-panel').getBoundingClientRect().y,tools:document.querySelector('.study-tools').getBoundingClientRect().y}));
   assert.ok(positions.content<positions.tools,'Mobile study content must precede the tools panel');
   assert.equal(calls,1,'Saved flashcards must not regenerate');
   await page.evaluate(()=>OmniProduct.persistAsync());await page.reload();await page.getByText('Apa yang berpindah pada ikatan ion?',{exact:true}).waitFor();
-  assert.equal(calls,1);await overflow();await shot('03-saved-flashcards-mobile');
+  assert.equal(calls,1);await overflow();
   // A rejected journey analysis must retain the source and expose a persistent review path.
   await page.evaluate(id=>{
     const source=OmniProduct.getSource(id);
@@ -145,6 +170,28 @@ async function run() {
   await page.locator('.study-error').waitFor();
   assert.match(await page.locator('.study-error').textContent(),/Kutipan hasil AI tidak cocok/);
   assert.equal(await page.getByRole('button',{name:'Periksa teks sumber'}).count(),1);
+  assert.equal(await page.evaluate(id=>OmniProduct.getSource(id).text,ids[0]),'Lambung mengolah makanan. Usus menyerap zat gizi.');
+  await page.evaluate(id=>{const source=OmniProduct.getSource(id);source.chat=[{role:'user',content:'Private source fixture question'},{role:'assistant',content:'Private source fixture answer'}];OmniProduct.selectSource(id,true);},ids[0]);
+  await navigate('chat');
+  const draft='Jelaskan teori relativitas Einstein';
+  await page.locator('#chatInput').fill(draft);
+  await page.getByRole('button',{name:'Beralih ke tanya umum',exact:true}).click();
+  await page.getByRole('button',{name:'Pilih materi untuk dibahas',exact:true}).waitFor();
+  assert.equal(await page.locator('#chatInput').inputValue(),draft);
+  assert.equal(await page.evaluate(()=>OmniProduct.getCurrentSource()),undefined);
+  const analysisCalls=calls;
+  let chatRequest;
+  await page.route('**/api/chat',route=>{
+    chatRequest=route.request().postDataJSON();
+    return route.fulfill({json:{answer:'Jawaban fixture untuk pertanyaan umum.'}});
+  });
+  await page.locator('#sendButton').click();
+  await page.getByText('Jawaban fixture untuk pertanyaan umum.',{exact:true}).waitFor();
+  assert.equal(chatRequest.history.some(item=>item.content.includes('Private source fixture')),false);
+  assert.equal(chatRequest.material,'');
+  assert.equal(chatRequest.materialId,'');
+  assert.equal(chatRequest.learningContext.chapter,null);
+  assert.equal(calls,analysisCalls,'General chat must not analyze the previously selected source');
   assert.equal(await page.evaluate(id=>OmniProduct.getSource(id).text,ids[0]),'Lambung mengolah makanan. Usus menyerap zat gizi.');
   assert.deepEqual(errors,[]);
   report.status='ASSERTIONS_PASSED_VISUAL_REVIEW_PENDING';report.inferenceCalls=calls;

@@ -84,7 +84,7 @@ async function run() {
   });
   await open(base,'home');
   assert.equal(await page.locator('.home-session .chat-message').count(),0,'Fresh Home must not repeat the hero greeting in a decorative chat bubble');
-  assert.equal((await (await page.request.get(base+'/api/health')).json()).uiBuild,'algorithmic-v9.1-1');
+  assert.equal((await (await page.request.get(base+'/api/health')).json()).uiBuild,'algorithmic-v10-workspace-1');
   for(const theme of ['dark','light']) {
     for(const width of [1440,1280,1024,820,768,390,360]) {
       await page.setViewportSize({width,height:900});
@@ -117,7 +117,9 @@ async function run() {
   await page.evaluate(()=>OmniProduct.navigate('dashboard'));
   await page.locator('.dashboard-focus').waitFor();
   await page.locator('[data-timer=start]').click();
+  assert.equal(await page.locator('[data-timer=pause]').evaluate(node=>node===document.activeElement),true);
   await page.locator('[data-timer=pause]').click();
+  assert.equal(await page.locator('[data-timer=start]').evaluate(node=>node===document.activeElement),true);
   assert.equal(await page.locator('[data-timer=start]').isEnabled(),true);
   await page.locator('[data-timer=reset]').click();
   await page.goBack();
@@ -145,12 +147,25 @@ async function run() {
   assert.equal(await page.evaluate(()=>document.getAnimations().filter(a=>a.playState==='running').length),0);
   assert.deepEqual(errors,[]);
   report.interactions='PASS: draft on failure/navigation/refresh, drawer Escape, timer start/pause/reset, paste dialog Escape/focus restoration, upload picker, YouTube transcript, reduced motion, no inference on navigation. Provider error is a fixture; microphone/live AI not tested.';
+  for(const theme of ['dark','light']) for(const width of [1440,1024,768,390,360]) {
+    await page.setViewportSize({width,height:900});
+    await page.evaluate(value=>OmniTheme.setPreference(value),theme);
+    for(const view of ['sources','subjects','exams','streaks','leaderboard','profile','updates']) {
+      await page.goto(base+'/dashboard?view='+view);
+      await page.locator('.product-panel h1').waitFor();
+      const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth);
+      assert.equal(overflow,false,`${view} overflows at ${width}px in ${theme}`);
+      assert.ok(await page.locator('.product-panel button,.product-panel a,.product-panel summary,.product-panel select').count() || ['streaks','leaderboard'].includes(view),`${view} has no controls`);
+      report.checks.push({view,width,theme,overflow});
+    }
+  }
+  assert.deepEqual(errors,[]);
   await context.close();
 
   const clean=await browser.newContext({deviceScaleFactor:1,colorScheme:'dark',locale:'id-ID',reducedMotion:'reduce'});
   page=await clean.newPage();
   await page.addInitScript(()=>localStorage.setItem('omnilearn-theme','dark'));
-  const captures=process.env.QA_SKIP_SCREENSHOTS==='1'?[]:[['01-home-desktop','home',1440],['02-dashboard-desktop','dashboard',1440],['03-home-mobile','home',390]];
+  const captures=process.env.QA_SKIP_SCREENSHOTS==='1'?[]:[['01-home-desktop','home',1440],['02-dashboard-desktop','dashboard',1440]];
   for(const [name,view,width] of captures) {
     await page.setViewportSize({width,height:900});
     await open(base,view);
