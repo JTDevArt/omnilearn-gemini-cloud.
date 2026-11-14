@@ -1,5 +1,17 @@
 # OmniLearn continuation checkpoint
 
+## V9.1 design synthesis — 14 November 2026
+
+Final production code on main: `58b436c0deae550ab521236c0df263d1e766f96a`, following `54943935a0dbd6d418128024e1aeb7bad412bb39`. Read `docs/design/V9.1-design-synthesis.md` for the six-reference-to-component mapping and exact changed paths. Preserve the owner's favicon commit `6e9c3a0e966b4891dd293995da9ef276340bce6f` and prior source-validator fix.
+
+Implemented: consistent original sidebar SVGs, quieter labels, source-aware Home with reading/library routes, topic-first Catatan cards and disclosure actions, content search and honest no-match feedback, readable chapter typography, shared control/reading tokens, real next-level XP and due-card review routing. A visual pass removed the redundant static welcome bubble and moved Catatan actions into its header. No storage/schema migration, copied third-party artwork, new dependency, new provider or automatic AI call.
+
+Validation: clean install, lint, 163 unit/HTTP tests, build and diff check passed. Final GitHub CI `43462466906` and browser run `43462466936` passed. Three final screenshots were opened and inspected; artifact `14057356551`. Automated checks cover 154 view/layout/theme/width combinations plus interactions, including source-specific chapters, search/filter, pin/rename/reload and due-source routing. The focused Home/Dashboard visual gate passes; other screens have automated checks, not a newly claimed nine-screen visual acceptance.
+
+Deployment marker: `algorithmic-v9.1-1`. GitHub delivery does not publish AI Studio. The public health endpoint was observed on the older `algorithmic-v8-home-1` during this work; no AI Studio publish was performed. Verify the marker and actual assets again after the owner syncs/restarts/publishes. Real Gemini/OCR, microphone, Firebase and full release acceptance remain unverified. Product version stays v1.0.0 in development.
+
+Next work: separate deployment synchronization from code acceptance; continue remaining page-specific Ujian/Subjects/Streaks/Profile polish and source/chapter/backup acceptance without repeating 00–08. Do not enable optional free-provider routing without the existing account/privacy and synthetic quality gates. Metadata commits after the code SHA above do not alter these captured production views.
+
 ## Latest source-validation bug fix
 
 Implementation main `dcc957202154f528c81b2a5b28e316589cce04da`; read `docs/milestones/SOURCE-EVIDENCE-FIX.md`. Fixed false evidence rejection for prompt HTML escapes and layout whitespace, plus silent truncation that could discard an unsupported suffix before validation. Matching always resolves to an original contiguous source substring and offsets. No fuzzy matching, altered-number/operator tolerance, missing-page content, arbitrary entity decoding or extra Gemini calls were introduced. Existing schema/storage and original files are unchanged.

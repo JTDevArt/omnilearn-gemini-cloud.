@@ -9,6 +9,13 @@
       "summary": "Milestone 00–08 lengkap di GitHub main; AI Home/Dashboard terpisah, progres dan profil menggunakan data asli, Update List berfungsi, riset memiliki penanganan penyimpanan yang benar, serta unit/lint/build diuji melalui GitHub Actions. v1.0.0 belum dirilis resmi.",
       "changes": [
         {
+          "title": "V9.1: navigasi konsisten, konteks sumber Home, kartu Catatan berbasis topik, bacaan bab dan review dari sumber yang tepat; 163 tes serta pemeriksaan browser lulus, belum dipublikasikan ke AI Studio",
+          "category": "UI/UX",
+          "status": "implemented-local",
+          "files": ["public/product.js", "public/dashboard-shell.js", "public/dashboard-metrics.js", "public/index.html", "public/design-system.css", "public/home.css", "public/study-workspace.css", "server.js", "scripts/verify-home-visual.cjs", "scripts/verify-study-workspace.cjs", "tests/dashboard-metrics.test.mjs", "tests/design-preview-http.test.mjs", ".github/workflows/live-screenshots.yml"],
+          "commit": "58b436c0deae550ab521236c0df263d1e766f96a"
+        },
+        {
           "title": "Validasi bukti sumber menangani escape dan baris PDF tanpa mengubah isi; kutipan terlalu panjang ditolak sebelum terpotong",
           "category": "AI & OCR",
           "status": "implemented-local",

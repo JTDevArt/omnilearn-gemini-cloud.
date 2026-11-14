@@ -1,5 +1,7 @@
 # OmniLearn production design, 13 November 2026
 
+Historical checkpoint. [V9.1 synthesis and final browser proof](V9.1-design-synthesis.md) supersedes the unverified browser status below. Preserve these earlier observations as history.
+
 Direction: continue the owner's nine-screen OmniLearn showcase, with navy surfaces, orange primary actions and blue study-progress accents. This is an iteration of the existing production app, not a new direction or an HTML prototype. Energy 2, rhythm 2, motion 2.
 
 | Reference | Observation | Production decision |
