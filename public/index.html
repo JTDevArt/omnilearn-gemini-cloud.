@@ -1506,11 +1506,18 @@ async function runTool(task, customTopic = '', forceRegenerate = false) {
     const notice=document.createElement('section');notice.className='study-error';notice.setAttribute('role','alert');
     const title=document.createElement('h2');title.textContent='Hasil belum bisa digunakan';
     const reason=document.createElement('p');reason.textContent=error.message;
+    const evidenceMismatch=/bukti analisis tidak cocok dengan teks sumber/i.test(error.message || '');
     const actions=document.createElement('div');actions.className='panel-actions';
     const retry=document.createElement('button');retry.type='button';retry.textContent='Coba buat kembali';
     retry.onclick=()=>runTool(task,customTopic,true);
     const review=document.createElement('button');review.type='button';review.textContent='Tinjau sumber';review.onclick=()=>window.OmniProduct?.navigate('sources');
-    actions.append(retry,review);notice.append(title,reason,actions);toolOutput.append(notice);
+    actions.append(retry,review);
+    if (evidenceMismatch) {
+      const guidance=document.createElement('p');
+      guidance.textContent='AI tidak berhasil membuktikan isi jawabannya dari dokumen ini. Periksa teks OCR pada Sumber. Jika pertanyaan tidak terkait PDF, gunakan Tanya tanpa dokumen. Materi asli tidak dihapus.';
+      notice.append(title,reason,guidance,actions);
+    } else notice.append(title,reason,actions);
+    toolOutput.append(notice);
     chatFeedback.textContent = 'Permintaan belum selesai. Periksa penjelasan pada area hasil.';
   } finally {
     if (activeStudyAbortController === abortController) {
