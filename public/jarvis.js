@@ -112,8 +112,14 @@
       const button = document.createElement('button');
       button.className = 'primary';
       button.textContent = 'Susun jalur dari materi ini';
-      panel.append(button);
+      const errorNotice = document.createElement('div');
+      errorNotice.className = 'study-error';
+      errorNotice.setAttribute('role', 'alert');
+      errorNotice.hidden = true;
+      panel.append(button, errorNotice);
       button.onclick = async () => {
+        errorNotice.hidden = true;
+        errorNotice.replaceChildren();
         button.disabled = true;
         button.textContent = 'Gemini sedang menyusun bab…';
         try {
@@ -142,7 +148,18 @@
         } catch (error) {
           button.disabled = false;
           button.textContent = 'Coba susun kembali';
-          toast(error.message);
+          const rejectedEvidence = /bukti analisis tidak cocok dengan teks sumber/i.test(error.message || '');
+          const description = document.createElement('p');
+          description.textContent = rejectedEvidence
+            ? 'Kutipan hasil AI tidak cocok dengan teks PDF yang diekstrak. Hasil ditolak agar tidak menghasilkan bab palsu. Periksa hasil OCR atau revisi teks sumber sebelum mencoba lagi.'
+            : error.message;
+          const review = document.createElement('button');
+          review.type = 'button';
+          review.textContent = 'Periksa teks sumber';
+          review.onclick = () => api.navigate('sources');
+          errorNotice.replaceChildren(description, review);
+          errorNotice.hidden = false;
+          toast(rejectedEvidence ? 'Analisis ditolak: bukti tidak cocok. File asli tetap aman.' : error.message);
         }
       };
       return;
