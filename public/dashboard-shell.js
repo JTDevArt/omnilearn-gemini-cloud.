@@ -358,7 +358,7 @@
         sources
           .map(
             (s) =>
-              `<label class="master-assignment">${escape(s.name)}<select data-assign="${escape(s.id)}"><option value="">Tanpa pelajaran</option>${names.map((n) => `<option ${s.subject === n ? "selected" : ""}>${escape(n)}</option>`).join("")}</select></label>`,
+              `<label class="master-assignment">${escape(lessonTitle(s))}<select data-assign="${escape(s.id)}"><option value="">Tanpa pelajaran</option>${names.map((n) => `<option ${s.subject === n ? "selected" : ""}>${escape(n)}</option>`).join("")}</select></label>`,
           )
           .join("") || "<p>Unggah materi terlebih dahulu.</p>",
       ).onchange = (e) => {
