@@ -9,45 +9,107 @@
       "summary": "Milestone 00–08 lengkap di GitHub main; AI Home/Dashboard terpisah, progres dan profil menggunakan data asli, Update List berfungsi, riset memiliki penanganan penyimpanan yang benar, serta unit/lint/build diuji melalui GitHub Actions. v1.0.0 belum dirilis resmi.",
       "changes": [
         {
+          "title": "Pemulihan pencarian/judul dan tindakan sumber, konteks chat umum yang eksplisit, serta perapian Dashboard dan workspace mobile; CI dan pemeriksaan browser lulus, keseluruhan V10 masih parsial",
+          "category": "Fixed",
+          "status": "implemented-local",
+          "files": [
+            "public/product.js",
+            "public/study-shell.js",
+            "public/study-workspace.css",
+            "public/dashboard-shell.js",
+            "public/design-system.css",
+            "public/focus-timer.js",
+            "server.js",
+            "scripts/verify-home-visual.cjs",
+            "scripts/verify-study-workspace.cjs",
+            "tests/design-preview-http.test.mjs",
+            ".github/workflows/live-screenshots.yml",
+            "docs/DEPLOYMENT.md",
+            "docs/handoff/ASTRA_TO_CLAUDE.md",
+            "docs/milestones/V10-WORKSPACE-RECOVERY.md"
+          ],
+          "commit": "631ed07315dcd087b59ff948eaa5fe1eb591c625"
+        },
+        {
           "title": "V9.1: navigasi konsisten, konteks sumber Home, kartu Catatan berbasis topik, bacaan bab dan review dari sumber yang tepat; 163 tes serta pemeriksaan browser lulus, belum dipublikasikan ke AI Studio",
           "category": "UI/UX",
           "status": "implemented-local",
-          "files": ["public/product.js", "public/dashboard-shell.js", "public/dashboard-metrics.js", "public/index.html", "public/design-system.css", "public/home.css", "public/study-workspace.css", "server.js", "scripts/verify-home-visual.cjs", "scripts/verify-study-workspace.cjs", "tests/dashboard-metrics.test.mjs", "tests/design-preview-http.test.mjs", ".github/workflows/live-screenshots.yml"],
+          "files": [
+            "public/product.js",
+            "public/dashboard-shell.js",
+            "public/dashboard-metrics.js",
+            "public/index.html",
+            "public/design-system.css",
+            "public/home.css",
+            "public/study-workspace.css",
+            "server.js",
+            "scripts/verify-home-visual.cjs",
+            "scripts/verify-study-workspace.cjs",
+            "tests/dashboard-metrics.test.mjs",
+            "tests/design-preview-http.test.mjs",
+            ".github/workflows/live-screenshots.yml"
+          ],
           "commit": "58b436c0deae550ab521236c0df263d1e766f96a"
         },
         {
           "title": "Validasi bukti sumber menangani escape dan baris PDF tanpa mengubah isi; kutipan terlalu panjang ditolak sebelum terpotong",
           "category": "AI & OCR",
           "status": "implemented-local",
-          "files": ["lib/source-intelligence.js", "tests/source-intelligence.test.mjs"],
+          "files": [
+            "lib/source-intelligence.js",
+            "tests/source-intelligence.test.mjs"
+          ],
           "commit": "dcc957202154f528c81b2a5b28e316589cce04da"
         },
         {
           "title": "Workspace alat belajar berbasis sumber: daftar bab, hasil dan alat kontekstual; pembuatan AI lewat aksi eksplisit",
           "category": "UI/UX",
           "status": "partial",
-          "files": ["public/study-shell.js", "public/study-workspace.css", "public/product.js", "public/index.html", "scripts/verify-study-workspace.cjs"],
+          "files": [
+            "public/study-shell.js",
+            "public/study-workspace.css",
+            "public/product.js",
+            "public/index.html",
+            "scripts/verify-study-workspace.cjs"
+          ],
           "commit": "93c093ab084d642e4e0cce8bddd1777c61c025fd"
         },
         {
           "title": "Composer Home tunggal tanpa border bertumpuk, penempatan maskot, dan pembatalan file picker yang mempertahankan Home",
           "category": "UI/UX",
           "status": "partial",
-          "files": ["public/dashboard-shell.js", "public/home.css", "public/product.css", "public/design-system.css", "public/product.js", "scripts/verify-home-visual.cjs"],
+          "files": [
+            "public/dashboard-shell.js",
+            "public/home.css",
+            "public/product.css",
+            "public/design-system.css",
+            "public/product.js",
+            "scripts/verify-home-visual.cjs"
+          ],
           "commit": "5fb92d5a42c539abc5240054ddf56122d37e87c3"
         },
         {
           "title": "Dashboard production dengan ringkasan nyata, panel level dan timer berdampingan, grafik mingguan, serta motion dengan dukungan reduced motion",
           "category": "UI/UX",
           "status": "partial",
-          "files": ["public/dashboard-shell.js", "public/design-system.css", "public/product.js", "public/ui-motion.js"],
+          "files": [
+            "public/dashboard-shell.js",
+            "public/design-system.css",
+            "public/product.js",
+            "public/ui-motion.js"
+          ],
           "commit": "d9086a17bc3ebe66272df6bc6cf110a25a59dad0"
         },
         {
           "title": "Validasi JSON fallback pilot dan penanda UI build untuk pemeriksaan deployment",
           "category": "Fixed",
           "status": "implemented-local",
-          "files": ["lib/text-provider-pilot.js", "server.js", "tests/text-provider-pilot.test.mjs", "tests/design-preview-http.test.mjs"],
+          "files": [
+            "lib/text-provider-pilot.js",
+            "server.js",
+            "tests/text-provider-pilot.test.mjs",
+            "tests/design-preview-http.test.mjs"
+          ],
           "commit": "d9086a17bc3ebe66272df6bc6cf110a25a59dad0"
         },
         {
@@ -244,7 +306,12 @@
           "title": "Navigasi produksi, dashboard dengan data nyata, judul materi dan akses bab sesuai sumber",
           "category": "UI/UX",
           "status": "implemented-local",
-          "files": ["public/product.js", "public/dashboard-shell.js", "public/lesson-label.js", "public/jarvis.js"],
+          "files": [
+            "public/product.js",
+            "public/dashboard-shell.js",
+            "public/lesson-label.js",
+            "public/jarvis.js"
+          ],
           "commit": "e13d6c59b4d9df19052aec8af8a59c9cad129f27"
         }
       ],

@@ -35,3 +35,29 @@ No storage/schema migration, original-file deletion, new API provider, credentia
 Public `/api/health` was checked during this increment and returned `algorithmic-v9.1-1`, not this increment. No AI Studio publication was performed. GitHub delivery and live deployment must be reported separately.
 
 Still incomplete: full page-specific redesign of Subjects/Exams/Streaks/Profile/landing; the requested twelve-reference V10.1 research/motion synthesis; live PDF/Gemini/OCR acceptance for the owner's failing document; microphone/Firebase/device-to-device checks; final release acceptance. Passing route/overflow checks does not certify these workflows or visual parity. Keep v1.0.0 in development.
+
+## GitHub delivery verification — 15 November 2026
+
+Implementation on `main`: [631ed07315dcd087b59ff948eaa5fe1eb591c625](https://github.com/JTDevArt/omnilearn-gemini-cloud./commit/631ed07315dcd087b59ff948eaa5fe1eb591c625). Remote tree `fa03ce3d2c01902d775cdd92fda3876054ed48f4` matches the locally tested tree.
+
+- [Checks run 43614564956](https://github.com/JTDevArt/omnilearn-gemini-cloud./actions/runs/43614564956): success.
+- [Browser run 43614565020](https://github.com/JTDevArt/omnilearn-gemini-cloud./actions/runs/43614565020): success. Artifact `14120979987`, three requested screenshots, retention until 21 November 2026.
+- `npm audit --omit=dev`: zero reported vulnerabilities at verification time.
+- Public health rechecked 15 November: still `algorithmic-v9.1-1`. This increment is not verified as deployed; no publishing performed.
+
+### Exact changed implementation paths
+
+- `public/product.js`
+- `public/study-shell.js`
+- `public/study-workspace.css`
+- `public/dashboard-shell.js`
+- `public/design-system.css`
+- `public/focus-timer.js`
+- `server.js`
+- `scripts/verify-home-visual.cjs`
+- `scripts/verify-study-workspace.cjs`
+- `tests/design-preview-http.test.mjs`
+- `.github/workflows/live-screenshots.yml`
+- `docs/DEPLOYMENT.md`
+- `docs/handoff/ASTRA_TO_CLAUDE.md`
+- `docs/milestones/V10-WORKSPACE-RECOVERY.md`
