@@ -1,3 +1,4 @@
+import { lessonTitle } from './lesson-label.js';
 import { validateExam } from './exam-engine.js';
 const el = (tag, text) => {
   const n = document.createElement(tag);
@@ -19,7 +20,7 @@ export function installExamBuilder(host, editor, status, source) {
     difficulty = el('select'),
     preview = el('div');
   form.className = 'exam-builder';
-  title.value = 'Ujian · ' + source.name;
+  title.value = 'Ujian · ' + lessonTitle(source);
   duration.type = 'number';
   duration.value = 20;
   duration.min = 1;
@@ -122,7 +123,7 @@ export function installExamBuilder(host, editor, status, source) {
           type: type.value,
           question: question.value,
           explanation: explanation.value,
-          topic: source.subject || source.name,
+          topic: source.subject || lessonTitle(source),
         };
       if (type.value === 'multiple') {
         q.options = options.value

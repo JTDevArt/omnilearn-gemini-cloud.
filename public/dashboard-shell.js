@@ -32,10 +32,11 @@
     host.classList.remove("video-learning");
     host.classList.toggle('master-home-mode', view === 'home');
     host.classList.toggle('master-dashboard-mode', view === 'dashboard');
+    for (const page of ['subjects','streaks','profile','leaderboard'])
+      host.classList.toggle('page-' + page, view === page);
     const summary = activitySummary(state.activity);
     const metrics = progressMetrics(sources, state.activity);
     const dashboard = dashboardMetrics(sources, profile, state.activity);
-    const stats = `<div class="master-stats"><article><strong>${sources.length}</strong><span>Materi</span></article><article><strong>${summary.streak}</strong><span>Streak hari</span></article><article><strong>${metrics.cardsDue}</strong><span>Flashcard perlu diulang</span></article><article><strong>${metrics.xp}</strong><span>XP tercatat · Level ${metrics.level}</span></article></div>`;
     const top = document.querySelector(".product-top");
     let badge = top.querySelector(".master-profile");
     if (!badge) {
@@ -316,10 +317,15 @@
           ...sources.map((s) => s.subject).filter(Boolean),
         ]),
       ];
+      host.querySelector('.master-heading p').textContent = 'Kelompokkan materi dan lanjutkan belajar per pelajaran.';
       const node = section(
-        "Atur materi berdasarkan pelajaran",
-        `<form><label>Nama mata pelajaran <input name="subject" required maxlength="100"></label><button>Tambah</button></form><input class="subject-search" placeholder="Cari mata pelajaran" aria-label="Cari mata pelajaran"><select aria-label="Urutan mata pelajaran" class="subject-sort"><option value="name">Nama A–Z</option><option value="count">Materi terbanyak</option></select><div class="subject-items">${names.map((name, i) => `<article class="master-subject" data-name="${escape(name.toLowerCase())}" data-count="${sources.filter(s=>s.subject===name).length}"><h3>${escape(name)}</h3><p>${sources.filter((s) => s.subject === name).length} materi</p><form data-index="${i}"><label>Ubah nama <input name="subject" value="${escape(name)}" required maxlength="100"></label><button>Simpan</button><button type="button" data-delete="${i}">Hapus</button></form></article>`).join("") || "<p>Belum ada mata pelajaran.</p>"}</div>`,
+        "Koleksi pelajaran",
+        `<div class="subject-toolbar"><input type="search" class="subject-search" placeholder="Cari mata pelajaran" aria-label="Cari mata pelajaran"><select aria-label="Urutan mata pelajaran" class="subject-sort"><option value="name">Nama A–Z</option><option value="count">Materi terbanyak</option></select><details class="subject-add"><summary>Tambah pelajaran</summary><form><label>Nama mata pelajaran <input name="subject" required maxlength="100" autocomplete="off"></label><button class="primary">Tambah</button></form></details></div><p class="subject-result-count" role="status"></p><div class="subject-items">${names.map((name, i) => {
+          const materials = sources.filter(source => source.subject === name);
+          return `<article class="master-subject" data-name="${escape(name.toLowerCase())}" data-count="${materials.length}"><span class="subject-book" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 4h7l2 2 2-2h7v15h-7l-2 2-2-2H3zM12 6v15"/></svg></span><h3>${escape(name)}</h3><p>${materials.length} materi tersimpan</p><details class="subject-materials"><summary>Buka materi</summary>${materials.length ? `<ul>${materials.map(source => `<li><button data-subject-source="${escape(source.id)}">${escape(lessonTitle(source))}</button></li>`).join('')}</ul>` : '<p>Belum ada materi di pelajaran ini. Kelompokkan materi melalui panel di bawah.</p>'}</details><details class="subject-edit"><summary>Kelola pelajaran</summary><form data-index="${i}"><label>Ubah nama <input name="subject" value="${escape(name)}" required maxlength="100"></label><button>Simpan</button><button type="button" data-delete="${i}">Hapus pelajaran</button></form><p>Materi tetap tersimpan saat pelajaran dihapus.</p></details></article>`;
+        }).join("") || '<div class="subject-empty"><img src="/mascot.svg" width="96" height="96" alt=""><h3>Belum ada mata pelajaran</h3><p>Tambahkan pelajaran pertama, lalu kelompokkan materi yang sudah kamu simpan.</p></div>'}</div><p class="subject-no-match" hidden>Tidak ada pelajaran yang cocok. Ubah pencarianmu.</p>`,
       );
+      node.classList.add('subjects-collection');
       function change(old, name) {
         commit((s) => {
           if (s.profile.subjects !== undefined && !Array.isArray(s.profile.subjects))
@@ -348,6 +354,12 @@
           );
       };
       node.onclick = (e) => {
+        const open = e.target.closest('[data-subject-source]');
+        if (open) {
+          if (api.selectSource(open.dataset.subjectSource)) api.navigate(api.getSource(open.dataset.subjectSource)?.text?.trim() ? 'journey' : 'sources');
+          else saveStatus.textContent = 'Materi belum dapat dibuka. Tunggu proses saat ini selesai.';
+          return;
+        }
         const b = e.target.closest("[data-delete]");
         if (b && confirm("Hapus pelajaran ini? Materi tetap disimpan."))
           change(names[b.dataset.delete], "");
@@ -357,6 +369,9 @@
         const byCount=node.querySelector('.subject-sort').value==='count';
         const items=[...node.querySelectorAll('.master-subject')].sort((a,b)=>(byCount?Number(b.dataset.count)-Number(a.dataset.count):0)||a.dataset.name.localeCompare(b.dataset.name,'id'));
         for(const item of items){item.hidden=!item.dataset.name.includes(query);node.querySelector('.subject-items').append(item);}
+        const visible = items.filter(item => !item.hidden).length;
+        node.querySelector('.subject-result-count').textContent = `${visible} pelajaran`;
+        node.querySelector('.subject-no-match').hidden = !items.length || visible > 0;
       };
       node.querySelector('.subject-search').oninput=sortSubjects;node.querySelector('.subject-sort').onchange=sortSubjects;sortSubjects();
       section(
@@ -376,45 +391,29 @@
       };
     }
     if (view === "streaks") {
-      host.insertAdjacentHTML("beforeend", stats);
+      host.querySelector('.master-heading p').textContent = 'Konsistensi belajar dari aktivitas yang benar-benar kamu lakukan.';
       const events = state.activity?.events || [];
-      const longest = metrics.longestStreak;
-      section(
-        "Aktivitas nyata",
-        `<p>Streak terpanjang: ${longest} hari · ${metrics.cardsReviewed} tinjauan flashcard · ${summary.answered} jawaban kuis</p><div class="master-calendar" aria-label="Kalender aktivitas 365 hari">${Array.from(
-          { length: 365 },
-          (_, i) => {
-            const day = activityDay(Date.now() - (364 - i) * 86400000);
-            const count = events.filter((e) => e.day === day).length;
-            return `<span class="${count ? "studied" : ""}" title="${day}: ${count} aktivitas" aria-label="${day}: ${count} aktivitas"></span>`;
-          },
-        ).join(
-          "",
-        )}</div><p>Hari berwarna menunjukkan aktivitas tersimpan. Riwayat dibatasi 1.000 aktivitas terbaru.</p>${events
-          .slice(-20)
-          .reverse()
-          .map(
-            (e) =>
-              `<p>${escape(e.day)} · ${escape(e.type)} · ${escape(e.topic)} · ${Number(e.points) || 0} XP</p>`,
-          )
-          .join("")}`,
-      );
+      host.insertAdjacentHTML('beforeend', `<div class="learning-summary">${[[summary.streak+' hari','Streak saat ini'],[metrics.longestStreak+' hari','Streak terpanjang'],[metrics.xp.toLocaleString('id-ID'),'Total XP'],[metrics.cardsDue,'Flashcard perlu diulang']].map(([value,label])=>`<article><strong>${value}</strong><span>${label}</span></article>`).join('')}</div>`);
+      const counts = new Map();
+      for (const event of events) counts.set(event.day, (counts.get(event.day) || 0) + 1);
+      const calendar = section('Kalender belajar', `<p>365 hari terakhir. Semua tanggal mengikuti waktu Jakarta.</p><div class="activity-calendar-scroll"><div class="master-calendar" role="img" aria-label="Kalender: ${counts.size} hari memiliki aktivitas dalam riwayat yang tersimpan. Rincian aktivitas tersedia di bawah.">${Array.from({length:365},(_,i)=>{
+        const day=activityDay(Date.now()-(364-i)*86400000), count=counts.get(day)||0;
+        return `<span class="${count?'studied':''}" title="${day}: ${count} aktivitas" aria-hidden="true"></span>`;
+      }).join('')}</div></div><div class="activity-legend"><span><i aria-hidden="true"></i>Belum tercatat</span><span><i class="studied" aria-hidden="true"></i>Ada aktivitas</span></div><p class="activity-footnote">Riwayat dibatasi 1.000 aktivitas terbaru. Warna menunjukkan aktivitas, bukan tingkat penguasaan.</p>`);
+      calendar.classList.add('activity-calendar-panel');
+      const labels={lesson:'Bab dipelajari',quiz:'Jawaban kuis',review:'Ulangan flashcard',note:'Catatan disimpan'};
+      section('Riwayat terbaru', events.length ? `<ul class="study-history">${events.slice(-20).reverse().map(event=>`<li><div><strong>${escape(labels[event.type]||'Aktivitas belajar')}</strong><p>${escape(event.topic||'Tanpa topik')}</p></div><div><time datetime="${escape(event.day)}">${escape(event.day)}</time><span>${Number(event.points)||0} XP</span></div></li>`).join('')}</ul>` : `<div class="progress-empty"><h3>Mulai dari satu pelajaran</h3><p>Selesaikan bab, jawab kuis, atau ulangi flashcard. Aktivitasmu akan tercatat di sini.</p>${action('Buka materi','notes')}</div>`);
     }
-    if (view === "leaderboard")
-      section(
-        "Belajar bersama, berkembang bersama",
-        '<div class="master-empty"><h2>Ranking belum tersedia</h2><p>Peringkat lintas pengguna belum terhubung. Progres pribadimu tetap tercatat di halaman Streaks.</p></div>',
-      );
+    if (view === "leaderboard") {
+      host.querySelector('.master-heading p').textContent = 'Progres pribadi tetap milikmu. Peringkat bersama belum tersedia.';
+      section('Belajar bersama', `<div class="ranking-empty"><svg viewBox="0 0 48 48" width="64" height="64" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M16 7h16v12c0 8-16 8-16 0V7Zm0 4H8v6c0 6 8 7 8 7m16-13h8v6c0 6-8 7-8 7M24 25v12m-8 4h16"/></svg><h2>Ranking belum tersedia</h2><p>Belum ada peringkat lintas pengguna yang terhubung. XP dan aktivitas pribadimu tetap tersimpan, tanpa membagikannya ke pengguna lain.</p><div class="panel-actions">${action('Lihat progresku','streaks')}${action('Lanjutkan belajar','notes')}</div></div>`);
+    }
     if (view === "profile") {
-      host.insertAdjacentHTML("beforeend", stats);
-      section("Ringkasan belajar", `<p>Total XP: ${metrics.xp} · Level: ${metrics.level} · Streak terpanjang: ${metrics.longestStreak} hari · Flashcard diulang: ${metrics.cardsReviewed}</p><progress max="100" value="${metrics.levelProgress}" aria-label="Progres XP">${metrics.levelProgress}%</progress>`);
-      section(
-        escape(profile.name || "Pelajar OmniLearn"),
-        `<p>${sources.filter((s) => s.notes).length} catatan · ${sources.filter((s) => s.hasOriginal).length} file asli tersimpan</p><p>Email dan identitas terverifikasi tersedia melalui pengaturan akun.</p>${action("Preferensi AI, bahasa & tema", "settings")}${action("Akun & sinkronisasi", "account")}${action("Cadangan dan pustaka", "sources")}`,
-      );
+      host.querySelector('.master-heading p').textContent = 'Kelola identitas, preferensi, dan data belajarmu.';
+      section('Profil pelajar', `<div class="profile-person"><div class="profile-avatar" aria-hidden="true">${escape((profile.name||'O').trim().charAt(0).toLocaleUpperCase('id-ID'))}</div><div><h2>${escape(profile.name||'Pelajar OmniLearn')}</h2><p>Level ${metrics.level} · Progres tersimpan di perangkat ini</p></div><button data-open="account">Kelola akun</button></div><div class="learning-summary">${[[metrics.xp.toLocaleString('id-ID'),'Total XP'],[summary.streak+' hari','Streak'],[sources.filter(s=>typeof s.notes==='string'&&s.notes.trim()).length,'Catatan terisi'],[dashboard.exams,'Ujian selesai']].map(([value,label])=>`<article><strong>${value}</strong><span>${label}</span></article>`).join('')}</div><div class="profile-level"><span>Level ${metrics.level}</span><progress max="100" value="${metrics.levelProgress}" aria-label="Progres XP">${metrics.levelProgress}%</progress><span>${metrics.nextLevelXp-metrics.xp} XP ke level berikutnya</span></div>`).classList.add('profile-overview');
       const preferences = section(
         "Preferensi pribadi",
-        `<form><label>Nama <input name="name" maxlength="50" value="${escape(profile.name || "")}"></label><label>Bahasa jawaban <select name="language"><option value="auto">Otomatis</option><option value="id">Indonesia</option><option value="en">English</option></select></label><button>Simpan</button><p role="status"></p></form>`,
+        `<form><label>Nama tampilan <input name="name" maxlength="50" value="${escape(profile.name || "")}" autocomplete="nickname"></label><label>Bahasa jawaban <select name="language"><option value="auto">Otomatis</option><option value="id">Indonesia</option><option value="en">English</option></select></label><div class="panel-actions"><button class="primary">Simpan preferensi</button><button type="button" data-open="settings">Tampilan &amp; preferensi AI</button></div><p role="status"></p></form>`,
       );
       preferences.querySelector("select").value = profile.language || "auto";
       preferences.onsubmit = (e) => {
@@ -424,6 +423,11 @@
           s.profile.language = e.target.elements.language.value;
         }, () => {
           e.target.querySelector('[role=status]').textContent = 'Preferensi tersimpan di pustaka perangkat.';
+          const name = api.snapshot().profile.name || 'Pelajar OmniLearn';
+          host.querySelector('.profile-person h2').textContent = name;
+          host.querySelector('.profile-avatar').textContent = name.trim().charAt(0).toLocaleUpperCase('id-ID');
+          badge.textContent = name;
+          badge.setAttribute('aria-label', `Profil ${name}, level ${metrics.level}`);
         });
         const language = document.querySelector("#outputLanguage");
         if (language) language.value = e.target.elements.language.value;

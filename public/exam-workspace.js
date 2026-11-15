@@ -7,6 +7,7 @@ import {
   examFromQuiz,
   selectExamQuestions,
 } from './exam-engine.js';
+import { lessonTitle } from './lesson-label.js';
 import { installExamBuilder } from './exam-builder.js';
 const el = (tag, text) => {
   const n = document.createElement(tag);
@@ -20,25 +21,29 @@ const button = (label, fn) => {
   return b;
 };
 export function renderExams(host, api) {
-  host.replaceChildren(
-    el('h1', 'Simulasi ujian'),
-    el(
-      'p',
-      'Timer, navigasi, simpan jawaban dan nilai objektif bekerja tanpa Gemini. Esai/kasus yang belum dinilai tetap berstatus menunggu.'
-    )
-  );
+  host.classList.add('exam-page');
+  const heading=el('header');heading.className='exam-heading';
+  heading.append(el('h1','Ujian'),el('p','Susun latihan dari materimu, kerjakan dengan fokus, lalu pelajari pembahasannya.'));
+  host.replaceChildren(heading);
   const source = api.getCurrentSource();
   const sourcePicker = el('select'); sourcePicker.setAttribute('aria-label','Sumber ujian');
   const empty = el('option','Pilih materi'); empty.value=''; sourcePicker.append(empty);
-  for (const item of api.snapshot().sources) { const option=el('option',item.name);option.value=item.id;option.selected=item.id===source?.id;sourcePicker.append(option); }
-  sourcePicker.onchange=()=>{if(api.selectSource(sourcePicker.value))renderExams(host,api);};host.append(sourcePicker);
+  for (const item of api.snapshot().sources) { const option=el('option',lessonTitle(item));option.value=item.id;option.selected=item.id===source?.id;sourcePicker.append(option); }
+  sourcePicker.onchange=()=>{if(api.selectSource(sourcePicker.value))renderExams(host,api);};
+  const sourceLabel=el('label','Materi ujian');sourceLabel.className='exam-source';sourceLabel.append(sourcePicker);host.append(sourceLabel);
   if (!source) {
-    host.append(el('p', 'Pilih sumber dari pustaka terlebih dahulu.'));
+    const empty=el('section');empty.className='exam-empty';
+    empty.append(el('img'));const image=empty.querySelector('img');image.src='/mascot.svg';image.alt='Maskot OmniLearn';image.width=100;image.height=100;
+    empty.append(el('h2','Latihan dimulai dari satu materi'),el('p','Pilih materi tersimpan atau tambahkan sumber. Setelah itu, buat soal sendiri atau gunakan kuis yang sudah ada.'),button('Pilih atau tambah materi',()=>api.navigate('notes')));host.append(empty);
     return;
   }
   source.exams ||= [];
-  const content = el('section');
-  host.append(content);
+  const layout=el('div');layout.className='exam-layout';
+  const content = el('section');content.className='exam-content';
+  const guide=el('aside');guide.className='exam-guide';guide.append(el('h2','Persiapan ujian'));
+  const steps=el('ol');for(const copy of ['Periksa sumber dan bank soal.','Atur jumlah soal yang tersedia.','Kerjakan, lalu tinjau jawaban.'])steps.append(el('li',copy));
+  guide.append(steps,el('p','Soal objektif dinilai otomatis. Esai dan analisis kasus menunggu penilaian AI yang diminta secara terpisah.'));
+  layout.append(content,guide);host.append(layout);
   function save() {
     api.persist();
   }
@@ -49,6 +54,7 @@ export function renderExams(host, api) {
       save();
     }
     content.replaceChildren();
+    content.classList.add('exam-attempt');guide.hidden=true;sourceLabel.hidden=true;
     if (attempt.status === 'submitted') {
       const score = examScore(attempt);
       content.append(
@@ -197,7 +203,7 @@ export function renderExams(host, api) {
     const interval = setInterval(update, 1000);
     const q = attempt.questions[attempt.currentIndex],
       navigation = el('nav');
-    navigation.className = 'panel-actions';
+    navigation.className = 'panel-actions exam-question-nav';
     navigation.setAttribute('aria-label', 'Navigasi soal');
     attempt.questions.forEach((question, i) =>
       navigation.append(
@@ -251,6 +257,7 @@ export function renderExams(host, api) {
           const value = question.type === 'multiple' ? i : i === 0;
           radio.checked = answer === value;
           radio.onchange = () => onChange(value);
+          label.className='exam-answer-option';
           label.append(radio, document.createTextNode(option));
           parent.append(label);
         });
@@ -313,11 +320,17 @@ export function renderExams(host, api) {
         }
       })
     );
+    actions.lastElementChild.classList.add('primary');
+    actions.children[0].disabled=attempt.currentIndex===0;
+    actions.children[2].disabled=attempt.currentIndex===attempt.questions.length-1;
     content.append(actions);
     update();
   }
+  const attempts=el('section');attempts.className='exam-history';
+  if(source.exams.length)attempts.append(el('h2','Percobaan tersimpan'));
+  content.append(attempts);
   for (const attempt of [...source.exams].reverse())
-    content.append(
+    attempts.append(
       button(
         `${attempt.title} · ${attempt.status === 'running' ? 'Lanjutkan' : 'Hasil'}`,
         () => show(attempt)
@@ -328,7 +341,7 @@ export function renderExams(host, api) {
   editor.className = 'exam-bank';
   editor.value = JSON.stringify(
     {
-      title: 'Latihan saya',
+      title: 'Ujian · ' + lessonTitle(source),
       durationMinutes: 20,
       questions: [],
     },
@@ -342,35 +355,33 @@ export function renderExams(host, api) {
     source.examDraft = editor.value;
     save();
   };
-  const savedBanks=el('section');savedBanks.append(el('h2','Bank soal tersimpan'));
+  const savedBanks=el('section');savedBanks.className='exam-saved-banks';savedBanks.append(el('h2','Bank soal tersimpan'));
   for(const bank of source.examBanks || []) savedBanks.append(button(`${bank.title} · ${bank.questions.length} soal`,()=>{editor.value=JSON.stringify(bank,null,2);editor.dispatchEvent(new Event('input'));status.textContent='Bank dimuat ke draf.';}));
   savedBanks.append(button('Simpan bank soal',async()=>{
     try { const bank=validateExam(JSON.parse(editor.value)); (source.examBanks ||= []).push({...bank,id:crypto.randomUUID(),savedAt:Date.now(),sourceVersion:source.version});await api.persistAsync();renderExams(host,api); }
     catch(error){status.textContent='Belum tersimpan: '+error.message;}
   })); content.append(savedBanks);
-  installExamBuilder(content, editor, status, source);
+  const builder=el('details');builder.className='exam-author';builder.open=!(source.examDraft || source.examBanks?.length || Object.keys(source.generated || {}).length);
+  builder.append(el('summary','Susun atau edit soal'));
+  content.append(builder);installExamBuilder(builder, editor, status, source);
   const selection=el('section'),count=el('input'),preset=el('select'),mixFields=el('div'),mix={};
+  selection.className='exam-selection';
   count.type='number';count.min=1;count.max=100;count.placeholder='Semua soal';count.setAttribute('aria-label','Jumlah soal ujian');
   for(const [value,label] of [['all','Pilih jumlah dari bank'],['mix','20 PG + 5 isian + 5 esai (dapat diubah)']]){const option=el('option',label);option.value=value;preset.append(option);}
   preset.setAttribute('aria-label','Komposisi ujian');mixFields.hidden=true;
   for(const [type,label,amount] of [['multiple','Jumlah pilihan ganda',20],['short','Jumlah isian',5],['essay','Jumlah esai',5]]){const row=el('label',label),input=el('input');input.type='number';input.min=0;input.max=100;input.value=amount;input.setAttribute('aria-label',label);row.append(input);mixFields.append(row);mix[type]=input;}
-  preset.onchange=()=>{mixFields.hidden=preset.value!=='mix';count.hidden=preset.value==='mix';};
-  selection.append(el('h2','Komposisi percobaan'),preset,count,mixFields,el('p','Komposisi mengambil soal yang tersedia. Bank asli tetap tersimpan.'));content.append(selection);
+  preset.onchange=()=>{mixFields.hidden=preset.value!=='mix';countLabel.hidden=preset.value==='mix';};
+  const compositionLabel=el('label','Komposisi'),countLabel=el('label','Jumlah soal');compositionLabel.append(preset);countLabel.append(count);
+  selection.append(el('h2','Atur latihan'),compositionLabel,countLabel,mixFields,el('p','Hanya soal yang tersedia di bank yang digunakan. Bank asli tetap tersimpan.'));content.append(selection);
   const advanced = el('details');
   advanced.append(
     el('summary', 'Impor / edit bank soal lanjutan (JSON)'),
     editor
   );
   content.append(
-    el('h2', 'Buat ujian manual'),
-    el(
-      'p',
-      'Buat soal dengan formulir di atas atau gunakan kuis tersimpan. Bank lanjutan mendukung subsoal (multipart). Kunci tidak ditampilkan selama ujian.'
-    ),
     advanced
   );
-  content.append(
-    button('Mulai ujian', () => {
+  const startButton=button('Mulai ujian', () => {
       try {
         const definition = selectExamQuestions(JSON.parse(editor.value),preset.value==='mix'?{mix:Object.fromEntries(Object.entries(mix).map(([key,input])=>[key,Number(input.value)]))}:{count:count.value});
         const bankVersion=JSON.parse(editor.value).sourceVersion;
@@ -385,8 +396,9 @@ export function renderExams(host, api) {
       } catch (error) {
         status.textContent = error.message;
       }
-    })
-  );
+    });
+  startButton.classList.add('primary');
+  content.insertBefore(selection,savedBanks);selection.after(startButton);
   content.append(
     button('Ambil kuis materi tersimpan', () => {
       try {
@@ -398,7 +410,7 @@ export function renderExams(host, api) {
             'Buat kuis terlebih dahulu, atau edit bank soal manual.'
           );
         editor.value = JSON.stringify(
-          examFromQuiz(quiz, 'Ujian · ' + source.name),
+          examFromQuiz(quiz, 'Ujian · ' + lessonTitle(source)),
           null,
           2
         );

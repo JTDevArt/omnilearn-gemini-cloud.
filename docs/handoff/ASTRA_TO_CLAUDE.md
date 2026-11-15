@@ -1,5 +1,9 @@
 # OmniLearn continuation checkpoint
 
+## V10.4 pages integration — 15 November 2026
+
+Read `docs/milestones/V10.4-INTEGRATION.md` and `docs/design/OMNILEARN-DESIGN-RESEARCH.md`. Remaining page compositions and landing are now implemented; preserve approved Home/Dashboard. Exams use canonical titles and retain saved engine state. Final release/live AI/OCR/deployment acceptance remains separate. Runtime marker `algorithmic-v10.4-pages-1`.
+
 ## V10 workspace recovery — 14 November 2026
 
 Implementation delivered to `main`: `631ed07315dcd087b59ff948eaa5fe1eb591c625`. Checks run `43614564956` and browser run `43614565020` both succeeded. Read `docs/milestones/V10-WORKSPACE-RECOVERY.md` first. This increment restores library functions removed by 882f17f, adds explicit source/general chat using existing state, refines Dashboard/timer and mobile study hierarchy, and extends browser checks. Overall V10 remains PARTIAL. New runtime marker: `algorithmic-v10-workspace-1`. Public runtime observed `algorithmic-v9.1-1`; no AI Studio publish. Preserve strict source validation and all newer main changes when continuing; merge diffs rather than uploading stale complete files.

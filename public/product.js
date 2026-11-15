@@ -1376,7 +1376,7 @@
     view=({ujian:'exams',flashcards:'cards',mindmap:'map',update:'updates'})[view] || view;
     if (current === 'podcast') disposePodcast();
     panel.dashboardRenderId = null;
-    panel.classList.remove('master-home-mode', 'master-dashboard-mode');
+    panel.classList.remove('master-home-mode', 'master-dashboard-mode', 'exam-page', 'page-subjects', 'page-streaks', 'page-profile', 'page-leaderboard');
     chatHome.after(chatMessages);
     feedbackHome.after(chatFeedback, $('chatRequestActions'));
     if (!views[view] && !tools.has(view)) view = 'dashboard';

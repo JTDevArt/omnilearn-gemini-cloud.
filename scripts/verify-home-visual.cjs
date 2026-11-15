@@ -84,7 +84,7 @@ async function run() {
   });
   await open(base,'home');
   assert.equal(await page.locator('.home-session .chat-message').count(),0,'Fresh Home must not repeat the hero greeting in a decorative chat bubble');
-  assert.equal((await (await page.request.get(base+'/api/health')).json()).uiBuild,'algorithmic-v10-workspace-1');
+  assert.equal((await (await page.request.get(base+'/api/health')).json()).uiBuild,'algorithmic-v10.4-pages-1');
   for(const theme of ['dark','light']) {
     for(const width of [1440,1280,1024,820,768,390,360]) {
       await page.setViewportSize({width,height:900});

@@ -7,6 +7,10 @@ on:
       - '.github/workflows/live-screenshots.yml'
       - 'scripts/verify-home-visual.cjs'
       - 'scripts/verify-study-workspace.cjs'
+      - 'scripts/verify-remaining-pages.cjs'
+      - 'scripts/verify-page-interactions.cjs'
+      - 'public/exam-*.js'
+      - 'public/landing.*'
       - 'public/*.css'
       - 'public/dashboard-shell.js'
       - 'public/product.js'
@@ -41,6 +45,8 @@ jobs:
         run: |
           node scripts/verify-home-visual.cjs
           node scripts/verify-study-workspace.cjs
+          QA_SKIP_SCREENSHOTS=1 node scripts/verify-remaining-pages.cjs
+          node scripts/verify-page-interactions.cjs
       - name: Upload screenshots and access report
         if: always()
         uses: actions/upload-artifact@v4
