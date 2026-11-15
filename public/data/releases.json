@@ -9,6 +9,34 @@
       "summary": "Milestone 00–08 lengkap di GitHub main; AI Home/Dashboard terpisah, progres dan profil menggunakan data asli, Update List berfungsi, riset memiliki penanganan penyimpanan yang benar, serta unit/lint/build diuji melalui GitHub Actions. v1.0.0 belum dirilis resmi.",
       "changes": [
         {
+          "title": "V10.4: Mata Pelajaran, Ujian, Profil, Streaks, Leaderboard dan landing terintegrasi; judul topik pada ujian, preferensi profil konsisten, riset 50 referensi, tes browser sintetis; publikasi belum dilakukan",
+          "category": "UI/UX",
+          "status": "implemented-local",
+          "files": [
+            ".github/workflows/live-screenshots.yml",
+            "docs/DEPLOYMENT.md",
+            "docs/design/OMNILEARN-DESIGN-RESEARCH.md",
+            "docs/handoff/ASTRA_TO_CLAUDE.md",
+            "docs/milestones/V10.4-INTEGRATION.md",
+            "public/dashboard-shell.js",
+            "public/design-system.css",
+            "public/exam-builder.js",
+            "public/exam-workspace.css",
+            "public/exam-workspace.js",
+            "public/index.html",
+            "public/landing.css",
+            "public/landing.html",
+            "public/landing.js",
+            "public/product.js",
+            "scripts/verify-home-visual.cjs",
+            "scripts/verify-page-interactions.cjs",
+            "scripts/verify-remaining-pages.cjs",
+            "server.js",
+            "tests/design-preview-http.test.mjs"
+          ],
+          "commit": "d94fbad50b8e35d41db1ffdcf1ba4530d20dd452"
+        },
+        {
           "title": "Pemulihan pencarian/judul dan tindakan sumber, konteks chat umum yang eksplisit, serta perapian Dashboard dan workspace mobile; CI dan pemeriksaan browser lulus, keseluruhan V10 masih parsial",
           "category": "Fixed",
           "status": "implemented-local",

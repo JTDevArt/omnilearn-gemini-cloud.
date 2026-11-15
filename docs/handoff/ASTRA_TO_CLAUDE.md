@@ -2,7 +2,7 @@
 
 ## V10.4 pages integration — 15 November 2026
 
-Read `docs/milestones/V10.4-INTEGRATION.md` and `docs/design/OMNILEARN-DESIGN-RESEARCH.md`. Remaining page compositions and landing are now implemented; preserve approved Home/Dashboard. Exams use canonical titles and retain saved engine state. Final release/live AI/OCR/deployment acceptance remains separate. Runtime marker `algorithmic-v10.4-pages-1`.
+Implementation main `d94fbad50b8e35d41db1ffdcf1ba4530d20dd452`. Read `docs/milestones/V10.4-INTEGRATION.md` and `docs/design/OMNILEARN-DESIGN-RESEARCH.md`. Remaining page compositions and landing are now implemented; preserve approved Home/Dashboard. Exams use canonical titles and retain saved engine state. Final release/live AI/OCR/deployment acceptance remains separate. Runtime marker `algorithmic-v10.4-pages-1`.
 
 ## V10 workspace recovery — 14 November 2026
 

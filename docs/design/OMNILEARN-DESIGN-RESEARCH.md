@@ -2,7 +2,7 @@
 
 Verified 15 November 2026. Scope: 50 distinct reference entries, including explicitly documented replacements, ten closer analyses, and production requirements. Research used retrieved public page text, public product examples and official component documentation. **It did not include signed-in use of the products, measured competitor layouts, tested competitor motion, or competitor mobile screenshots.** Responsive and motion recommendations below are engineering deductions to verify in OmniLearn, rather than observations of private applications.
 
-The owner's nine-screen OmniLearn showcase and `ASTRA_SHOWCASE_CONTINUATION.md` govern identity and composition. The current Home/Dashboard layouts are frozen. Public Pelajarin examples verify the connected study workflow; the newer recording named in the directive was not present in this worktree's available attachments for frame inspection. Older recordings are not represented here as the newer recording. No third-party artwork, stylesheets or code were copied.
+The owner's nine-screen OmniLearn showcase and `ASTRA_SHOWCASE_CONTINUATION.md` govern identity and composition. The current Home/Dashboard layouts are frozen. After initial public research, the owner-supplied `Pelajarin.ai - Opera 2026-11-15 17-47-08.mp4` was retrieved and six sampled frames across its 150.6-second duration were visually inspected. This is inspection of a supplied recording, not access to an authenticated competitor session. No third-party artwork, stylesheets or code were copied.
 
 ## Evidence register: fifty references
 
@@ -132,4 +132,8 @@ Palette, typography, shell and page proportions derive from OmniLearn's approved
 
 ## Acceptance boundary
 
-The fifty-entry research requirement is supported by retrieved evidence and documented replacements. The ten analyses are actionable production requirements. This document alone does **not** certify implementation, screenshot parity, live Gemini/OCR, authenticated provider privacy approval, or deployment. Root integration must record actual changed files, browser screenshots, final tests/commit and deployment evidence. The unavailable newer recording remains a reference-inspection limitation; do not claim it was watched.
+The fifty-entry research requirement is supported by retrieved evidence and documented replacements. The ten analyses are actionable production requirements. This document alone does **not** certify implementation, screenshot parity, live Gemini/OCR, authenticated provider privacy approval, or deployment. Root integration must record actual changed files, browser screenshots, final tests/commit and deployment evidence. The supplied recording was sampled visually rather than watched continuously; do not infer unseen actions or measured competitor behavior.
+
+## Supplied recording: sampled workflow evidence
+
+Six frames from the owner-supplied 15 November recording show a relativity lesson overview with chapter list, a numbered multiple-choice exercise step, flashcard preparation, question-first flashcard recall with previous/next controls, and the same lesson source beside contextual conversation. These observations support source identity across activities, content-first exercise layout, explicit recall before answer, and contextual chat. OmniLearn preserves these relationships through its existing journey/quiz/deck/source IDs; the new exam setup also uses canonical topic titles and saved source-bound attempts. A displayed competitor percentage is not evidence of real processing progress: OmniLearn must continue using actual stages rather than copying it. No competitor art, copy, code or unique composition was imported.
