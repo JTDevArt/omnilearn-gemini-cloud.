@@ -84,7 +84,16 @@ async function run() {
   });
   await open(base,'home');
   assert.equal(await page.locator('.home-session .chat-message').count(),0,'Fresh Home must not repeat the hero greeting in a decorative chat bubble');
-  assert.equal((await (await page.request.get(base+'/api/health')).json()).uiBuild,'algorithmic-v10.4-pages-1');
+  const build = await (await page.request.get(base+'/ui-build.json')).json();
+  assert.equal(build.uiBuild,'omnilearn-showcase-2026-11-16');
+  assert.equal(await page.locator('body').getAttribute('data-ui-build'),build.uiBuild);
+  assert.equal(await page.locator('.home-quick').count(),6);
+  assert.equal(await page.locator('.home-library').count(),1);
+  assert.equal(await page.locator('.home-stats').count(),0,'Learning Home keeps analytics in Dashboard');
+  await page.evaluate(()=>OmniProduct.navigate('dashboard'));
+  await page.locator('.dashboard-focus [data-clock]').waitFor();
+  assert.equal(await page.locator('.master-stats>a').count(),4);
+  assert.equal(await page.locator('.dashboard-bento').count(),0,'Dashboard follows the four-stat showcase composition');
   for(const theme of ['dark','light']) {
     for(const width of [1440,1280,1024,820,768,390,360]) {
       await page.setViewportSize({width,height:900});

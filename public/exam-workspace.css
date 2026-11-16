@@ -1,6 +1,8 @@
+/* Shared color tokens and responsive type; existing tool layout stays intact. */
+/* Shared colors and responsive type; tool layout stays intact. */
 .exam-page { max-width:1120px; margin-inline:auto; }
 .exam-heading { padding-block:var(--space-24); }
-.exam-heading h1 { margin:0 0 var(--space-8); font-size:32px; letter-spacing:-.035em; }
+.exam-heading h1 { margin:0 0 var(--space-8); font-size:clamp(32px,2vw,32px); letter-spacing:-.035em; }
 .exam-heading p { margin:0; max-width:65ch; color:var(--text-secondary); font-size:14px; }
 .exam-source { display:grid; gap:var(--space-8); max-width:480px; margin-bottom:var(--space-24); font-size:13px; color:var(--text-secondary); }
 .exam-page select,.exam-page input:not([type=radio]),.exam-page textarea { width:100%; min-width:0; }
@@ -28,11 +30,11 @@
 .exam-saved-banks>button,.exam-history>button { display:block; width:100%; margin:var(--space-8) 0; text-align:left; }
 .exam-empty { padding:var(--space-40) var(--space-24); max-width:640px; margin:var(--space-24) auto; text-align:center; }
 .exam-empty img { display:block; margin:0 auto var(--space-20); }
-.exam-empty h2 { font-size:24px; }
+.exam-empty h2 { font-size:clamp(24px,2vw,24px); }
 .exam-empty p { color:var(--text-secondary); font-size:15px; line-height:1.7; }
 .exam-attempt { grid-column:1/-1; max-width:800px; width:100%; margin-inline:auto; padding:var(--space-24); background:var(--surface); border-radius:var(--radius-card); }
-.exam-attempt [role=timer] { color:var(--secondary); font-size:22px; font-weight:650; font-variant-numeric:tabular-nums; }
-.exam-attempt h3 { font-size:20px; line-height:1.5; }
+.exam-attempt [role=timer] { color:var(--secondary); font-size:clamp(22px,2vw,22px); font-weight:650; font-variant-numeric:tabular-nums; }
+.exam-attempt h3 { font-size:clamp(20px,2vw,20px); line-height:1.5; }
 .exam-attempt>p { color:var(--text-secondary); font-size:14px; }
 .exam-answer-option { display:flex; align-items:center; gap:var(--space-12); min-height:48px; padding:var(--space-12); border-radius:var(--radius-control); margin-block:var(--space-8); background:var(--surface-elevated); font-size:15px; cursor:pointer; }
 .exam-answer-option:has(:checked) { outline:2px solid var(--secondary); outline-offset:-2px; }

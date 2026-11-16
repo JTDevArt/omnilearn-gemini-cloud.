@@ -48,7 +48,8 @@ async function run(){
  for(const theme of ['dark','light'])for(const width of [1440,1280,1024,768,390,360]){
   await page.setViewportSize({width,height:1000});await page.evaluate(theme=>OmniTheme.setPreference(theme),theme);
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
-  assert.equal(await page.locator('.landing-hero-visual img').evaluate(i=>i.complete&&i.naturalWidth>0),true);
+  assert.equal(await page.locator('.landing-product-preview img').evaluate(i=>i.complete&&i.naturalWidth>0),true);
+  assert.equal(await page.locator('.landing-preview-composer').getAttribute('href'),'/dashboard?view=home');
   report.checks.push({view:'landing',width,theme,overflow:false});
  }
  await page.locator('.landing-faq summary').nth(3).click();assert.match(await page.locator('.landing-faq details').nth(3).textContent(),/browser perangkat/);

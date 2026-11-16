@@ -1,3 +1,4 @@
+/* Source-first learning Home and the owner's compact management dashboard. */
 /* Dashboard views share the existing source store and learning engines. */
 (() => {
   const escape = (value) =>
@@ -60,7 +61,7 @@
       pinned: "Disematkan",
       updates: "Update List",
     }[view];
-    host.innerHTML = window.OmniHtml.sanitize(`<div class="master-heading">${view === "home" ? '<img src="/mascot.svg" width="100" height="100" fetchpriority="high" alt="Maskot OmniLearn">' : ""}<div><h1>${title}</h1><p>${view === "home" ? "Tanyakan apa saja, unggah materi, atau gunakan tautan YouTube untuk mulai belajar bersama AI." : "Belajar dengan sumber dan progres milikmu sendiri."}</p></div></div>`);
+    host.innerHTML = window.OmniHtml.sanitize(`<div class="master-heading">${view === "home" ? '<img src="/mascot.svg" width="106" height="106" fetchpriority="high" alt="Maskot OmniLearn">' : ''}<div><h1>${title}</h1><p>${view === "home" ? "Tanyakan apa saja, unggah materi, atau gunakan tautan YouTube untuk mulai belajar bersama AI." : "Belajar dengan sumber dan progres milikmu sendiri."}</p></div></div>`);
     const section = (heading, content) => {
       const node = document.createElement("section");
       node.className = "master-section";
@@ -183,12 +184,15 @@
       draw();
     }
     if (view === "home") {
-      host.querySelector('.master-heading').classList.add('home-hero');
+      const hero=host.querySelector('.master-heading');
+      hero.classList.add('home-hero');
+      if(profile.name)hero.querySelector('h1').textContent='Halo, '+profile.name+'. Siap belajar?';
       const chat = document.createElement('section');
       chat.className = 'home-session';
       chat.setAttribute('aria-label', 'Tutor AI');
-      chat.innerHTML = `<form class="home-composer master-composer"><label class="home-input-label" for="homeQuestion">Pertanyaan untuk tutor</label><textarea id="homeQuestion" placeholder="Tanyakan materi, minta penjelasan, atau berikan instruksi…" required maxlength="12000" rows="3"></textarea><div class="home-composer-actions"><button type="button" data-record-audio>Rekam</button><button type="button" data-upload>Unggah</button><button type="button" data-open="sources">YouTube</button><button class="primary" type="submit">Kirim</button></div><span id="recordStatus" role="status"></span></form><details class="home-secondary-tools"><summary>Tambahkan materi teks</summary><button type="button" data-paste-material>Tempel materi</button></details>`;
+      chat.innerHTML = `<form class="home-composer master-composer"><label class="home-input-label" for="homeQuestion">Pertanyaan untuk tutor</label><textarea id="homeQuestion" placeholder="Tanya AI apa saja…" required maxlength="12000" rows="3"></textarea><div class="home-composer-actions"><button type="button" data-record-audio>Rekam</button><button type="button" data-upload>Unggah</button><button type="button" data-open="sources">YouTube</button><button class="primary" type="submit">Kirim</button></div><span id="recordStatus" role="status"></span></form><details class="home-secondary-tools"><summary>Tambahkan materi teks</summary><button type="button" data-paste-material>Tempel materi</button></details>`;
       const selectedSource = api.getCurrentSource();
+      chat.classList.toggle('has-source', Boolean(selectedSource));
       chat.insertAdjacentHTML('afterbegin', `<div class="home-source-context"><div><span>${selectedSource ? 'Sumber percakapan' : 'Percakapan umum'}</span><strong>${selectedSource ? escape(lessonTitle(selectedSource)) : 'Belum memakai materi tersimpan'}</strong></div><button type="button" data-open="notes">${selectedSource ? 'Ganti materi' : 'Pilih materi'}</button>${selectedSource?.journey?.chapters?.length ? '<button type="button" data-open="learn">Baca materi</button>' : ''}</div>`);
       host.append(chat);
       const draftInput = chat.querySelector("textarea");
@@ -244,6 +248,19 @@
         };
       };
       api.mountDashboardChat(chat);
+      const quick=section('Alat belajar',window.OmniHtml.fragment('<div class="home-quick-grid">'+[
+        ['sources','Unggah materi','<path d="M12 16V3m-4 4 4-4 4 4M4 14v7h16v-7"/>'],
+        ['notes','Catatan','<path d="M6 3h12v18H6zM9 8h6m-6 4h6m-6 4h4"/>'],
+        ['quiz','Kuis','<path d="M8 5H5v16h14V5h-3M8 3h8v4H8zM8 14l3 3 5-6"/>'],
+        ['cards','Flashcard','<rect x="5" y="6" width="15" height="15" rx="2"/><path d="M4 17H3V3h14v1M9 11h7m-7 5h5"/>'],
+        ['map','Mindmap','<path d="M9 10 5 6m10 4 4-4M9 14l-4 4m10-4 4 4"/><circle cx="12" cy="12" r="4"/><circle cx="3" cy="4" r="2"/><circle cx="21" cy="4" r="2"/><circle cx="3" cy="20" r="2"/><circle cx="21" cy="20" r="2"/>'],
+        ['podcast','Podcast','<path d="M4 14v-3a8 8 0 0 1 16 0v3"/><rect x="3" y="12" width="4" height="8" rx="2"/><rect x="17" y="12" width="4" height="8" rx="2"/>']
+      ].map(([route,label,icon])=>'<button class="home-quick" data-open="'+route+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+icon+'</svg>'+label+'</button>').join('')+'</div>'));
+      quick.classList.add('home-quick-section');
+      library();
+      const collection=host.lastElementChild;
+      collection.classList.add('home-library');
+      collection.querySelector('h2').textContent='Materi belajarmu';
     }
     if (view === "dashboard") {
       const hour = new Date().getHours();
@@ -255,7 +272,7 @@
         exams: '<path d="M8 5H5v16h14V5h-3M8 3h8v4H8zM8 14l3 3 5-6"/>',
         streaks: '<path d="m12 3 3 6 6 1-4.5 4.5L18 21l-6-3-6 3 1.5-6.5L3 10l6-1z"/>'
       };
-      host.insertAdjacentHTML('beforeend', `<div class="master-stats">${[[dashboard.subjects,'Mata pelajaran','subjects'],[dashboard.notes,'Catatan','notes'],[dashboard.exams,'Ujian selesai','exams'],[metrics.xp,'Total XP','streaks']].map(([value,label,route])=>`<a href="/dashboard?view=${route}" data-view="${route}"><span class="stat-icon stat-icon-${route}" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${statIcons[route]}</svg></span><div><strong>${value.toLocaleString('id-ID')}</strong><span>${label}</span></div></a>`).join('')}</div>`);
+      host.insertAdjacentHTML('beforeend', window.OmniHtml.sanitize(`<div class="master-stats">${[[dashboard.subjects,'Mata pelajaran','subjects'],[dashboard.notes,'Catatan','notes'],[dashboard.exams,'Ujian selesai','exams'],[metrics.xp,'Total XP','streaks']].map(([value,label,route])=>`<a href="/dashboard?view=${route}" data-view="${route}"><span class="stat-icon stat-icon-${route}" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${statIcons[route]}</svg></span><div><strong>${value.toLocaleString('id-ID')}</strong><span>${label}</span></div></a>`).join('')}</div>`));
       const level = section('Progres level', window.OmniHtml.fragment(`<div class="progress-level"><div><strong>Level ${metrics.level}</strong><span>${metrics.xp} / ${metrics.nextLevelXp} XP</span></div><progress max="100" value="${metrics.levelProgress}" aria-label="Progres XP">${metrics.levelProgress}%</progress><p>${metrics.nextLevelXp - metrics.xp} XP menuju level berikutnya · ${summary.streak} hari streak</p><div class="dashboard-next-step"><span>${metrics.cardsDue ? `${metrics.cardsDue} flashcard siap diulang` : 'Belum ada flashcard jatuh tempo'}</span>${dashboard.reviewSourceId ? '<button data-review-due>Mulai review</button>' : action('Buka materi','notes')}</div></div>`));
       level.classList.add('dashboard-level');
       level.querySelector('[data-review-due]')?.addEventListener('click', () => {

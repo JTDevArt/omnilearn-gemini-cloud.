@@ -1,16 +1,18 @@
+/* Shared color tokens and responsive type; existing tool layout stays intact. */
+/* Shared colors and responsive type; tool layout stays intact. */
 .forge-dialog {
   width: min(920px, 94vw);
   max-height: 90dvh;
   overflow: auto;
   box-sizing: border-box;
-  border: 1px solid var(--border, #bcc6d0);
+  border: 1px solid var(--border, var(--color--bcc6d0));
   border-radius: var(--radius-20);
-  background: var(--surface, #fff);
-  color: var(--text, #202638);
+  background: var(--surface, var(--color--fff));
+  color: var(--text, var(--color--202638));
   padding: var(--space-24);
 }
 .forge-dialog::backdrop {
-  background: #10141d99;
+  background: var(--color--10141d99);
 }
 .forge-dialog input,
 .forge-dialog textarea,
@@ -18,8 +20,8 @@
   max-width: 100%;
   box-sizing: border-box;
   color: inherit;
-  background: var(--surface, #fff);
-  border: 1px solid var(--border, #bbc5d3);
+  background: var(--surface, var(--color--fff));
+  border: 1px solid var(--border, var(--color--bbc5d3));
   border-radius: var(--radius-10);
   padding: var(--space-10);
   margin: var(--space-8) 0;
@@ -43,16 +45,16 @@
 }
 .map-children {
   margin-left: var(--space-18);
-  border-left: 1px solid var(--border, #bbc5d3);
+  border-left: 1px solid var(--border, var(--color--bbc5d3));
   padding-left: var(--space-12);
 }
 .map-outline button.active {
-  outline: 2px solid var(--accent, #ed6800);
+  outline: 2px solid var(--accent, var(--color--ed6800));
   outline-offset: 1px;
 }
 .graph-node {
   padding: var(--space-14);
-  border: 1px solid var(--border, #bbc5d3);
+  border: 1px solid var(--border, var(--color--bbc5d3));
   border-radius: var(--radius-12);
   margin: var(--space-10) 0;
   overflow-wrap: anywhere;
@@ -68,16 +70,16 @@
 }
 .exam-result {
   padding: var(--space-20);
-  border: 1px solid var(--border, #bbc5d3);
+  border: 1px solid var(--border, var(--color--bbc5d3));
   border-radius: var(--radius-14);
   margin: var(--space-16) 0;
 }
 .product-panel [role='timer'] {
-  font-size: 24px;
+  font-size:clamp(24px,2vw,24px);
   font-weight: 700;
   position: sticky;
   top: 80px;
-  background: var(--surface, #fff);
+  background: var(--surface, var(--color--fff));
   padding: var(--space-10);
   z-index: 2;
 }
@@ -92,7 +94,7 @@
   aspect-ratio: 16/9;
   border: 0;
   border-radius: var(--radius-14);
-  background: #10141d;
+  background: var(--color--10141d);
 }
 .transcript-segment {
   display: block;
@@ -102,12 +104,12 @@
   margin: var(--space-6) 0;
 }
 .transcript-segment.active {
-  outline: 2px solid var(--accent, #ed6800);
+  outline: 2px solid var(--accent, var(--color--ed6800));
 }
 .provider-notice,
 .sync-notice {
   padding: var(--space-12);
-  border: 1px solid var(--border, #bbc5d3);
+  border: 1px solid var(--border, var(--color--bbc5d3));
   border-radius: var(--radius-12);
   font-size: 13px;
   line-height: 1.6;
@@ -116,7 +118,7 @@
   margin: var(--space-18) 0;
 }
 .research-results article {
-  border: 1px solid var(--border, #bbc5d3);
+  border: 1px solid var(--border, var(--color--bbc5d3));
   padding: var(--space-18);
   border-radius: var(--radius-14);
   margin: var(--space-14) 0;

@@ -1,13 +1,15 @@
+/* Shared color tokens and responsive type; existing tool layout stays intact. */
+/* Shared colors and responsive type; tool layout stays intact. */
 :root {
   color-scheme: dark;
-  --bg: #070d18;
+  --bg: var(--color--070d18);
 
-  --surface-2: #121f33;
+  --surface-2: var(--color--121f33);
 
-  --line-strong: #355277;
+  --line-strong: var(--color--355277);
 
 
-  --orange: #ff791f;
+  --orange: var(--color--ff791f);
 
   font-family:var(--font-ui);
 }
@@ -36,9 +38,9 @@ button { cursor: pointer; }
 .brand-mark { width: 31px; height: 25px; display: inline-block; position: relative; transform: skew(-20deg); }
 .brand-mark i { position: absolute; display: block; width: 14px; height: 22px; border-radius: var(--radius-8) var(--radius-8) 3px var(--radius-8); background: var(--orange); }
 .brand-mark i:first-child { left: 1px; top: 2px; }
-.brand-mark i:last-child { right: 1px; top: 0; background: #ff9a42; }
+.brand-mark i:last-child { right: 1px; top: 0; background: var(--color--ff9a42); }
 .preview-meta { gap: var(--space-10); color: var(--muted); font-size: 12px; white-space: nowrap; }
-.status-dot, .frame-led { width: 8px; height: 8px; border-radius: 50%; background: #58d89b; box-shadow: 0 0 0 4px #58d89b20; }
+.status-dot, .frame-led { width: 8px; height: 8px; border-radius: 50%; background: var(--color--58d89b); box-shadow: 0 0 0 4px var(--color--58d89b20); }
 .preview-meta a { color: var(--text); text-decoration: none; border: 1px solid var(--line-strong); border-radius: var(--radius-8); padding: var(--space-8) 11px; }
 .preview-meta a:hover, .preview-meta a:focus-visible { border-color: var(--blue); color: var(--blue); }
 
@@ -53,9 +55,9 @@ kbd { display: inline-grid; place-items: center; min-width: 24px; height: 24px; 
 .route-tabs { display: flex; gap: 7px; overflow-x: auto; padding: var(--space-4) var(--space-2) var(--space-14); scrollbar-width: thin; }
 .route-tabs button { flex: 0 0 auto; min-height: 38px; padding: 0 13px; border: 1px solid var(--line); border-radius: 9px; color: var(--muted); background: var(--surface); font-size: 12px; font-weight: 700; transition: background .18s ease, border-color .18s ease, color .18s ease; }
 .route-tabs button:hover, .route-tabs button:focus-visible { border-color: var(--blue); color: var(--text); }
-.route-tabs button[aria-selected="true"] { border-color: var(--orange); color: #fff; background: #4a2719; box-shadow: 0 5px 18px #ff791f22; }
+.route-tabs button[aria-selected="true"] { border-color: var(--orange); color: var(--color--fff); background: var(--color--4a2719); box-shadow: 0 5px 18px var(--color--ff791f22); }
 
-.frame-shell { overflow: hidden; border: 1px solid var(--line-strong); border-radius: 15px; background: #080f1c; box-shadow: 0 22px 60px #0006; }
+.frame-shell { overflow: hidden; border: 1px solid var(--line-strong); border-radius: 15px; background: var(--color--080f1c); box-shadow: 0 22px 60px var(--color--0006); }
 .frame-toolbar { gap: var(--space-10); min-height: 43px; padding: 0 13px; border-bottom: 1px solid var(--line); color: var(--text); background: var(--surface); font-size: 12px; font-weight: 700; }
 .frame-url { min-width: 0; overflow: hidden; color: var(--muted); font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
 .toolbar-button { margin-left: auto; border: 1px solid var(--line); border-radius: 7px; padding: var(--space-6) 9px; color: var(--muted); background: transparent; font-size: 11px; }

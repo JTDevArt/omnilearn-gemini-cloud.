@@ -1,3 +1,5 @@
+/* Shared color tokens and responsive type; existing tool layout stays intact. */
+/* Shared colors and responsive type; tool layout stays intact. */
 .map-edit-dialog {
   max-width: min(650px, 94vw);
   max-height: 90vh;
@@ -9,7 +11,7 @@
   padding: var(--space-24);
 }
 .map-edit-dialog::backdrop {
-  background: #0009;
+  background: var(--color--0009);
 }
 .map-edit-dialog form,
 .map-edit-dialog label {
@@ -46,7 +48,7 @@
 }
 .learning-stat strong {
   display: block;
-  font-size: 26px;
+  font-size:clamp(26px,2vw,26px);
 }
 .learning-stat span {
   font-size: 13px;
@@ -122,7 +124,7 @@
 .journey-tools button{text-align:left}
 @media (min-width:701px) and (max-width:1050px){.journey-workspace{grid-template-columns:minmax(150px,200px) minmax(0,1fr)}.journey-tools{grid-column:1/-1;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}.journey-tools h2{grid-column:1/-1}}
 .journey-workspace h2 {
-  font-size: 28px;
+  font-size:clamp(28px,2vw,28px);
 }
 .profile-form {
   display: grid;

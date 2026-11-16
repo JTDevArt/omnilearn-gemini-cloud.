@@ -1,3 +1,5 @@
+/* Shared color tokens and responsive type; existing tool layout stays intact. */
+/* Shared colors and responsive type; tool layout stays intact. */
 .product-dashboard .study-workspace { padding:0; border:0; background:transparent; box-shadow:none; }
 .study-workspace .workspace-head { padding:var(--space-24) 0; margin:0; align-items:center; }
 .study-workspace .study-title { margin:0 0 var(--space-8); font-size:clamp(24px,2.6vw,32px); overflow-wrap:anywhere; }
@@ -24,7 +26,7 @@
 .study-workspace .task-options label { font-size:13px; }
 .study-workspace .task-options span { font-size:12px; }
 .study-workspace .tool-output { min-height:180px; padding:var(--space-4) 0; font-size:15px; }
-.study-workspace .tool-output h2 { font-size:20px; margin:0 0 var(--space-12); }
+.study-workspace .tool-output h2 { font-size:clamp(20px,2vw,20px); margin:0 0 var(--space-12); }
 .study-workspace .tool-output p { margin:var(--space-8) 0 var(--space-16); }
 .study-workspace .chat-messages { max-height:none; padding:0; }
 .study-workspace .chat-row { padding:var(--space-8) 0 0; background:transparent; }
@@ -39,7 +41,7 @@ body[data-study-tool]:not([data-study-tool=chat]) .study-workspace :is(#chatMess
 .product-panel .journey-workspace { grid-template-columns:190px minmax(0,1fr) 180px; gap:var(--space-16); }
 .journey-workspace>nav,.journey-workspace>article,.journey-workspace>.journey-tools { padding:var(--space-18); border:1px solid var(--border); border-radius:var(--radius-card); background:var(--surface); }
 .journey-workspace .journey-tools h2 { font-size:15px; margin:0 0 var(--space-8); }
-.journey-workspace article h2 { font-size:22px; margin:0 0 var(--space-12); }
+.journey-workspace article h2 { font-size:clamp(22px,2vw,22px); margin:0 0 var(--space-12); }
 .journey-workspace article h3 { font-size:17px; }
 .journey-workspace>article { padding:clamp(var(--space-18),2.2vw,var(--space-32)); }
 .journey-workspace>article>:not(details) { max-width:var(--reading-measure); margin-inline:auto; }
@@ -78,6 +80,6 @@ body[data-study-tool]:not([data-study-tool=chat]) .study-workspace :is(#chatMess
  .study-settings[open] .dropzone span { overflow-wrap:anywhere; }
  .product-panel .journey-workspace { grid-template-columns:minmax(0,1fr); }
  .product-panel:has(.journey-workspace)>.panel-actions { display:block; margin-block:var(--space-20); }
- .product-panel:has(.journey-workspace)>.panel-actions h1 { margin:0 0 var(--space-8); font-size:28px; }
+ .product-panel:has(.journey-workspace)>.panel-actions h1 { margin:0 0 var(--space-8); font-size:clamp(28px,2vw,28px); }
  .product-panel:has(.journey-workspace)>.panel-actions>span { font-size:13px; color:var(--text-secondary); }
 }

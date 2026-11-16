@@ -38,7 +38,7 @@
     root.style.colorScheme = resolved;
     if (document.body) document.body.classList.toggle('dark', resolved === 'dark');
     const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.content = resolved === 'dark' ? '#10131a' : '#fffaf5';
+    if (meta) meta.content = resolved === 'dark' ? '#0b1220' : '#f7f8fc';
     updateControls();
     window.dispatchEvent(new CustomEvent('omnilearn:themechange', {
       detail: { preference, resolved }
