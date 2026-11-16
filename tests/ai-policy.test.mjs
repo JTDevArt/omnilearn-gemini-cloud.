@@ -29,6 +29,8 @@ test('cached map rendering omits causal fields and uses the result language', ()
   const extract = (start,end) => script.slice(script.indexOf(start),script.indexOf(end,script.indexOf(start)));
   const output = { classList: {remove(){}}, innerHTML:'',querySelectorAll:()=>[] };
   const ctx = vm.createContext({toolOutput:output, conceptMapState:legacyMap, $:()=>null,renderMarkdownToSafeHtml:v=>v || ''});
+  // This fixture checks template copy; real DOM sanitization runs in verify-html-safety.cjs.
+  ctx.window = {OmniHtml:{sanitize:value=>value}};
   vm.runInContext(extract('function escapeHtml','function renderMarkdownToSafeHtml')+extract('function renderInteractiveConceptMap','function getTabCacheKey'),ctx);
   ctx.renderInteractiveConceptMap();
   assert.ok(!output.innerHTML.includes('LEGACY CAUSAL TEXT'));

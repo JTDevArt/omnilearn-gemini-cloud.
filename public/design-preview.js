@@ -92,11 +92,11 @@ const titleBlock = (name,desc,cta='') =>
   '<div class="page-head"><div><p class="eyebrow">OMNILEARN AI · DESIGN EXPLORATION</p>'+
   '<h1>'+escapeHtml(name)+'</h1><p>'+desc+'</p></div>'+cta+'</div>';
 function syncNavigation(route){
-  nav.innerHTML='<div class="nav-list">'+routes.map(item =>
+  nav.innerHTML=window.OmniHtml.sanitize('<div class="nav-list">'+routes.map(item =>
     '<a class="nav-link'+(item[0]===route?' active':'')+'" href="#'+item[0]+'"'+
     (item[0]===route?' aria-current="page"':'')+'>'+
     '<span class="nav-icon" aria-hidden="true">'+item[1]+'</span>'+item[2]+'</a>'
-  ).join('')+'</div>';
+  ).join('')+'</div>');
   $('#topTitle').textContent=routeNames[route];
   $('#modeSwitch').setAttribute('aria-label',route==='home'?'Beralih ke Dashboard':'Beralih ke Beranda AI');
   document.title=routeNames[route]+' · OmniLearn AI Design Preview';
@@ -112,19 +112,19 @@ function notesList(notes=state.notes){
     (!term || (note.title+' '+note.subject+' '+note.kind+' '+(note.summary||''))
       .toLocaleLowerCase('id').includes(term)));
   visible.sort((a,b)=>state.sort==='old' ? a.date-b.date : b.date-a.date);
-  if(!visible.length) return '<div class="empty"><div class="empty-art">▤</div><h2>Belum ada catatan yang cocok</h2><p>Ubah pencarian atau buat catatan baru.</p>'+ 
+  if(!visible.length) return '<div class="empty"><div class="empty-art">▤</div><h2>Belum ada catatan yang cocok</h2><p>Ubah pencarian atau buat catatan baru.</p>'+
     '<button class="button button-primary" data-action="add-note">+ Buat Catatan</button></div>';
   return '<div class="content-grid three-cols lesson-collection '+(state.layout==='list'?'list-layout':'')+'">'+visible.map(note=> {
     const chapters=note.chapters||[];
     return '<button class="note-card saved-lesson-card" type="button" data-note="'+escapeHtml(note.id)+'" aria-label="Buka materi '+escapeHtml(note.title)+'">'+
-      '<div class="saved-cover" aria-hidden="true"><div class="saved-cover-top"><span>OMNILEARN · MATERI</span><span>✦</span></div>'+ 
-      '<div class="saved-cover-paper"><div class="saved-paper-category">'+escapeHtml(note.subject)+'</div>'+ 
-      '<div class="saved-paper-heading">'+escapeHtml(note.title)+'</div>'+ 
-      '<div class="saved-paper-rule"></div><div class="saved-paper-line"></div><div class="saved-paper-line short"></div>'+ 
-      '<div class="saved-paper-section">'+(chapters.length>1?'01 / '+chapters.length+' BAB':'CATATAN')+'</div></div></div>'+ 
-      '<div class="saved-lesson-info"><span class="saved-category">'+escapeHtml(note.subject)+'</span>'+ 
-      '<h3>'+escapeHtml(note.title)+'</h3>'+ 
-      '<p class="saved-summary">'+escapeHtml(note.summary)+'</p>'+ 
+      '<div class="saved-cover" aria-hidden="true"><div class="saved-cover-top"><span>OMNILEARN · MATERI</span><span>✦</span></div>'+
+      '<div class="saved-cover-paper"><div class="saved-paper-category">'+escapeHtml(note.subject)+'</div>'+
+      '<div class="saved-paper-heading">'+escapeHtml(note.title)+'</div>'+
+      '<div class="saved-paper-rule"></div><div class="saved-paper-line"></div><div class="saved-paper-line short"></div>'+
+      '<div class="saved-paper-section">'+(chapters.length>1?'01 / '+chapters.length+' BAB':'CATATAN')+'</div></div></div>'+
+      '<div class="saved-lesson-info"><span class="saved-category">'+escapeHtml(note.subject)+'</span>'+
+      '<h3>'+escapeHtml(note.title)+'</h3>'+
+      '<p class="saved-summary">'+escapeHtml(note.summary)+'</p>'+
       '<div class="note-foot"><span>'+escapeHtml(note.kind)+'</span><span>'+chapters.length+' bab <b aria-hidden="true">↗</b></span></div></div></button>';
   }).join('')+'</div>';
 }
@@ -143,10 +143,10 @@ function noteControls(){
 }
 function renderNotesGrid(){
   const container=$('#noteResults');
-  if(container) container.innerHTML=notesList();
+  if(container) container.innerHTML=window.OmniHtml.sanitize(notesList());
 }
 function renderLanding(){
-  page.innerHTML='<div class="panel brand-hero">'+
+  page.innerHTML=window.OmniHtml.sanitize('<div class="panel brand-hero">'+
     '<p class="eyebrow" style="color:#ffbd83!important">PLATFORM BELAJAR BERBASIS AI</p>'+
     '<h1>Belajar lebih efektif<br>dengan <em>AI.</em></h1>'+
     '<p>Bangun kebiasaan belajar, simpan materimu, dan siapkan latihan dalam satu ruang yang konsisten.</p>'+
@@ -166,10 +166,10 @@ function renderLanding(){
     '<div class="quick-grid">'+[
       ['✦','Tanya & belajar','#home'],['▣','Kelola catatan','#notes'],
       ['◉','Latihan ujian','#exams'],['▦','Pantau progres','#dashboard']
-    ].map(x=>'<a class="panel quick-card" href="'+x[2]+'"><span class="quick-icon">'+x[0]+'</span><strong>'+x[1]+'</strong></a>').join('')+'</div>';
+    ].map(x=>'<a class="panel quick-card" href="'+x[2]+'"><span class="quick-icon">'+x[0]+'</span><strong>'+x[1]+'</strong></a>').join('')+'</div>');
 }
 function renderHome(){
-  page.innerHTML='<div class="hero-home">'+robot()+
+  page.innerHTML=window.OmniHtml.sanitize('<div class="hero-home">'+robot()+
     '<p class="eyebrow">OMNILEARN · LEARNING ASSISTANT</p><h1>Halo, siap belajar hari ini?</h1>'+
     '<p>Tanyakan apa saja, unggah materi, atau gunakan tautan video untuk memulai. Di preview ini AI tidak dipanggil.</p></div>'+
     '<form class="composer" id="composerForm">'+
@@ -185,7 +185,7 @@ function renderHome(){
     '<a href="https://omnilearnid.ai.studio/dashboard?view=chat" style="color:var(--blue)">Buka Tutor AI aplikasi asli</a>.</p>'+
     '<div class="subhead"><div><h2>Catatan Kamu</h2><p>Materi tersimpan sebagai catatan belajar dengan judul, ringkasan, dan bab.</p></div>'+
     '<button class="button button-primary" data-action="add-note">+ Catatan Baru</button></div>'+
-    noteControls()+'<div id="noteResults">'+notesList()+'</div>';
+    noteControls()+'<div id="noteResults">'+notesList()+'</div>');
 }
 function stat(icon,label,value){
   return '<article class="panel stat-card"><span class="stat-icon">'+icon+'</span><div><span>'+label+'</span>'+
@@ -207,7 +207,7 @@ function chartHtml(){
   ).join('')+'</div><p class="meta" style="padding-top:21px">Data aktivitas ilustratif</p>';
 }
 function renderDashboard(){
-  page.innerHTML=titleBlock('Selamat datang di OmniLearn! 👋','Lanjutkan perjalanan belajarmu. Angka di layar ini hanyalah contoh desain.',tag)+
+  page.innerHTML=window.OmniHtml.sanitize(titleBlock('Selamat datang di OmniLearn! 👋','Lanjutkan perjalanan belajarmu. Angka di layar ini hanyalah contoh desain.',tag)+
     '<div class="content-grid four-cols">'+
     stat('▣','Mata pelajaran','12')+stat('▤','Catatan contoh',String(state.notes.length))+
     stat('◉','Latihan ujian','27')+stat('★','Total XP','3.420')+'</div>'+
@@ -219,15 +219,15 @@ function renderDashboard(){
     '<section class="panel panel-pad"><h3>Progres Mingguan</h3>'+chartHtml()+'</section>'+
     '<section class="panel panel-pad"><h3>Aktivitas Terakhir</h3><div class="activity-list" style="margin-top:23px">'+
     '<div class="activity-row"><span class="activity-mark">✓</span>Menyelesaikan latihan <time>10 m lalu · contoh</time></div>'+
-    '<div class="activity-row"><span class="activity-mark">▤</span>Membuat catatan <time>1 jam lalu · contoh</time></div></div></section></div>';
+    '<div class="activity-row"><span class="activity-mark">▤</span>Membuat catatan <time>1 jam lalu · contoh</time></div></div></section></div>');
 }
 function renderSubjects(){
   const subjects=state.subjects;
-  page.innerHTML=titleBlock('Mata Pelajaran','Kelola dan jelajahi semua mata pelajaranmu di satu tempat.',
+  page.innerHTML=window.OmniHtml.sanitize(titleBlock('Mata Pelajaran','Kelola dan jelajahi semua mata pelajaranmu di satu tempat.',
     '<button class="button button-primary" data-action="add-subject">+ Tambah</button>')+
     '<div class="toolbar"><input id="subjectSearch" class="field" type="search" placeholder="Cari mata pelajaran..." aria-label="Cari mata pelajaran">'+
     '<span class="chip active">Aktif</span><span class="chip">Arsip · demo</span></div>'+
-    '<div id="subjectResults">'+(subjects.length?subjectCards(subjects):subjectEmpty())+'</div>';
+    '<div id="subjectResults">'+(subjects.length?subjectCards(subjects):subjectEmpty())+'</div>');
 }
 function subjectEmpty(){
   return '<div class="empty"><div class="empty-art">📚</div><h2>Belum ada mata pelajaran</h2>'+
@@ -246,15 +246,15 @@ function renderFilteredSubjects(){
   if(!input||!target)return;
   const q=input.value.trim().toLocaleLowerCase('id');
   const filtered=state.subjects.filter(s=>s.name.toLocaleLowerCase('id').includes(q));
-  target.innerHTML=filtered.length?subjectCards(filtered):subjectEmpty();
+  target.innerHTML=window.OmniHtml.sanitize(filtered.length?subjectCards(filtered):subjectEmpty());
 }
 function renderNotes(){
-  page.innerHTML=titleBlock('Catatan','Judul topik dan bab belajar ditampilkan rapi; nama berkas hanya ada di bagian sumber.',
+  page.innerHTML=window.OmniHtml.sanitize(titleBlock('Catatan','Judul topik dan bab belajar ditampilkan rapi; nama berkas hanya ada di bagian sumber.',
     '<button class="button button-primary" data-action="add-note">+ Buat Catatan</button>')+
-    noteControls()+'<div id="noteResults">'+notesList()+'</div>';
+    noteControls()+'<div id="noteResults">'+notesList()+'</div>');
 }
 function renderExams(){
-  page.innerHTML=titleBlock('Ujian','Latihan soal, tryout, dan simulasi ujian. Belum terhubung ke backend pada preview ini.',tag)+
+  page.innerHTML=window.OmniHtml.sanitize(titleBlock('Ujian','Latihan soal, tryout, dan simulasi ujian. Belum terhubung ke backend pada preview ini.',tag)+
     '<div class="chip-row" style="margin-bottom:18px"><span class="chip active">Latihan Soal</span><span class="chip">Tryout · rancangan</span><span class="chip">Simulasi · rancangan</span></div>'+
     '<div class="exam-layout"><form id="examForm" class="panel exam-form"><h3>Atur Latihan Soal</h3>'+
     '<label for="examSubject">Mata Pelajaran</label><select id="examSubject" class="field"><option>Matematika</option><option>Biologi</option><option>Fisika</option></select>'+
@@ -264,7 +264,7 @@ function renderExams(){
     '<button class="button button-primary" type="submit" style="width:100%">▶ Mulai Simulasi UI</button></form>'+
     '<div class="panel exam-preview" id="examResult">'+examDemoMarkup()+'</div></div>'+
     '<div class="subhead"><div><h2>Mesin ujian sebenarnya</h2><p>Milestone 08 sudah memiliki engine ujian di aplikasi utama.</p></div>'+
-    linkButton('Buka Ujian asli ↗','/dashboard?view=exams','button-blue')+'</div>';
+    linkButton('Buka Ujian asli ↗','/dashboard?view=exams','button-blue')+'</div>');
 }
 function examDemoMarkup(){
   if(!state.examStarted)return '<div class="icon-large">📋</div><h3>Latihan Terarah</h3>'+
@@ -282,14 +282,14 @@ function examDemoMarkup(){
 function renderStreaks(){
   const heat=Array.from({length:84},(_,i)=>'<div class="heat h'+((i*17+Math.floor(i/6))%5)+
     '" title="Aktivitas ilustrasi hari '+(i+1)+'" aria-label="Aktivitas ilustrasi"></div>').join('');
-  page.innerHTML=titleBlock('Streaks & Aktivitas','Bangun konsistensi belajarmu dan lihat perjalanan belajar dari waktu ke waktu.',tag)+
+  page.innerHTML=window.OmniHtml.sanitize(titleBlock('Streaks & Aktivitas','Bangun konsistensi belajarmu dan lihat perjalanan belajar dari waktu ke waktu.',tag)+
     '<div class="content-grid three-cols">'+stat('🔥','Streak belajar','12 hari')+
     stat('🏆','Peringkat contoh','#42')+stat('◆','Total XP','3.420 XP')+'</div>'+
     '<div class="streak-layout" style="margin-top:17px">'+
     '<section class="panel panel-pad"><h3>Aktivitas Belajar</h3>'+chartHtml()+'</section>'+
     '<section class="panel panel-pad"><h3>Kalender Aktivitas</h3><p class="meta">12 minggu · data ilustrasi</p><div class="heatmap">'+heat+'</div></section></div>'+
     '<div class="subhead"><p>Data nyata harus diambil dari modul learning-activity, bukan dari angka demo ini.</p>'+
-    linkButton('Lihat streak asli ↗','/dashboard?view=streaks')+'</div>';
+    linkButton('Lihat streak asli ↗','/dashboard?view=streaks')+'</div>');
 }
 function renderLesson(){
   const note=state.notes.find(item => item.id===state.selectedNote) || state.notes[0];
@@ -302,40 +302,40 @@ function renderLesson(){
     ? paras.map(p=>'<p>'+escapeHtml(p)+'</p>').join('')
     : '<div class="chapter-empty">Belum ada isi bab. Klik <strong>Edit isi bab</strong> untuk menulis catatanmu.</div>';
   const source=note.sourceFile
-    ? '<details class="source-disclosure"><summary>Sumber asli</summary><p>'+escapeHtml(note.sourceFile)+'</p>'+ 
+    ? '<details class="source-disclosure"><summary>Sumber asli</summary><p>'+escapeHtml(note.sourceFile)+'</p>'+
       '<small>Berkas asal hanya dicatat sebagai metadata dalam prototipe. Tidak diunggah atau diproses oleh AI.</small></details>'
     : '<details class="source-disclosure"><summary>Sumber asli</summary><p>Catatan dibuat manual.</p></details>';
-  page.innerHTML='<div class="lesson-breadcrumb"><a href="#notes">Catatan</a><span>›</span><span>'+escapeHtml(note.subject)+'</span><span>›</span><strong>'+escapeHtml(note.title)+'</strong></div>'+ 
-    '<div class="page-head lesson-page-head"><div><p class="eyebrow">RUANG BELAJAR · MATERI TERSIMPAN</p><h1>'+escapeHtml(note.title)+'</h1>'+ 
-    '<p>'+escapeHtml(note.summary)+'</p><div class="lesson-meta"><span>'+escapeHtml(note.subject)+'</span><span>'+chapters.length+' bab</span><span>'+escapeHtml(note.kind)+'</span></div></div>'+ 
-    '<button class="button button-ghost" data-action="edit-note" type="button">✎ Edit judul</button></div>'+ 
+  page.innerHTML=window.OmniHtml.sanitize('<div class="lesson-breadcrumb"><a href="#notes">Catatan</a><span>›</span><span>'+escapeHtml(note.subject)+'</span><span>›</span><strong>'+escapeHtml(note.title)+'</strong></div>'+
+    '<div class="page-head lesson-page-head"><div><p class="eyebrow">RUANG BELAJAR · MATERI TERSIMPAN</p><h1>'+escapeHtml(note.title)+'</h1>'+
+    '<p>'+escapeHtml(note.summary)+'</p><div class="lesson-meta"><span>'+escapeHtml(note.subject)+'</span><span>'+chapters.length+' bab</span><span>'+escapeHtml(note.kind)+'</span></div></div>'+
+    '<button class="button button-ghost" data-action="edit-note" type="button">✎ Edit judul</button></div>'+
     '<div class="lesson-grid lesson-grid-upgraded">'+
-    '<aside class="panel lesson-nav"><h3>Daftar Bab</h3><p class="meta" style="margin:7px 0 12px">Susunan catatanmu</p>'+ 
-    chapters.map((item,i)=>'<button class="chapter-btn '+(i===active?'active':'')+'" type="button" data-chapter="'+i+'" aria-current="'+(i===active?'step':'false')+'"><span class="chapter-no">'+(i+1)+'</span>'+escapeHtml(item.title)+'</button>').join('')+'</aside>'+ 
-    '<article class="panel lesson-reader structured-reader"><div class="reader-overline">BAB '+String(active+1).padStart(2,'0')+' · '+escapeHtml(note.subject)+'</div>'+ 
-    '<h2>'+escapeHtml(chapter.title)+'</h2><div class="reader-text">'+chapterBody+'</div>'+ 
-    (chapter.example?'<div class="reader-example"><strong>Contoh</strong><p>'+escapeHtml(chapter.example)+'</p></div>':'')+ 
-    (chapter.formula?'<div class="formula">'+escapeHtml(chapter.formula)+'</div>':'')+ 
-    '<div class="reader-edit-actions"><button type="button" class="button button-ghost" data-action="edit-chapter">✎ Edit isi bab</button></div>'+ 
-    '<div id="chapterEditor" class="chapter-editor" hidden><label for="chapterBody">Isi catatan</label>'+ 
-    '<textarea id="chapterBody" class="field" rows="8">'+escapeHtml(chapter.body||'')+'</textarea>'+ 
-    '<button type="button" class="button button-primary" data-action="save-chapter">Simpan catatan</button></div>'+ 
-    source+'</article>'+ 
-    '<aside class="panel lesson-tools"><h3>Alat Belajar</h3><p class="meta" style="margin:9px 0 15px">Pakai fitur aplikasi asli</p>'+ 
+    '<aside class="panel lesson-nav"><h3>Daftar Bab</h3><p class="meta" style="margin:7px 0 12px">Susunan catatanmu</p>'+
+    chapters.map((item,i)=>'<button class="chapter-btn '+(i===active?'active':'')+'" type="button" data-chapter="'+i+'" aria-current="'+(i===active?'step':'false')+'"><span class="chapter-no">'+(i+1)+'</span>'+escapeHtml(item.title)+'</button>').join('')+'</aside>'+
+    '<article class="panel lesson-reader structured-reader"><div class="reader-overline">BAB '+String(active+1).padStart(2,'0')+' · '+escapeHtml(note.subject)+'</div>'+
+    '<h2>'+escapeHtml(chapter.title)+'</h2><div class="reader-text">'+chapterBody+'</div>'+
+    (chapter.example?'<div class="reader-example"><strong>Contoh</strong><p>'+escapeHtml(chapter.example)+'</p></div>':'')+
+    (chapter.formula?'<div class="formula">'+escapeHtml(chapter.formula)+'</div>':'')+
+    '<div class="reader-edit-actions"><button type="button" class="button button-ghost" data-action="edit-chapter">✎ Edit isi bab</button></div>'+
+    '<div id="chapterEditor" class="chapter-editor" hidden><label for="chapterBody">Isi catatan</label>'+
+    '<textarea id="chapterBody" class="field" rows="8">'+escapeHtml(chapter.body||'')+'</textarea>'+
+    '<button type="button" class="button button-primary" data-action="save-chapter">Simpan catatan</button></div>'+
+    source+'</article>'+
+    '<aside class="panel lesson-tools"><h3>Alat Belajar</h3><p class="meta" style="margin:9px 0 15px">Pakai fitur aplikasi asli</p>'+
     [['✦','Ringkas dengan AI','summary'],['▤','Buat Catatan','notes'],['▣','Buat Flashcard','cards'],['◉','Latihan Soal','quiz'],['☏','Tanya AI','chat']].map(x=>
-      '<a class="tool-link" href="https://omnilearnid.ai.studio/dashboard?view='+x[2]+'">'+x[0]+' '+x[1]+' ↗</a>').join('')+'</aside></div>';
+      '<a class="tool-link" href="https://omnilearnid.ai.studio/dashboard?view='+x[2]+'">'+x[0]+' '+x[1]+' ↗</a>').join('')+'</aside></div>');
 }
 function renderLeaderboard(){
-  page.innerHTML=titleBlock('Leaderboard','Peringkat hanya boleh menggunakan data pengguna nyata yang mengizinkan tampil di papan peringkat.',tag)+
+  page.innerHTML=window.OmniHtml.sanitize(titleBlock('Leaderboard','Peringkat hanya boleh menggunakan data pengguna nyata yang mengizinkan tampil di papan peringkat.',tag)+
     '<div class="empty"><div class="empty-art">🏆</div><h2>Belum ada peringkat terverifikasi</h2>'+
     '<p>Prototipe tidak membuat akun atau pesaing palsu. Sambungkan leaderboard asli hanya setelah sistem opt-in dan privasi tersedia.</p>'+
-    linkButton('Buka leaderboard aplikasi ↗','/dashboard?view=leaderboard')+'</div>';
+    linkButton('Buka leaderboard aplikasi ↗','/dashboard?view=leaderboard')+'</div>');
 }
 function renderPinned(){
-  page.innerHTML=titleBlock('Disematkan','Area khusus materi favorit dan catatan penting.',tag)+
+  page.innerHTML=window.OmniHtml.sanitize(titleBlock('Disematkan','Area khusus materi favorit dan catatan penting.',tag)+
     '<div class="empty"><div class="empty-art">◇</div><h2>Belum ada pin di prototipe</h2>'+
     '<p>Astra perlu memakai status pinned dari local-library yang sudah ada, bukan membuat penyimpanan baru.</p>'+
-    linkButton('Buka pin aplikasi asli ↗','/dashboard?view=pinned')+'</div>';
+    linkButton('Buka pin aplikasi asli ↗','/dashboard?view=pinned')+'</div>');
 }
 function renderProfile(){
   const tab=Number(state.profileTab)||0;
@@ -351,7 +351,7 @@ function renderProfile(){
   if(tab===2)body='<div class="setting-row"><strong>Akun</strong><span>Demo tanpa login</span></div>'+
     '<div class="setting-row"><strong>Penyimpanan</strong><span>sessionStorage prototipe saja</span></div>'+
     '<div class="setting-row"><strong>Fitur akun asli</strong>'+linkButton('Buka pengaturan ↗','/dashboard?view=account')+'</div>';
-  page.innerHTML=titleBlock('Profil','Kelola akun, preferensi, dan pengaturan belajarmu.',tag)+
+  page.innerHTML=window.OmniHtml.sanitize(titleBlock('Profil','Kelola akun, preferensi, dan pengaturan belajarmu.',tag)+
     '<div class="panel profile-top"><span class="profile-avatar" aria-hidden="true">O</span>'+
     '<div><h2>Pelajar OmniLearn</h2><p>Profil contoh · bukan akun asli</p></div>'+
     '<span class="chip active" style="margin-left:auto">★ Level 8 · demo</span></div>'+
@@ -360,11 +360,11 @@ function renderProfile(){
     '<div class="tabs" role="tablist" aria-label="Bagian profil">'+tabs.map((name,i)=>
     '<button class="tab '+(tab===i?'active':'')+'" role="tab" type="button" data-profile-tab="'+i+
     '" aria-selected="'+(tab===i)+'">'+name+'</button>').join('')+'</div>'+
-    '<section class="panel">'+body+'</section>';
+    '<section class="panel">'+body+'</section>');
 }
 async function renderUpdates(){
-  page.innerHTML=titleBlock('Update List','Riwayat perubahan aplikasi asli, bukan daftar fitur palsu dari prototipe.',tag)+
-    '<div id="releaseResults" class="panel panel-pad"><p role="status">Mengambil manifest versi asli…</p></div>';
+  page.innerHTML=window.OmniHtml.sanitize(titleBlock('Update List','Riwayat perubahan aplikasi asli, bukan daftar fitur palsu dari prototipe.',tag)+
+    '<div id="releaseResults" class="panel panel-pad"><p role="status">Mengambil manifest versi asli…</p></div>');
   const container=$('#releaseResults');
   try{
     const inlineManifest=document.querySelector('#previewReleaseData');
@@ -520,7 +520,7 @@ document.addEventListener('submit',event=>{
   }
   if(event.target.id==='examForm'){
     event.preventDefault();state.examStarted=true;state.examAnswer='';store();
-    $('#examResult').innerHTML=examDemoMarkup();notify('Simulasi antarmuka dimulai. Tidak memakai kuota AI.');
+    $('#examResult').innerHTML=window.OmniHtml.sanitize(examDemoMarkup());notify('Simulasi antarmuka dimulai. Tidak memakai kuota AI.');
   }
 });
 document.addEventListener('click',event=>{
@@ -533,7 +533,7 @@ document.addEventListener('click',event=>{
   const layout=event.target.closest('[data-layout]');
   if(layout){state.layout=layout.dataset.layout;store();render();return;}
   const answer=event.target.closest('[data-answer]');
-  if(answer){state.examAnswer=answer.dataset.answer;store();$('#examResult').innerHTML=examDemoMarkup();return;}
+  if(answer){state.examAnswer=answer.dataset.answer;store();$('#examResult').innerHTML=window.OmniHtml.sanitize(examDemoMarkup());return;}
   const action=event.target.closest('[data-action]');
   if(!action)return;
   switch(action.dataset.action){

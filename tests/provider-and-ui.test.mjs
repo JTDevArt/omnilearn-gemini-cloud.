@@ -74,6 +74,8 @@ test('concept-map titles and relations escape provider HTML', () => {
     conceptMapState: { centralTopic: '<img src=x onerror=alert(1)>', summary: '<script>bad</script>', branches: [
       { title: '<img onerror=bad>', relationToCenter: '<b>bad</b>', subconcepts: [{title:'<script>bad</script>',relation:'<img onerror=bad>'}] }
     ] } });
+  // Keep this test focused on escaping before the separately browser-tested sink.
+  ctx.window = {OmniHtml:{sanitize:value=>value}};
   vm.runInContext(extract('function escapeHtml', 'function renderMarkdownToSafeHtml') + extract('function renderInteractiveConceptMap', 'function getTabCacheKey'), ctx);
   ctx.renderInteractiveConceptMap();
   assert.ok(output.innerHTML.includes('&lt;img'));

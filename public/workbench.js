@@ -19,7 +19,7 @@
   };
   const render = (node, value) => {
     // There is no raw HTML fallback if the optional renderer has not loaded.
-    if (typeof window.renderMarkdownToSafeHtml === 'function') node.innerHTML = window.renderMarkdownToSafeHtml(String(value || ''));
+    if (typeof window.renderMarkdownToSafeHtml === 'function') node.innerHTML = window.OmniHtml.sanitize(window.renderMarkdownToSafeHtml(String(value || '')));
     else node.textContent = String(value || '');
     node.querySelectorAll('a').forEach(link => { link.target = '_blank'; link.rel = 'noopener noreferrer'; });
   };

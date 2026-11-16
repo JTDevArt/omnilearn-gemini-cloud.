@@ -205,7 +205,7 @@ function renderMarkdownToSafeHtml(rawText) {
 function setRenderedContent(el, role, text) {
   if (role === 'assistant') {
     el.classList.add('md-rendered');
-    el.innerHTML = renderMarkdownToSafeHtml(text);
+    el.innerHTML = window.OmniHtml.sanitize(renderMarkdownToSafeHtml(text));
     el.querySelectorAll('a').forEach(link => {
       link.setAttribute('target', '_blank');
       link.setAttribute('rel', 'noopener noreferrer');
@@ -220,7 +220,7 @@ function setToolOutputMarkdown(markdownText) {
   lastOutput = String(markdownText || '');
   lastOutputHtml = renderMarkdownToSafeHtml(lastOutput);
   toolOutput.classList.add('md-rendered');
-  toolOutput.innerHTML = lastOutputHtml;
+  toolOutput.innerHTML = window.OmniHtml.sanitize(lastOutputHtml);
   toolOutput.querySelectorAll('a').forEach(link => {
     link.setAttribute('target', '_blank');
     link.setAttribute('rel', 'noopener noreferrer');
@@ -766,7 +766,7 @@ function renderInteractiveQuiz() {
       `</div>`;
     }
 
-    toolOutput.innerHTML = `<div class="quiz-widget" data-testid="quiz-results">
+    toolOutput.innerHTML = window.OmniHtml.sanitize(`<div class="quiz-widget" data-testid="quiz-results">
       <div class="quiz-results-card">
         <div class="quiz-score-banner">
           <div>
@@ -781,7 +781,7 @@ function renderInteractiveQuiz() {
         </div>
         ${reviewHtml}
       </div>
-    </div>`;
+    </div>`);
 
     $('retryQuizBtn')?.addEventListener('click', () => {
       quizState.currentIndex = 0;
@@ -835,7 +835,7 @@ function renderInteractiveQuiz() {
     </div>`;
   }
 
-  toolOutput.innerHTML = `<div class="quiz-widget" data-testid="quiz-interactive">
+  toolOutput.innerHTML = window.OmniHtml.sanitize(`<div class="quiz-widget" data-testid="quiz-interactive">
     <div class="quiz-topbar">
       <div class="quiz-meta">
         <span class="badge-pill">Soal ${idx + 1} dari ${total}</span>
@@ -859,7 +859,7 @@ function renderInteractiveQuiz() {
         </div>
       </div>
     </div>
-  </div>`;
+  </div>`);
 
   toolOutput.querySelectorAll('.quiz-opt-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -940,7 +940,7 @@ function renderInteractiveFlashcards() {
       ? `<span class="badge-pill warn">↺ Perlu diulang (${card.difficultCount}x)</span>`
       : '<span class="badge-pill">Belum dinilai</span>';
 
-  toolOutput.innerHTML = `<div class="fc-widget" data-testid="flashcard-interactive">
+  toolOutput.innerHTML = window.OmniHtml.sanitize(`<div class="fc-widget" data-testid="flashcard-interactive">
     <div class="fc-topbar">
       <div class="fc-stats-row">
         <span class="badge-pill">Kartu ${pos} dari ${totalInView}</span>
@@ -996,7 +996,7 @@ function renderInteractiveFlashcards() {
         <button type="button" class="tool-action" id="fcMarkEasyBtn" style="border-color:#c2dbc4;background:var(--green)">✓ Sudah paham</button>
       </div>
     </div>
-  </div>`;
+  </div>`);
 
   const toggleFlip = () => {
     flashcardState.isFlipped = !flashcardState.isFlipped;
@@ -1124,7 +1124,7 @@ function renderInteractiveConceptMap() {
     ].join('\n')
     : '';
 
-  toolOutput.innerHTML = `<div class="cmap-widget" data-testid="concept-map-interactive">
+  toolOutput.innerHTML = window.OmniHtml.sanitize(`<div class="cmap-widget" data-testid="concept-map-interactive">
     <div class="cmap-topbar">
       <div class="quiz-meta">
         <span class="badge-pill">${en ? 'Concept Map' : 'Peta Konsep'}</span>
@@ -1142,7 +1142,7 @@ function renderInteractiveConceptMap() {
     </div>
     <div class="cmap-branches">${branchesHtml}</div>
     ${relTableMd ? `<div class="md-rendered" style="margin-top:8px">${renderMarkdownToSafeHtml(relTableMd)}</div>` : ''}
-  </div>`;
+  </div>`);
 
   toolOutput.querySelectorAll('.cmap-toggle-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -1241,7 +1241,7 @@ async function runTool(task, customTopic = '', forceRegenerate = false) {
   const capturedMaterialVersion = materialVersion;
 
   toolOutput.classList.remove('md-rendered');
-  toolOutput.innerHTML = `<div class="study-loading"><span class="study-spinner" aria-hidden="true"></span><span>${taskNames[task]} sedang disusun…</span></div>`;
+  toolOutput.innerHTML = window.OmniHtml.sanitize(`<div class="study-loading"><span class="study-spinner" aria-hidden="true"></span><span>${taskNames[task]} sedang disusun…</span></div>`);
   chatFeedback.textContent = `AI sedang menyusun ${taskNames[task].toLowerCase()}…`;
   setBusy(true);
   try {
@@ -1848,7 +1848,7 @@ function renderSubjectExplorerCard(subject) {
   };
 
   cardEl.classList.add('show');
-  cardEl.innerHTML = `<div class="subject-explorer-head">
+  cardEl.innerHTML = window.OmniHtml.sanitize(`<div class="subject-explorer-head">
       <div>
         <div class="kicker">Jalur Eksplorasi Bidang Ilmu</div>
         <h3 style="margin:4px 0 0;font-size:21px">${subject}</h3>
@@ -1878,7 +1878,7 @@ function renderSubjectExplorerCard(subject) {
       <div class="subject-meta-item"><strong>Konsep-Konsep Utama</strong>${info.concepts}</div>
       <div class="subject-meta-item"><strong>Contoh Praktis Nyata</strong>${info.example}</div>
       <div class="subject-meta-item"><strong>Latihan & Eksplorasi Lanjutan</strong><em>Latihan:</em> ${info.exercise}<br><em>Topik Lanjutan:</em> ${info.further}</div>
-    </div>`;
+    </div>`);
 
   $('askTutorSubjectBtn')?.addEventListener('click', () => {
     chatInput.value = `Ajari aku bidang ${subject} secara bertahap mulai dari tingkat Pemula (Beginner) hingga Menengah dengan contoh nyata.`;

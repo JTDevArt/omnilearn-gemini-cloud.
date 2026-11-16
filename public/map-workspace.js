@@ -280,7 +280,7 @@ window.OmniMapWorkspace.render = (host, map) => {
     card.append(title);
     if (node.description) {
       const text = el('div');
-      text.innerHTML = renderMarkdownToSafeHtml(node.description);
+      text.innerHTML = window.OmniHtml.sanitize(renderMarkdownToSafeHtml(node.description));
       card.append(text);
     }
     parent.append(card);

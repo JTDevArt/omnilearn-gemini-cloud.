@@ -9,6 +9,9 @@ on:
       - 'scripts/verify-study-workspace.cjs'
       - 'scripts/verify-remaining-pages.cjs'
       - 'scripts/verify-page-interactions.cjs'
+      - 'scripts/verify-html-safety.cjs'
+      - 'public/safe-html.js'
+      - 'public/app.js'
       - 'public/exam-*.js'
       - 'public/landing.*'
       - 'public/*.css'
@@ -47,6 +50,7 @@ jobs:
           node scripts/verify-study-workspace.cjs
           QA_SKIP_SCREENSHOTS=1 node scripts/verify-remaining-pages.cjs
           node scripts/verify-page-interactions.cjs
+          node scripts/verify-html-safety.cjs
       - name: Upload screenshots and access report
         if: always()
         uses: actions/upload-artifact@v4

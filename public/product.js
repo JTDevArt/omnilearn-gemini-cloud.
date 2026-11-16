@@ -246,7 +246,7 @@
     updates: 'M5 5h14v16H5ZM8 3v4M16 3v4M8 11h8M8 15h5',
     profile: 'M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0ZM4 21v-2a8 6 0 0 1 16 0v2',
   };
-  sidebar.innerHTML = `<a class="wordmark" href="/">✳ omni<span>learn</span></a><nav aria-label="Menu utama">${Object.entries(
+  sidebar.innerHTML = window.OmniHtml.sanitize(`<a class="wordmark" href="/">✳ omni<span>learn</span></a><nav aria-label="Menu utama">${Object.entries(
     Object.fromEntries(['home','dashboard','subjects','notes','exams','streaks','leaderboard','updates','profile'].map(id => [id, views[id]]))
   )
     .map(
@@ -255,7 +255,7 @@
     )
     .join(
       ''
-    )}</nav><div class="sidebar-bottom"><a href="/dashboard?view=pinned" data-view="pinned">Disematkan</a><a href="/dashboard?view=help" data-view="help">Bantuan</a><a href="/dashboard?view=account" data-view="account">Akun</a><label>Tema <select data-theme-select aria-label="Tema"><option value="system">Ikuti perangkat</option><option value="light">Terang</option><option value="dark">Gelap</option></select></label><button id="shellTheme" hidden>◐ Tema</button><button id="shellLogout">Keluar</button><p>Pustaka pribadi · v1.0.0 dalam pengembangan</p></div>`;
+    )}</nav><div class="sidebar-bottom"><a href="/dashboard?view=pinned" data-view="pinned">Disematkan</a><a href="/dashboard?view=help" data-view="help">Bantuan</a><a href="/dashboard?view=account" data-view="account">Akun</a><label>Tema <select data-theme-select aria-label="Tema"><option value="system">Ikuti perangkat</option><option value="light">Terang</option><option value="dark">Gelap</option></select></label><button id="shellTheme" hidden>◐ Tema</button><button id="shellLogout">Keluar</button><p>Pustaka pribadi · v1.0.0 dalam pengembangan</p></div>`);
   document.body.prepend(sidebar);
   const closeSidebar = document.createElement('button');
   closeSidebar.className = 'menu-product secondary';
@@ -283,7 +283,7 @@
   const materialNav = document.createElement('nav');
   materialNav.className = 'material-navigation';
   materialNav.setAttribute('aria-label', 'Workspace materi');
-  materialNav.innerHTML = ['journey','note-editor','map','quiz','cards','sources','chat','podcast','sticky','video'].map(id => `<a href="/dashboard?view=${id}" data-view="${id}">${id === 'journey' ? 'Belajar' : id === 'note-editor' ? 'Catatan' : views[id][1]}</a>`).join('');
+  materialNav.innerHTML = window.OmniHtml.sanitize(['journey','note-editor','map','quiz','cards','sources','chat','podcast','sticky','video'].map(id => `<a href="/dashboard?view=${id}" data-view="${id}">${id === 'journey' ? 'Belajar' : id === 'note-editor' ? 'Catatan' : views[id][1]}</a>`).join(''));
   materialNav.insertAdjacentHTML('beforeend','<details class=more-tools><summary>Alat lainnya</summary><div>'+['summary','research','translate','plan','recovery'].map(id=>`<a href="/dashboard?view=${id}" data-view="${id}">${({summary:'Ringkasan',research:'Riset',translate:'Terjemahan',plan:'Rencana belajar',recovery:'Permintaan tersimpan'})[id]}</a>`).join('')+'</div></details>');
   const mobile = matchMedia('(max-width:700px)');
   sidebar.id='primarySidebar';
@@ -862,7 +862,7 @@
     return `<div class="source-grid">${list.map((s) => `<article class="source-card"><div class="source-card-kicker"><span>${{ audio: 'Audio', video: 'Video', transcript: 'Transkrip', document: 'Dokumen' }[kind(s)]}</span><span>${html(s.subject || 'Tanpa pelajaran')}</span></div><h3>${html(lessonTitle(s))}</h3><p>${Number(s.meta?.pageCount || 1)} bagian · ${s.text.length.toLocaleString('id-ID')} karakter<br>${new Date(s.createdAt).toLocaleDateString('id-ID')}</p><p class="subject-tag">${s.meta?.uploadState && s.meta.uploadState !== 'completed' ? 'Ekstraksi belum selesai; file asli tersimpan jika tersedia' : s.meta?.partialRead || s.meta?.truncated ? 'Teks sebagian; periksa sumber asli' : 'Teks siap dipakai'}</p><details class="source-original"><summary>Sumber asli</summary><p>${html(s.name)}</p><div class="panel-actions"><button data-source="${html(s.id)}" data-action="preview">Pratinjau</button><button data-source="${html(s.id)}" data-action="download">Unduh teks</button></div></details><div class="panel-actions"><button data-source="${html(s.id)}" data-action="rename">Ubah judul</button><button data-source="${html(s.id)}" data-action="chat">Buka</button></div><details class="source-card-tools"><summary>Alat belajar &amp; kelola</summary><div class="panel-actions"><button data-source="${html(s.id)}" data-action="summary">Ringkas</button><button data-source="${html(s.id)}" data-action="quiz">Kuis</button><button data-source="${html(s.id)}" data-action="cards">Kartu</button><button data-source="${html(s.id)}" data-action="map">Mindmap</button><button data-source="${html(s.id)}" data-action="delete">Hapus</button></div></details></article>`).join('')}</div>`;
   }
   function sourcesView(home = false, query = '') {
-    panel.innerHTML = `<span class="handwriting">${home ? 'selangkah lebih paham hari ini' : 'semua materi, satu tempat'}</span><h1>${home ? 'Mau belajar apa hari ini?' : 'Pustaka sumbermu'}</h1><p>${home ? 'Lanjutkan materimu, atau mulai dari rasa ingin tahu yang baru.' : 'Dokumen dan transkrip disimpan di browser perangkat ini. Pilih sumber untuk menghubungkannya ke seluruh alat belajar.'}</p><div class="panel-actions"><button data-explorer>Jelajahi bidang ilmu</button><button data-free-chat data-open="chat">Tanya tanpa dokumen ↗</button></div><div id="sourceResults">${sourceCards(query)}</div>`;
+    panel.innerHTML = window.OmniHtml.sanitize(`<span class="handwriting">${home ? 'selangkah lebih paham hari ini' : 'semua materi, satu tempat'}</span><h1>${home ? 'Mau belajar apa hari ini?' : 'Pustaka sumbermu'}</h1><p>${home ? 'Lanjutkan materimu, atau mulai dari rasa ingin tahu yang baru.' : 'Dokumen dan transkrip disimpan di browser perangkat ini. Pilih sumber untuk menghubungkannya ke seluruh alat belajar.'}</p><div class="panel-actions"><button data-explorer>Jelajahi bidang ilmu</button><button data-free-chat data-open="chat">Tanya tanpa dokumen ↗</button></div><div id="sourceResults">${sourceCards(query)}</div>`);
     const intro = panel.querySelector('h1');
     const active = sources.find((source) => source.id === materialId);
     const sourceControls = document.createElement('section');
@@ -1044,16 +1044,16 @@
         'Transkrip manual; tanpa mengambil video',
       ],
     ];
-    hub.innerHTML = `<div class="input-hub-grid">${hubCards.map(([type, icon, title, copy, formats], i) => `<button class="input-hub-card" data-source="${type}" data-input-kind="${type}"><span class="input-hub-number">0${i + 1}</span><span class="input-hub-icon" aria-hidden="true">${icon}</span><h3>${title}</h3><p class="input-hub-copy">${copy}</p><span class="input-hub-formats">${formats}</span><span class="input-hub-cta">${type === 'youtube' ? 'Tempel transkrip' : 'Pilih file'}</span></button>`).join('')}</div><div class="panel-actions"><button data-record-audio>● Rekam audio</button><span role="status" id="recordStatus"></span></div>`;
+    hub.innerHTML = window.OmniHtml.sanitize(`<div class="input-hub-grid">${hubCards.map(([type, icon, title, copy, formats], i) => `<button class="input-hub-card" data-source="${type}" data-input-kind="${type}"><span class="input-hub-number">0${i + 1}</span><span class="input-hub-icon" aria-hidden="true">${icon}</span><h3>${title}</h3><p class="input-hub-copy">${copy}</p><span class="input-hub-formats">${formats}</span><span class="input-hub-cta">${type === 'youtube' ? 'Tempel transkrip' : 'Pilih file'}</span></button>`).join('')}</div><div class="panel-actions"><button data-record-audio>● Rekam audio</button><span role="status" id="recordStatus"></span></div>`);
     panel.querySelector('#sourceResults').before(hub);
     const filters = document.createElement('div');
     filters.className = 'source-filters';
-    filters.innerHTML = `<select id="sourceType" aria-label="Filter tipe sumber"><option value="all">Semua tipe</option><option value="document">Dokumen</option><option value="audio">Audio</option><option value="video">Video</option><option value="transcript">Transkrip</option></select><select id="sourceSubject" aria-label="Filter mata pelajaran"><option value="all">Semua pelajaran</option>${[...new Set(sources.map((s) => s.subject).filter(Boolean))].map((s) => `<option>${html(s)}</option>`).join('')}</select><select id="sourceSort" aria-label="Urutkan sumber"><option value="newest">Terbaru</option><option value="oldest">Terlama</option><option value="title">Judul A–Z</option><option value="subject">Mata pelajaran</option></select>`;
+    filters.innerHTML = window.OmniHtml.sanitize(`<select id="sourceType" aria-label="Filter tipe sumber"><option value="all">Semua tipe</option><option value="document">Dokumen</option><option value="audio">Audio</option><option value="video">Video</option><option value="transcript">Transkrip</option></select><select id="sourceSubject" aria-label="Filter mata pelajaran"><option value="all">Semua pelajaran</option>${[...new Set(sources.map((s) => s.subject).filter(Boolean))].map((s) => `<option>${html(s)}</option>`).join('')}</select><select id="sourceSort" aria-label="Urutkan sumber"><option value="newest">Terbaru</option><option value="oldest">Terlama</option><option value="title">Judul A–Z</option><option value="subject">Mata pelajaran</option></select>`);
     panel.querySelector('#sourceResults').before(filters);
     filters.onchange = () =>
-      (panel.querySelector('#sourceResults').innerHTML = sourceCards(
+      (panel.querySelector('#sourceResults').innerHTML = window.OmniHtml.sanitize(sourceCards(
         top.querySelector('#sourceSearch').value
-      ));
+      )));
     if (home) {
       const stats = document.createElement('div');
       stats.className = 'learning-stats';
@@ -1061,20 +1061,20 @@
       activityAPI.then(({ activitySummary }) => {
         if (!stats.isConnected) return;
         const summary = activitySummary(activity);
-        stats.innerHTML = summary.xp
+        stats.innerHTML = window.OmniHtml.sanitize(summary.xp
           ? `<div class="learning-stat"><strong>${summary.xp}</strong><span>XP dari aktivitas tercatat</span></div><div class="learning-stat"><strong>${summary.level}</strong><span>Level belajar</span></div><div class="learning-stat"><strong>${summary.streak}</strong><span>Hari berurutan (WIB)</span></div><div class="learning-stat"><strong>${summary.accuracy ?? '—'}%</strong><span>Akurasi ${summary.answered} jawaban</span></div>`
-          : '<p>Belum ada aktivitas belajar tercatat. Mulai dari satu sumber; progres akan muncul dari latihan dan bab yang kamu selesaikan.</p>';
+          : '<p>Belum ada aktivitas belajar tercatat. Mulai dari satu sumber; progres akan muncul dari latihan dan bab yang kamu selesaikan.</p>');
         if (summary.weakTopics.length) {
           const weak = document.createElement('div');
           weak.className = 'source-card';
           weak.innerHTML =
-            '<h3>Materi yang perlu diulang</h3>' +
+            window.OmniHtml.sanitize('<h3>Materi yang perlu diulang</h3>' +
             summary.weakTopics
               .map(
                 (item) =>
                   `<p>${html(item.topic)} · ${item.count} jawaban keliru</p>`
               )
-              .join('');
+              .join(''));
           stats.after(weak);
         }
       });
@@ -1125,7 +1125,7 @@
       });
       return;
     }
-    panel.innerHTML = `<span class="handwriting">tulis dengan bahasamu sendiri</span><h1>Catatan belajarmu</h1><p>${html(source ? lessonTitle(source) : 'Catatan bebas dalam sesi ini')}</p><div class="panel-actions"><button data-fill-note>Ambil hasil AI terakhir</button><button data-export-note>Ekspor .txt</button><button data-open="summary">Buat ringkasan AI ↗</button></div><textarea id="noteEditor" aria-label="Editor catatan" placeholder="Tulis atau tempel catatan di sini…"></textarea><p class="note-status" id="noteStatus">Tersimpan dalam sesi tab ini.</p>`;
+    panel.innerHTML = window.OmniHtml.sanitize(`<span class="handwriting">tulis dengan bahasamu sendiri</span><h1>Catatan belajarmu</h1><p>${html(source ? lessonTitle(source) : 'Catatan bebas dalam sesi ini')}</p><div class="panel-actions"><button data-fill-note>Ambil hasil AI terakhir</button><button data-export-note>Ekspor .txt</button><button data-open="summary">Buat ringkasan AI ↗</button></div><textarea id="noteEditor" aria-label="Editor catatan" placeholder="Tulis atau tempel catatan di sini…"></textarea><p class="note-status" id="noteStatus">Tersimpan dalam sesi tab ini.</p>`);
     const editor = panel.querySelector('#noteEditor');
     try {
       editor.value =
@@ -1257,10 +1257,10 @@
     const formats =
       capabilities?.extensions?.join(', ').toUpperCase() ||
       'PDF, DOCX, PPTX, XLSX, TXT, PNG, JPEG, MP3, M4A, WAV, WEBM, MP4';
-    panel.innerHTML = `<h1>Pengaturan sesi</h1><p>Sumber, catatan, dan riwayat tersimpan di browser ini. Buka Akun & cloud untuk sinkronisasi jika penyedianya sudah dikonfigurasi.</p><div class="panel-actions"><button data-theme-setting>Ganti tema</button><button data-delete-session>Hapus data perangkat</button></div><h3>Privasi dan AI</h3><p>Materi dikirim ke Gemini saat diproses. Periksa fakta penting dan gunakan materi yang boleh dibagikan kepada penyedia AI.</p><h3>Format yang tersedia</h3><p>Upload ${formats} hingga 15 MB. Caption otomatis memerlukan izin resmi YouTube; transkrip manual dan SRT/VTT tetap tersedia.</p>`;
+    panel.innerHTML = window.OmniHtml.sanitize(`<h1>Pengaturan sesi</h1><p>Sumber, catatan, dan riwayat tersimpan di browser ini. Buka Akun & cloud untuk sinkronisasi jika penyedianya sudah dikonfigurasi.</p><div class="panel-actions"><button data-theme-setting>Ganti tema</button><button data-delete-session>Hapus data perangkat</button></div><h3>Privasi dan AI</h3><p>Materi dikirim ke Gemini saat diproses. Periksa fakta penting dan gunakan materi yang boleh dibagikan kepada penyedia AI.</p><h3>Format yang tersedia</h3><p>Upload ${formats} hingga 15 MB. Caption otomatis memerlukan izin resmi YouTube; transkrip manual dan SRT/VTT tetap tersedia.</p>`);
     const form = document.createElement('form');
     form.className = 'profile-form';
-    form.innerHTML = `<h2>Preferensi belajar (opsional)</h2><p>Disimpan di perangkat; bukan akun atau profil psikologis.</p><label>Nama panggilan<input name="name" maxlength="50" value="${html(profile.name || '')}"></label><label>Jenjang pendidikan<input name="education" maxlength="100" value="${html(profile.education || '')}"></label><label>Mata pelajaran<input name="subject" maxlength="100" value="${html(profile.subject || '')}"></label><label>Target belajar<input name="goal" maxlength="200" value="${html(profile.goal || '')}"></label><label>Mode tutor<select name="teachingMode">${teaching.innerHTML}</select></label><label>Tema<select name="theme" data-theme-select><option value="system">Ikuti sistem</option><option value="light">Terang</option><option value="dark">Gelap</option></select></label><button class="primary">Simpan preferensi</button><p role="status" data-profile-status></p>`;
+    form.innerHTML = window.OmniHtml.sanitize(`<h2>Preferensi belajar (opsional)</h2><p>Disimpan di perangkat; bukan akun atau profil psikologis.</p><label>Nama panggilan<input name="learnerName" maxlength="50" value="${html(profile.name || '')}"></label><label>Jenjang pendidikan<input name="education" maxlength="100" value="${html(profile.education || '')}"></label><label>Mata pelajaran<input name="subject" maxlength="100" value="${html(profile.subject || '')}"></label><label>Target belajar<input name="goal" maxlength="200" value="${html(profile.goal || '')}"></label><label>Mode tutor<select name="teachingMode">${teaching.innerHTML}</select></label><label>Tema<select name="theme" data-theme-select><option value="system">Ikuti sistem</option><option value="light">Terang</option><option value="dark">Gelap</option></select></label><button class="primary">Simpan preferensi</button><p role="status" data-profile-status></p>`);
     panel.prepend(form);
     form.elements.teachingMode.value = profile.teachingMode || 'standard';
     form.elements.theme.value = window.OmniTheme?.getPreference() || 'system';
@@ -1269,7 +1269,7 @@
       const data = new FormData(form);
       profile = {
         ...profile,
-        name: data.get('name').trim(),
+        name: data.get('learnerName').trim(),
         education: data.get('education').trim(),
         subject: data.get('subject').trim(),
         goal: data.get('goal').trim(),
@@ -1598,11 +1598,11 @@
         }
         const dialog = document.createElement('dialog');
         dialog.className = 'map-edit-dialog';
-        dialog.innerHTML = `<form><h2>Edit node mindmap</h2><label>Pilih node<select name="node">${nodes.map((entry, i) => `<option value="${i}">${html(entry.node[entry.titleKey])}</option>`).join('')}</select></label><label>Judul<input name="title" maxlength="180" required></label><label>Penjelasan<textarea name="detail" maxlength="5000"></textarea></label><div class="panel-actions"><button type="submit">Simpan</button><button type="button" data-close>Batal</button></div><p>Edit ini adalah catatanmu, bukan hasil verifikasi AI.</p></form>`;
+        dialog.innerHTML = window.OmniHtml.sanitize(`<form><h2>Edit node mindmap</h2><label>Pilih node<select name="node">${nodes.map((entry, i) => `<option value="${i}">${html(entry.node[entry.titleKey])}</option>`).join('')}</select></label><label>Judul<input name="nodeTitle" maxlength="180" required></label><label>Penjelasan<textarea name="detail" maxlength="5000"></textarea></label><div class="panel-actions"><button type="submit">Simpan</button><button type="button" data-close>Batal</button></div><p>Edit ini adalah catatanmu, bukan hasil verifikasi AI.</p></form>`);
         const form = dialog.querySelector('form');
         const fill = () => {
           const entry = nodes[Number(form.elements.node.value)];
-          form.elements.title.value = entry.node[entry.titleKey];
+          form.elements.nodeTitle.value = entry.node[entry.titleKey];
           form.elements.detail.value = entry.node[entry.detailKey] || '';
         };
         fill();
@@ -1615,7 +1615,7 @@
           event.preventDefault();
           const entry = nodes[Number(form.elements.node.value)];
           const before = entry.node[entry.titleKey];
-          const title = form.elements.title.value.trim();
+          const title = form.elements.nodeTitle.value.trim();
           if (!title) return;
           entry.node[entry.titleKey] = title;
           entry.node[entry.detailKey] = form.elements.detail.value.trim();
@@ -1973,7 +1973,7 @@
   top.querySelector('#sourceSearch').addEventListener('input', (e) => {
     if (!['learn', 'sources'].includes(current)) navigate('sources');
     const results = panel.querySelector('#sourceResults');
-    if (results) results.innerHTML = sourceCards(e.target.value);
+    if (results) results.innerHTML = window.OmniHtml.sanitize(sourceCards(e.target.value));
   });
   window.addEventListener('popstate', () =>
     navigate(new URLSearchParams(location.search).get('view') || 'dashboard', false)
