@@ -61,7 +61,7 @@
       pinned: "Disematkan",
       updates: "Update List",
     }[view];
-    host.innerHTML = window.OmniHtml.sanitize(`<div class="master-heading">${view === "home" ? '<img src="/mascot.svg" width="106" height="106" fetchpriority="high" alt="Maskot OmniLearn">' : ''}<div><h1>${title}</h1><p>${view === "home" ? "Tanyakan apa saja, unggah materi, atau gunakan tautan YouTube untuk mulai belajar bersama AI." : "Belajar dengan sumber dan progres milikmu sendiri."}</p></div></div>`);
+    host.innerHTML = window.OmniHtml.sanitize(`<div class="master-heading">${view === "home" ? '<img src="/mascot.svg" width="106" height="106" fetchpriority="high" alt="Maskot OmniLearn">' : ''}<div><h1>${title}</h1><p>${view === "home" ? "Mulai dengan pertanyaan. Hubungkan materi saat kamu perlu jawaban dari sumber tertentu." : "Belajar dengan sumber dan progres milikmu sendiri."}</p></div></div>`);
     const section = (heading, content) => {
       const node = document.createElement("section");
       node.className = "master-section";
@@ -186,15 +186,28 @@
     if (view === "home") {
       const hero=host.querySelector('.master-heading');
       hero.classList.add('home-hero');
-      if(profile.name)hero.querySelector('h1').textContent='Halo, '+profile.name+'. Siap belajar?';
+      hero.querySelector('h1').textContent=profile.name?profile.name+', lanjutkan belajarmu.':'Materimu, langkah belajarmu.';
+      const progressLabel=document.createElement('p');progressLabel.className='home-progress-label';
+      progressLabel.textContent=metrics.xp+' XP · '+summary.streak+' hari streak';hero.append(progressLabel);
       const chat = document.createElement('section');
       chat.className = 'home-session';
       chat.setAttribute('aria-label', 'Tutor AI');
       chat.innerHTML = `<form class="home-composer master-composer"><label class="home-input-label" for="homeQuestion">Pertanyaan untuk tutor</label><textarea id="homeQuestion" placeholder="Tanya AI apa saja…" required maxlength="12000" rows="3"></textarea><div class="home-composer-actions"><button type="button" data-record-audio>Rekam</button><button type="button" data-upload>Unggah</button><button type="button" data-open="sources">YouTube</button><button class="primary" type="submit">Kirim</button></div><span id="recordStatus" role="status"></span></form><details class="home-secondary-tools"><summary>Tambahkan materi teks</summary><button type="button" data-paste-material>Tempel materi</button></details>`;
       const selectedSource = api.getCurrentSource();
-      chat.classList.toggle('has-source', Boolean(selectedSource));
+      const chatScope = api.getChatScope();
+      chat.classList.toggle('has-source', Boolean(selectedSource) && chatScope === 'document');
       chat.insertAdjacentHTML('afterbegin', `<div class="home-source-context"><div><span>${selectedSource ? 'Sumber percakapan' : 'Percakapan umum'}</span><strong>${selectedSource ? escape(lessonTitle(selectedSource)) : 'Belum memakai materi tersimpan'}</strong></div><button type="button" data-open="notes">${selectedSource ? 'Ganti materi' : 'Pilih materi'}</button>${selectedSource?.journey?.chapters?.length ? '<button type="button" data-open="learn">Baca materi</button>' : ''}</div>`);
       host.append(chat);
+      const scopeControl = document.createElement('fieldset'); scopeControl.className = 'chat-scope';
+      const scopeLabel = document.createElement('legend'); scopeLabel.textContent = 'Konteks jawaban'; scopeControl.append(scopeLabel);
+      for (const [scope, label] of [['general','Tanya umum'],['document','Berdasarkan materi']]) {
+        const choice = document.createElement('button'); choice.type = 'button'; choice.dataset.chatScope = scope;
+        choice.textContent = label; choice.setAttribute('aria-pressed', String(chatScope === scope));
+        choice.disabled = scope === 'document' && !selectedSource; scopeControl.append(choice);
+      }
+      chat.prepend(scopeControl);
+      const contextLabel = chat.querySelector('.home-source-context span');
+      contextLabel.textContent = chatScope === 'document' ? 'Sumber percakapan' : 'Percakapan umum';
       const draftInput = chat.querySelector("textarea");
       try { draftInput.value = sessionStorage.getItem(HOME_DRAFT_KEY) || ''; }
       catch { /* Session storage can be unavailable in private mode. */ }
@@ -256,24 +269,46 @@
         ['map','Mindmap','<path d="M9 10 5 6m10 4 4-4M9 14l-4 4m10-4 4 4"/><circle cx="12" cy="12" r="4"/><circle cx="3" cy="4" r="2"/><circle cx="21" cy="4" r="2"/><circle cx="3" cy="20" r="2"/><circle cx="21" cy="20" r="2"/>'],
         ['podcast','Podcast','<path d="M4 14v-3a8 8 0 0 1 16 0v3"/><rect x="3" y="12" width="4" height="8" rx="2"/><rect x="17" y="12" width="4" height="8" rx="2"/>']
       ].map(([route,label,icon])=>'<button class="home-quick" data-open="'+route+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+icon+'</svg>'+label+'</button>').join('')+'</div>'));
-      quick.classList.add('home-quick-section');
-      library();
-      const collection=host.lastElementChild;
-      collection.classList.add('home-library');
-      collection.querySelector('h2').textContent='Materi belajarmu';
+      quick.className='home-quick-section';
+      const ordered=[...sources].sort((a,b)=>(b.lastOpenedAt||b.createdAt)-(a.lastOpenedAt||a.createdAt));
+      const resume=event=>{
+        const id=event.target.closest('[data-resume]')?.dataset.resume;
+        if(id && api.selectSource(id))api.navigate(api.getSource(id)?.text?.trim()?'journey':'sources');
+      };
+      const continueHtml=ordered.filter(s=>s.text?.trim()).slice(0,2).map(source=>{
+        const chapters=source.journey?.chapters||[],done=chapters.filter(c=>source.completedChapters?.includes(c.id)).length;
+        const current=chapters.find(c=>c.id===source.activeChapter);
+        return '<article><h3>'+escape(lessonTitle(source))+'</h3><p>'+escape(source.subject||'Tanpa mata pelajaran')+'</p><p>'+escape(current?.title||'Bab belum dipilih')+'</p>'+
+          (chapters.length?'<progress aria-label="Progres '+escape(lessonTitle(source))+'" value="'+done+'" max="'+chapters.length+'"></progress><small>'+done+'/'+chapters.length+' bab selesai</small>':'<small>Bab belum disusun</small>')+
+          '<button data-resume="'+escape(source.id)+'">Lanjutkan belajar</button></article>';
+      }).join('');
+      const continuation=section('Lanjutkan belajar',window.OmniHtml.fragment(continueHtml||'<p>Materi yang sudah kamu baca akan muncul di sini.</p><button data-upload>Tambah materi</button>'));
+      continuation.classList.add('home-continuation');continuation.onclick=resume;
+      const layout=document.createElement('div');layout.className='home-learning-layout';chat.before(layout);layout.append(chat,continuation);chat.append(quick);
+      const collection=section('Materi terbaru',window.OmniHtml.fragment('<div class="home-recent-controls"><input type="search" aria-label="Cari catatan" placeholder="Cari catatan…"><button data-open="notes">Semua catatan</button></div><div class="home-recent-rows"></div>'));
+      collection.classList.add('home-library');collection.onclick=resume;
+      const search=collection.querySelector('input'),rows=collection.querySelector('.home-recent-rows');
+      const draw=()=>{
+        const query=search.value.toLocaleLowerCase('id-ID');
+        const matches=ordered.filter(source=>(lessonTitle(source)+' '+(source.subject||'')).toLocaleLowerCase('id-ID').includes(query)).slice(0,8);
+        rows.replaceChildren(window.OmniHtml.fragment(matches.length?matches.map(source=>{
+          const date=new Date(source.lastOpenedAt||source.createdAt).toLocaleDateString('id-ID');
+          return '<article><div><h3>'+escape(lessonTitle(source))+'</h3><p>'+escape(source.subject||'Tanpa mata pelajaran')+' · '+escape(date)+'</p></div><button data-resume="'+escape(source.id)+'">Buka materi</button></article>';
+        }).join(''):'<p class="master-empty">'+(query?'Tidak ada materi yang cocok.':'Belum ada materi. Unggah sumber pertamamu untuk mulai belajar.')+'</p>'));
+      };
+      search.oninput=draw;draw();
     }
     if (view === "dashboard") {
       const hour = new Date().getHours();
       host.querySelector('h1').textContent = `Selamat ${hour < 11 ? 'pagi' : hour < 15 ? 'siang' : hour < 18 ? 'sore' : 'malam'}${profile.name ? ', ' + profile.name : ''}!`;
       host.querySelector('.master-heading p').textContent = 'Lanjutkan perjalanan belajarmu di OmniLearn AI.';
-      const statIcons = {
-        subjects: '<path d="M4 4h7v16H4zM13 4h7v16h-7zM7 8h1m8 0h1"/>',
-        notes: '<path d="M6 3h12v18H6zM9 8h6m-6 4h6m-6 4h4"/>',
-        exams: '<path d="M8 5H5v16h14V5h-3M8 3h8v4H8zM8 14l3 3 5-6"/>',
-        streaks: '<path d="m12 3 3 6 6 1-4.5 4.5L18 21l-6-3-6 3 1.5-6.5L3 10l6-1z"/>'
-      };
-      host.insertAdjacentHTML('beforeend', window.OmniHtml.sanitize(`<div class="master-stats">${[[dashboard.subjects,'Mata pelajaran','subjects'],[dashboard.notes,'Catatan','notes'],[dashboard.exams,'Ujian selesai','exams'],[metrics.xp,'Total XP','streaks']].map(([value,label,route])=>`<a href="/dashboard?view=${route}" data-view="${route}"><span class="stat-icon stat-icon-${route}" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${statIcons[route]}</svg></span><div><strong>${value.toLocaleString('id-ID')}</strong><span>${label}</span></div></a>`).join('')}</div>`));
-      const level = section('Progres level', window.OmniHtml.fragment(`<div class="progress-level"><div><strong>Level ${metrics.level}</strong><span>${metrics.xp} / ${metrics.nextLevelXp} XP</span></div><progress max="100" value="${metrics.levelProgress}" aria-label="Progres XP">${metrics.levelProgress}%</progress><p>${metrics.nextLevelXp - metrics.xp} XP menuju level berikutnya · ${summary.streak} hari streak</p><div class="dashboard-next-step"><span>${metrics.cardsDue ? `${metrics.cardsDue} flashcard siap diulang` : 'Belum ada flashcard jatuh tempo'}</span>${dashboard.reviewSourceId ? '<button data-review-due>Mulai review</button>' : action('Buka materi','notes')}</div></div>`));
+      host.querySelector('.master-heading h1').textContent='Ringkasan belajarmu';
+      host.querySelector('.master-heading p').textContent=summary.answered
+        ? summary.answered+' jawaban kuis tersimpan'+(summary.accuracy===null?'':' · '+summary.accuracy+'% benar')
+        : 'Belum ada jawaban kuis. Progres akan dihitung dari aktivitas belajarmu.';
+      const summaryItems=[[dashboard.subjects,'Mata pelajaran','subjects'],[dashboard.notes,'Catatan','notes'],[dashboard.exams,'Ujian selesai','exams'],['Level '+metrics.level,metrics.xp+' XP','streaks']];
+      host.insertAdjacentHTML('beforeend',window.OmniHtml.sanitize('<div class="master-stats dashboard-summary">'+summaryItems.map(([value,label,route])=>'<a href="/dashboard?view='+route+'" data-view="'+route+'"><strong>'+escape(value)+'</strong><span>'+escape(label)+'</span></a>').join('')+'</div>'));
+      const level = section('Progres level', window.OmniHtml.fragment(`<div class="progress-level"><div><strong>Menuju level ${metrics.level+1}</strong><span>${metrics.nextLevelXp-metrics.xp} XP lagi</span></div><progress max="100" value="${metrics.levelProgress}" aria-label="Progres XP">${metrics.levelProgress}%</progress><div class="dashboard-next-step"><span>${metrics.cardsDue ? `${metrics.cardsDue} flashcard siap diulang` : 'Belum ada flashcard jatuh tempo'}</span>${dashboard.reviewSourceId ? '<button data-review-due>Mulai review</button>' : action('Buka materi','notes')}</div></div>`));
       level.classList.add('dashboard-level');
       level.querySelector('[data-review-due]')?.addEventListener('click', () => {
         if (api.selectSource(dashboard.reviewSourceId)) api.navigate('cards');

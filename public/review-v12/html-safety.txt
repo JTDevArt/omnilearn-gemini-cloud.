@@ -1,0 +1,1 @@
+{"status":"PASS","payloads":6,"executed":0,"controls":true,"assistant":true,"map":true,"libraryRoutes":3,"preview":true,"limits":"Browser payload fixtures and selected real renderers; not an exhaustive XSS proof or live provider test."}

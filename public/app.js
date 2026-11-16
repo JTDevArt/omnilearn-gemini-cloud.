@@ -268,6 +268,11 @@ function saveSessionState() {
 }
 
 function renderMaterialBadgeAndSidebar() {
+  const badgeIcon = (host, path) => {
+    const icon = document.createElementNS('http://www.w3.org/2000/svg','svg');
+    for (const [name,value] of Object.entries({viewBox:'0 0 24 24',width:'20',height:'20',fill:'none',stroke:'currentColor','stroke-width':'1.5','aria-hidden':'true'})) icon.setAttribute(name,value);
+    const shape = document.createElementNS('http://www.w3.org/2000/svg','path'); shape.setAttribute('d',path); icon.append(shape); host.append(icon);
+  };
   const list = $('materialList');
   const langBadge = $('detectedLangBadge');
   list.innerHTML = '';
@@ -283,7 +288,7 @@ function renderMaterialBadgeAndSidebar() {
     freeItem.className = 'lesson active';
     const icon = document.createElement('span');
     icon.className = 'lesson-icon';
-    icon.textContent = '💡';
+    badgeIcon(icon, 'M9 18h6m-5 3h4M8 14a6 6 0 1 1 8 0l-1 2H9z');
     freeItem.append(icon, document.createTextNode('Pertanyaan bebas'));
     list.append(freeItem);
     return;
@@ -296,7 +301,8 @@ function renderMaterialBadgeAndSidebar() {
   const ocrPart = meta.ocrUsed ? ' · OCR: Digunakan' : ' · OCR: Tidak diperlukan';
   const truncPart = meta.truncated ? ' · teks dipotong' : '';
   const langPart = meta.detectedLanguage?.name ? ` · Bahasa: ${meta.detectedLanguage.name}` : '';
-  $('materialLabel').textContent = `${materialName}${sizePart}${pagePart}${charPart}${ocrPart}${langPart}${truncPart}`;
+  const title = window.OmniProduct?.lessonTitle?.(window.OmniProduct.getCurrentSource()) || 'Materi belum diberi judul';
+  $('materialLabel').textContent = `${title}${sizePart}${pagePart}${charPart}${ocrPart}${langPart}${truncPart}`;
 
   if (langBadge) {
     const sel = $('outputLanguage')?.value || 'auto';
@@ -310,9 +316,9 @@ function renderMaterialBadgeAndSidebar() {
   item.className = 'lesson active';
   const icon = document.createElement('span');
   icon.className = 'lesson-icon';
-  icon.textContent = meta.ocrUsed ? '🔍' : '📄';
+  badgeIcon(icon, meta.ocrUsed ? 'M15 15l6 6M10 17a7 7 0 1 1 0-14 7 7 0 0 1 0 14' : 'M6 3h8l4 4v14H6zM14 3v5h4M9 12h6m-6 4h6');
   const name = document.createElement('span');
-  name.textContent = materialName;
+  name.textContent = title;
   item.append(icon, name);
   list.append(item);
 }
@@ -350,6 +356,9 @@ function setBusy(value) {
   dropzone.classList.toggle('disabled', Boolean(value || uploadInFlight));
   dropzone.setAttribute('aria-disabled', (value || uploadInFlight) ? 'true' : 'false');
   document.querySelectorAll('.tab').forEach(button => { button.disabled = value || uploadInFlight; });
+  document.querySelectorAll('[data-chat-scope]').forEach(button => {
+    button.disabled = value || uploadInFlight || (button.dataset.chatScope === 'document' && !window.OmniProduct?.getCurrentSource?.());
+  });
 }
 
 // 7-Stage Upload Progress Indicator (no fake percentages)
@@ -394,7 +403,7 @@ async function checkAI() {
   const data = await warmAuthAndHealthCheck(true);
   if (data && data.ready) {
     setStatus('ready', 'Gemini Cloud siap');
-    chatFeedback.textContent = `Terhubung ke ${data.provider || 'Gemini Cloud'} · ${data.model || 'gemini-3.8-flash'}.`;
+    chatFeedback.textContent = '';
   } else if (data && !data.ready) {
     setStatus('error', 'Secret Gemini belum tersedia');
     chatFeedback.textContent = 'Tambahkan GEMINI_API_KEY melalui Settings → Secrets di Google AI Studio Build Mode.';
@@ -426,31 +435,16 @@ function requestViaXhr(url, { method = 'GET', headers = {}, body = null, timeout
       }
     });
 
-    xhr.onload = () => {
-      const serverReqId = xhr.getResponseHeader('X-Request-Id') || reqId;
-      const contentType = xhr.getResponseHeader('content-type') || '';
-      const rawText = xhr.responseText || '';
-
-      if (!contentType.includes('application/json')) {
-        if (xhr.status === 413) {
-          return reject(new Error(`Ukuran file melebihi batas maksimal 15 MB. (ID: ${serverReqId})`));
-        }
-        return reject(new Error(`Server mengembalikan respons non-JSON (Status ${xhr.status}). Silakan coba lagi. (ID: ${serverReqId})`));
-      }
-
-      let data = null;
-      try { data = JSON.parse(rawText); } catch (_) {}
-      if (!data) {
-        return reject(new Error(`Gagal membaca respons JSON dari server (Status ${xhr.status}). (ID: ${serverReqId})`));
-      }
-      if (xhr.status < 200 || xhr.status >= 300) {
-        const idSuffix = data.requestId || serverReqId;
-        const err = new Error(`${data.error || 'Permintaan gagal diproses.'} (ID: ${idSuffix})`);
-        err.isHttpError = true;
-        err.status = xhr.status;
-        return reject(err);
-      }
-      resolve(data);
+    xhr.onload = async () => {
+      try {
+        const response = {
+          status: xhr.status,
+          headers: {get: name => xhr.getResponseHeader(name)},
+          text: async () => xhr.responseText || '',
+          json: async () => JSON.parse(xhr.responseText || ''),
+        };
+        resolve(await window.OmniAIResponse.read(response, reqId, {url,method}));
+      } catch (error) { reject(error); }
     };
 
     xhr.ontimeout = () => {
@@ -508,42 +502,7 @@ async function safeRequestJson(url, options = {}, { timeoutMs = 45000, stageCont
       signal: controller.signal
     });
 
-    const serverReqId = response.headers.get('X-Request-Id') || reqId;
-    const contentType = response.headers.get('content-type') || '';
-
-    if (!contentType.includes('application/json')) {
-      const textBody = await response.text().catch(() => '');
-      if (response.status === 413) {
-        const err413 = new Error(`Ukuran file melebihi batas maksimal 15 MB. (ID: ${serverReqId})`);
-        err413.isHttpError = true;
-        throw err413;
-      }
-      if (response.status === 502 || response.status === 503 || response.status === 504 || textBody.includes('warmup')) {
-        throw new Error(`Server sedang memulai ulang atau sibuk (Status ${response.status}). Silakan coba lagi beberapa detik. (ID: ${serverReqId})`);
-      }
-      throw new Error(`Respons server tidak berformat JSON (Status ${response.status}). (ID: ${serverReqId})`);
-    }
-
-    const data = await response.json().catch(() => null);
-    if (!data) {
-      throw new Error(`Gagal membaca respons JSON dari server (Status ${response.status}). (ID: ${serverReqId})`);
-    }
-
-    if (!response.ok) {
-      const idSuffix = data.requestId || serverReqId;
-      const httpErr = new Error(`${data.error || 'Permintaan gagal diproses.'} (ID: ${idSuffix})`);
-      httpErr.isHttpError = true;
-      httpErr.status = response.status;
-      httpErr.code = data.code;
-      httpErr.retryAt = data.retryAt;
-      httpErr.stage = data.stage;
-      httpErr.failureKind = data.failureKind;
-      httpErr.retryable = data.retryable;
-      httpErr.isCancelled = data.code === 'REQUEST_CANCELLED';
-      throw httpErr;
-    }
-
-    return data;
+    return await window.OmniAIResponse.read(response, reqId, {url,method});
   } catch (err) {
     window.clearTimeout(timeoutTimer);
 
@@ -559,11 +518,11 @@ async function safeRequestJson(url, options = {}, { timeoutMs = 45000, stageCont
     }
 
     if (err.name === 'AbortError' || err.isTimeout) {
-      throw new Error(`Waktu pemrosesan habis (Timeout setelah ${Math.round(timeoutMs / 1000)} detik). (ID: ${reqId})`);
+      throw window.OmniAIResponse.transport(err, reqId);
     }
 
     // A failed response does not mean the server did not process a POST.
-    if (method !== 'GET' && method !== 'HEAD') throw err;
+    if (method !== 'GET' && method !== 'HEAD') throw window.OmniAIResponse.transport(err, reqId);
 
     // If fetch failed due to iframe shim or expired auth bridge cookie, recover and retry via XMLHttpRequest
     await warmAuthAndHealthCheck(true);
@@ -597,24 +556,22 @@ async function safeRequestJson(url, options = {}, { timeoutMs = 45000, stageCont
 
 async function askAI(message, externalSignal) {
   const outputLanguage = $('outputLanguage') ? $('outputLanguage').value : 'auto';
-  try { if (materialText.trim()) await window.OmniProduct?.ensureAnalysis(externalSignal); }
-  catch(error){window.OmniProduct?.deferTask('/api/chat',{message,materialId,...window.OmniProduct.sourceRequest(),outputLanguage},error);throw error;}
+  const context = window.OmniProduct?.chatRequestContext?.() || {
+    history: chatHistory.slice(-24), material: materialText, materialId, materialName,
+    learningContext: window.OmniProduct?.context?.(), ...window.OmniProduct?.sourceRequest(),
+  };
+  if (context.material.trim()) await window.OmniProduct?.ensureAnalysis(externalSignal);
   const data = await safeRequestJson('/api/chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      message,
-      sessionId,
-      history: chatHistory.slice(-24),
+      ...context, message, sessionId,
       teachingMode: document.querySelector('#teachingMode')?.value || 'standard',
-      learningContext: window.OmniProduct?.context?.(),
-      ...window.OmniProduct?.sourceRequest(),
-      material: materialText,
-      materialId,
-      materialName,
-      outputLanguage
+      outputLanguage,
     })
   }, { timeoutMs: 120000, stageContext: 'chat', externalSignal });
+  if (typeof data.answer !== 'string' || !data.answer.trim())
+    throw window.OmniAIResponse.failure({data:{code:'INVALID_AI_OUTPUT'},requestId:data.requestId || ''});
   window.OmniRecovery?.notice(data);
   return data;
 }
@@ -641,6 +598,7 @@ async function sendChat(event) {
   $('retryChat').hidden = true;
   $('cancelChat').hidden = false;
   chatInput.value = '';
+  chatMessages.querySelectorAll('.ai-error').forEach(node => node.remove());
   addMessage('user', message);
   const pending = addMessage('assistant', 'Gemini sedang berpikir…', 'pending');
   setBusy(true);
@@ -653,23 +611,33 @@ async function sendChat(event) {
     setRenderedContent(pending, 'assistant', answer);
     lastOutput = answer;
     lastOutputHtml = pending.innerHTML;
-    chatHistory.push({ role: 'user', content: message }, { role: 'assistant', content: answer });
-    saveSessionState();
+    if (window.OmniProduct?.commitChatExchange) window.OmniProduct.commitChatExchange(message, answer);
+    else {
+      chatHistory.push({ role: 'user', content: message }, { role: 'assistant', content: answer });
+      saveSessionState();
+    }
     setStatus('ready', 'Gemini Cloud tersambung');
     chatFeedback.textContent = window.OmniRecovery?.text(data) || 'Jawaban dibuat oleh OmniLearn AI. Periksa fakta penting dari sumber tepercaya.';
+    return true;
   } catch (error) {
     pending.classList.remove('pending');
     if (capturedVersion !== materialVersion) return;
     if (error.isCancelled || abortController.signal.aborted) {
-      pending.textContent = 'Jawaban dibatalkan.'; chatFeedback.textContent = 'Permintaan dibatalkan. Kamu dapat mencoba lagi.';
+      pending.textContent = 'Jawaban dibatalkan. Pertanyaanmu tetap tersedia.'; chatFeedback.textContent = '';
       if (!chatInput.value) chatInput.value = message;
       $('retryChat').hidden = false; return;
     }
     $('retryChat').hidden = false;
-    window.OmniProduct?.deferTask('/api/chat',{message,materialId,...window.OmniProduct.sourceRequest(),outputLanguage:$('outputLanguage').value},error);
+    window.OmniProduct?.deferTask('/api/chat',{...window.OmniProduct.chatRequestContext(),message,outputLanguage:$('outputLanguage').value},error);
     if (!chatInput.value) chatInput.value = message;
-    pending.textContent = error.message;
-    chatFeedback.textContent = error.message;
+    window.OmniAIResponse.render(pending, error, {onScope: scope => {
+      if (window.OmniProduct?.setChatScope(scope)) {
+        chatInput.value = message;
+        const homeInput = $('homeQuestion'); if (homeInput) homeInput.value = message;
+        try { sessionStorage.setItem('omnilearn-home-draft', message); } catch {}
+      }
+    }});
+    chatFeedback.textContent = '';
     if (/secret|API key|backend/i.test(error.message)) setStatus('error', 'Perlu pemeriksaan');
   } finally {
     if (activeStudyAbortController === abortController) activeStudyAbortController = null;
@@ -748,7 +716,7 @@ function renderInteractiveQuiz() {
 
     let reviewHtml = '';
     if (wrongItems.length === 0) {
-      reviewHtml = `<div class="quiz-feedback-box is-correct"><span class="quiz-feedback-title">🎉 Sempurna! Seluruh ${total} soal dijawab dengan benar.</span>Kamu dapat mencoba tingkat kesulitan yang lebih tinggi atau membuat soal baru.</div>`;
+      reviewHtml = `<div class="quiz-feedback-box is-correct"><span class="quiz-feedback-title">Sempurna! Seluruh ${total} soal dijawab dengan benar.</span>Kamu dapat mencoba tingkat kesulitan yang lebih tinggi atau membuat soal baru.</div>`;
     } else {
       reviewHtml = `<h4 style="margin:16px 0 8px;font-size:15px">Tinjauan Jawaban yang Perlu Diperbaiki (${wrongItems.length} Soal)</h4><div class="quiz-review-list">` +
         wrongItems.map(({ q, idx, ans }) => {
@@ -775,8 +743,8 @@ function renderInteractiveQuiz() {
             <div style="font-size:12.5px;margin-top:4px">${feedbackHeadline}</div>
           </div>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <button type="button" class="btn btn-soft" id="retryQuizBtn">🔄 Ulangi Kuis Ini</button>
-            <button type="button" class="btn btn-primary" id="newQuizFromResultBtn">✨ Buat Soal Baru</button>
+            <button type="button" class="btn btn-soft" id="retryQuizBtn">Ulangi Kuis Ini</button>
+            <button type="button" class="btn btn-primary" id="newQuizFromResultBtn">Buat Soal Baru</button>
           </div>
         </div>
         ${reviewHtml}
@@ -952,8 +920,8 @@ function renderInteractiveFlashcards() {
         <button type="button" class="tool-action" id="fcReviewHardBtn" ${hardCount === 0 && !flashcardState.reviewHardOnly ? 'disabled' : ''}>
           ${flashcardState.reviewHardOnly ? `Tampilkan Semua (${all.length})` : `Tinjau Kartu Sulit (${hardCount})`}
         </button>
-        <button type="button" class="tool-action" id="fcShuffleBtn">🔀 Acak Kartu</button>
-        <button type="button" class="tool-action" id="fcRestartBtn">🔄 Mulai Ulang Deck</button>
+        <button type="button" class="tool-action" id="fcShuffleBtn">Acak Kartu</button>
+        <button type="button" class="tool-action" id="fcRestartBtn">Mulai Ulang Deck</button>
       </div>
     </div>
     <div class="fc-progress-track" aria-hidden="true"><div class="fc-progress-fill" style="width:${progressPct}%"></div></div>
@@ -1586,7 +1554,7 @@ async function uploadFile(file, task = {}) {
       `- **Status OCR:** ${ocrStatusLabel}`
     ];
     if (materialMeta.partialReadNotice) {
-      summaryCardLines.push(`- **Catatan Pembacaan:** ⚠️ ${materialMeta.partialReadNotice}`);
+      summaryCardLines.push(`- **Catatan Pembacaan:** ${materialMeta.partialReadNotice}`);
     }
     summaryCardLines.push(
       ``,
@@ -1662,6 +1630,12 @@ $('chatForm').addEventListener('submit', sendChat);
 
 $('clearChat').addEventListener('click', async () => {
   if (uploadInFlight) return;
+  if (window.OmniProduct?.clearVisibleChat) {
+    cancelActiveStudyRequest(); materialVersion++; setBusy(false);
+    window.OmniProduct.clearVisibleChat();
+    chatFeedback.textContent = 'Percakapan ini dihapus. Materi tetap tersimpan.';
+    return;
+  }
   cancelActiveStudyRequest();
   materialVersion++;
   tabViewCache.clear();
@@ -1854,7 +1828,7 @@ function renderSubjectExplorerCard(subject) {
         <h3 style="margin:4px 0 0;font-size:21px">${subject}</h3>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button type="button" class="btn btn-soft" id="exploreWithAiBtn">✨ Buat Jalur Belajar Lengkap (AI)</button>
+        <button type="button" class="btn btn-soft" id="exploreWithAiBtn">Buat Jalur Belajar Lengkap (AI)</button>
         <button type="button" class="btn btn-primary" id="askTutorSubjectBtn">💬 Belajar Bersama Tutor AI ↗</button>
       </div>
     </div>

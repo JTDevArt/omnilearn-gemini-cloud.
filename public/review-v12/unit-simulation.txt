@@ -1,0 +1,26 @@
+✔ JSON success stays JSON, including +json media types (5.591502ms)
+✔ HTML 401 is classified without exposing its body or request ID in the message (1.421763ms)
+✔ HTML 403 is classified without exposing its body or request ID in the message (0.850786ms)
+✔ HTML 429 is classified without exposing its body or request ID in the message (0.527426ms)
+✔ HTML 503 is classified without exposing its body or request ID in the message (0.724338ms)
+✔ rate limiting preserves a Retry-After hint (0.878514ms)
+✔ invalid JSON gets a controlled unexpected-response error (0.789025ms)
+✔ source evidence failures keep their code and require an explicit choice (0.683339ms)
+✔ untrusted JSON error markup is not offered as a visible reason (1.276023ms)
+✔ malformed JSON diagnostic fields do not break status classification (0.449825ms)
+✔ a malformed successful chat result never invents an HTTP error status (1.523034ms)
+✔ timeout and caller cancellation are distinct (0.217654ms)
+✔ actual request function never replays a failed POST: html403 (2.301332ms)
+✔ actual request function never replays a failed POST: invalidJson (1.740205ms)
+✔ actual request function never replays a failed POST: network (1.371993ms)
+✔ actual request function never replays a failed POST: timeout (14.447508ms)
+✔ actual chat function routes general context without silently choosing another source (1.555233ms)
+✔ actual chat function routes document context without silently choosing another source (1.241407ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 18
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 203.085227

@@ -6,7 +6,7 @@ export function enterView(host, { reduced = matchMedia('(prefers-reduced-motion:
   if (reduced || !host?.isConnected || typeof host.animate !== 'function') return;
   const animation = host.animate(
     [{ opacity: .65, transform: 'translateY(4px)' }, { opacity: 1, transform: 'none' }],
-    { duration: 180, easing: 'cubic-bezier(.2,.8,.2,1)' },
+    { duration: host.classList?.contains('master-home-mode') ? 350 : 190, easing: 'cubic-bezier(.2,.8,.2,1)' },
   );
   running.set(host, animation);
   const media = matchMedia('(prefers-reduced-motion: reduce)');

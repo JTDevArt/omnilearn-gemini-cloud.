@@ -1,0 +1,7 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> omnilearn-gemini-cloud@1.0.0 build
+> node scripts/check-syntax.mjs && node scripts/verify-migration.mjs
+
+Syntax checks passed for 69 JavaScript modules and HTML inline scripts.
+Migration check passed: no local WebLLM code and all learning API routes/tasks exist.

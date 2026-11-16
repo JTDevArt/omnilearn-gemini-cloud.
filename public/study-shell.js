@@ -38,11 +38,14 @@
       h1.textContent=source?title:'Ruang belajar';
       context.textContent=[labels[view],source?.subject || (source?'Tanpa mata pelajaran':'Pilih sumber atau gunakan pertanyaan bebas')].join(' · ');
       chatMode.hidden=view!=='chat';
-      modeDescription.textContent=source
+      const documentChat = source && api.getChatScope() === 'document';
+      modeDescription.textContent=documentChat
         ? 'Berdasarkan materi: '+title+'. Jawaban harus sesuai sumber ini.'
         : 'Tanya umum. Dokumen tersimpan tidak dikirim dalam percakapan ini.';
-      modeAction.textContent=source?'Beralih ke tanya umum':'Pilih materi untuk dibahas';
-      modeAction.toggleAttribute('data-free-chat',!!source);
+      modeAction.textContent=source?(documentChat?'Beralih ke tanya umum':'Pakai materi terpilih'):'Pilih materi untuk dibahas';
+      modeAction.toggleAttribute('data-free-chat', !!documentChat);
+      if (source && !documentChat) modeAction.dataset.chatScope = 'document';
+      else delete modeAction.dataset.chatScope;
       modeAction.dataset.open=source?'chat':'notes';
       chapters.replaceChildren();
       const h2=document.createElement('h2');h2.textContent='Daftar bab';chapters.append(h2);
