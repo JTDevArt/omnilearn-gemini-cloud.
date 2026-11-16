@@ -26,7 +26,7 @@ test('real routes and official SDK preserve safe failure classification and boun
     ['network',500,'GEMINI_NETWORK_ERROR','network',2],
     ['empty',422,'INVALID_AI_OUTPUT','invalid-response',2],
     ['citation',422,'INVALID_AI_OUTPUT','invalid-response',2],
-    ['malformed',422,'INVALID_AI_OUTPUT',null,2],
+    ['malformed',422,'INVALID_AI_OUTPUT',null,4],
     ['success',200,null,null,2],
   ]) await t.test(mode,async()=>{
     const f=await fixture(mode);
@@ -47,4 +47,19 @@ test('real routes and official SDK preserve safe failure classification and boun
       assert.equal(f.calls(),calls);
     } finally {f.child.kill();}
   });
+});
+
+test('JSON syntax and schema failures use exactly one fallback, then return INVALID_AI_OUTPUT', async () => {
+  for (const mode of ['json-syntax','json-schema','json-both']) {
+    const f=await fixture(mode);
+    try {
+      const response=await fetch(f.base+'/api/study',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({task:'cards',count:5,topic:'Geometry',sessionId:'json-test'})});
+      const data=await response.json();
+      assert.equal(response.status,mode==='json-both'?422:200,JSON.stringify(data));
+      if (mode==='json-both') assert.equal(data.code,'INVALID_AI_OUTPUT');
+      else { assert.equal(data.fallbackUsed,true); assert.equal(data.structuredData.cards.length,5); }
+      assert.equal(f.calls(),2);
+    } finally {f.child.kill();}
+  }
 });

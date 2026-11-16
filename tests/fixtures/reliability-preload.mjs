@@ -13,6 +13,13 @@ globalThis.fetch = async (input, options) => {
     {'@type':'type.googleapis.com/google.rpc.RetryInfo',retryDelay:mode==='daily'?'7200s':'60s'}]);
   if (mode==='network') throw new TypeError('fetch failed DO_NOT_LEAK_PROVIDER_DETAIL');
   if (mode==='success' && url.includes('gemini-3.8-flash')) return error(404,'Fixture model not found');
+  if (['json-syntax','json-schema','json-both'].includes(mode)) {
+    const primary = url.includes('gemini-3.8-flash');
+    const text = primary || mode === 'json-both'
+      ? (mode === 'json-syntax' ? '{broken' : '{"cards":[{}]}')
+      : JSON.stringify({cards:Array.from({length:5},(_,i)=>({front:`Question ${i}`,back:`Answer ${i}`}))});
+    return new Response(JSON.stringify({candidates:[{content:{role:'model',parts:[{text}]},finishReason:'STOP'}]}),{headers:{'Content-Type':'application/json'}});
+  }
   const text = ({empty:'',citation:'Unseen source [Page 999]',malformed:'{"cards":[{}]}',success:'Fixture tutor explanation.'})[mode];
   return new Response(JSON.stringify({candidates:[{content:{role:'model',parts:[{text}]},finishReason:'STOP'}]}),
     {headers:{'Content-Type':'application/json'}});

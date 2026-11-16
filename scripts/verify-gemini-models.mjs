@@ -3,7 +3,7 @@
 import { GoogleGenAI } from '@google/genai';
 import { ProviderManager } from '../lib/provider-manager.js';
 import { classifyAiFailure } from '../lib/provider-errors.js';
-import { thinkingConfigForModel } from '../lib/provider-models.js';
+import { textGenerationConfig } from '../lib/provider-models.js';
 if (!process.env.GEMINI_API_KEY) {
   console.log(JSON.stringify({status:'blocked', reason:'GEMINI_API_KEY is not configured; no live model availability claimed.'}));
   process.exitCode = 2;
@@ -31,7 +31,7 @@ if (!process.env.GEMINI_API_KEY) {
   if (process.argv.includes('--generate') && !blocked && results.some(r => r.model === manager.config.primary && r.status === 'generateContent-advertised')) {
     try {
       const response = await ai.models.generateContent({model:manager.config.primary, contents:'Reply with OK.',
-        config:{maxOutputTokens:512, ...thinkingConfigForModel(manager.config.primary, 'LOW')}});
+        config:textGenerationConfig(manager.config.primary, 'LOW', 512)});
       const valid = Boolean(response.text?.trim()) && response.candidates?.[0]?.finishReason !== 'MAX_TOKENS';
       results.push({model:manager.config.primary, smokeTest:valid ? 'passed' : 'invalid-response'});
       if (!valid) process.exitCode = 1;

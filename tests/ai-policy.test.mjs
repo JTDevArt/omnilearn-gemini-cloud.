@@ -25,7 +25,7 @@ test('invalid structured answers cannot count as successful results', () => {
   assert.equal(validateStudyResult('cards', { cards: [{}] }, 1), false);
 });
 test('cached map rendering omits causal fields and uses the result language', () => {
-  const script = readFileSync(new URL('../public/index.html', import.meta.url), 'utf8').match(/<script>([\s\S]*?)<\/script>/)[1];
+  const script = readFileSync(new URL('../public/app.js', import.meta.url), 'utf8');
   const extract = (start,end) => script.slice(script.indexOf(start),script.indexOf(end,script.indexOf(start)));
   const output = { classList: {remove(){}}, innerHTML:'',querySelectorAll:()=>[] };
   const ctx = vm.createContext({toolOutput:output, conceptMapState:legacyMap, $:()=>null,renderMarkdownToSafeHtml:v=>v || ''});

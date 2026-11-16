@@ -38,8 +38,14 @@ test('caller cancellation stops provider', async () => {
     invoke: async () => { calls++; } }), /cancelled/);
   assert.equal(calls, 0);
 });
-const html = readFileSync(new URL('../public/index.html', import.meta.url), 'utf8');
-const script = html.match(/<script>([\s\S]*?)<\/script>/)[1];
+const script = readFileSync(new URL('../public/app.js', import.meta.url), 'utf8');
+test('dashboard loads the extracted runtime in its original classic-script order under CSP', () => {
+  const html = readFileSync(new URL('../public/index.html', import.meta.url), 'utf8');
+  assert.ok(!/<script>([\s\S]*?)<\/script>/.test(html));
+  assert.ok(!/\sstyle=|<style[\s>]/i.test(html));
+  assert.ok(html.indexOf('src="/app.js"') < html.indexOf('src="/workbench.js"'));
+  assert.ok(html.includes('href="/app.css"'));
+});
 new vm.Script(script); // Parse the actual browser script, including edits outside tested functions.
 function extract(start, end) { return script.slice(script.indexOf(start), script.indexOf(end, script.indexOf(start))); }
 test('concept map commands route correctly; conceptual questions stay in chat', () => {

@@ -87,14 +87,37 @@ See [.env.example](.env.example). Optional server configuration: `FIREBASE_PROJE
 ## Project structure
 
 ```text
-omnilearn-gemini-cloud/
+omnilearn-gemini-cloud./
+├── .github/workflows/       # CI and browser verification
+├── docs/                   # Deployment, design, milestones and handoff
 ├── lib/
+│   ├── provider-manager.js  # Model admission, circuits, bounded fallback
+│   ├── provider-request.js  # Shared deadline and cancellation
+│   ├── provider-models.js   # Explicit thinking capabilities/token allocation
+│   ├── ai-limits.js         # Daily AI admission
+│   ├── source-intelligence.js
 │   ├── learning-engine.js
-│   └── learning-engine.test.js
+│   └── ...                 # OCR, accounts, research and ingestion modules
 ├── public/
-│   └── index.html
+│   ├── index.html          # Dashboard document; no inline CSS/JS
+│   ├── app.js              # Existing classic study/chat runtime
+│   ├── app.css             # Extracted document presentation
+│   ├── design-system.css   # Shared tokens and component foundations
+│   ├── landing.html
+│   ├── landing.css
+│   ├── landing.js
+│   ├── product.js
+│   ├── dashboard-shell.js
+│   ├── theme.js
+│   ├── local-library.js
+│   ├── assets/
+│   └── ...                 # Learning workspaces, styles and local modules
 ├── scripts/
-│   └── verify-migration.mjs
+│   ├── verify-gemini-models.mjs
+│   ├── check-syntax.mjs
+│   ├── verify-migration.mjs
+│   └── verify-*.cjs         # Browser regressions
+├── tests/                  # Unit/HTTP tests and provider fixtures
 ├── server.js
 ├── package.json
 ├── metadata.json
@@ -106,9 +129,17 @@ omnilearn-gemini-cloud/
 
 ## AI request reliability
 
-Chat uses a 40-second total provider deadline; study tools use 42 or 55 seconds depending on the task. At most two configured candidates are attempted within that deadline. Browser timeouts include a margin for server responses. Failed POST responses are not automatically replayed.
+`AI_REQUEST_TIMEOUT_MS` defaults to 45000ms and sets the minimum total provider deadline. Longer extraction/study stages retain their 55000ms deadline. `AI_ATTEMPT_TIMEOUT_MS` defaults to 18000ms per model. Startup rejects a total below two attempts plus 8000ms for queue/backoff, so a stalled primary leaves room for one full fallback. Browser chat/study requests allow 120s for source analysis plus generation; increase that client allowance if deploying substantially larger server deadlines. At most two configured candidates are attempted. The SDK uses one transport attempt; failed browser POST requests are not replayed.
+
+Thinking capabilities are an explicit model lookup. Gemini 2.5 uses `thinkingBudget`; the output ceiling adds that budget to the requested visible allowance. The supported Gemini 3 defaults use `thinkingLevel` without a numeric budget, so their full documented 65536-token output ceiling is reserved. A ceiling is not a target or a guarantee that output will finish within the deadline. Unknown model overrides omit thinking configuration and log one sanitized warning. JSON is parsed and checked with the existing task validators inside each candidate attempt. Invalid JSON/schema can use the second candidate once; invalid results never enter the successful-response cache.
 
 The primary default remains `gemini-3.8-flash`, with `gemini-3.1-flash-lite` for text fallback and `gemini-3-flash-preview` for multimodal fallback. Centralized configuration, cooldowns and actual-model notices are active. Model availability and quota still affect requests; no new paid AI provider is enabled.
+
+These three IDs were checked against the [official model catalog](https://ai.google.dev/gemini-api/docs/models) on 2026-11-16; all are listed, so no defaults were renamed. Configure `GEMINI_MODEL`, `GEMINI_FALLBACK_MODEL`, and `GEMINI_MULTIMODAL_FALLBACK_MODEL` in the server environment. `node scripts/verify-gemini-models.mjs` performs read-only per-model API discovery using the configured key; add `--generate` only for an explicit small text smoke test. This workspace has no key, so account-specific access and live inference remain unverified.
+
+`AI_DAILY_LIMIT_PER_IP=200` and `AI_DAILY_LIMIT_PER_SESSION=100` set shared request budgets across POST `/api/chat`, `/api/study`, `/api/source/analyze`, `/api/exam/grade`, `/api/research/*`, and `/api/speech`. Limits must be positive integers. Admission happens before provider work; rejected input and cancelled requests still consume admission. Missing session IDs share the IP's session bucket. Rotating a client session ID does not bypass the IP cap. Exhaustion returns HTTP 429, `code: AI_DAILY_LIMIT`, a clear message and `Retry-After`. Existing short-window limits remain active.
+
+Daily counters use the existing in-memory rate-limit store: a 24-hour window per key, reset on process restart, not a global multi-instance quota. Use one instance for this cap or a shared rate-limit store before scaling. Configure a trusted reverse proxy correctly; the existing Express `trust proxy: 1` assumes exactly one trusted upstream. These are request limits, not a currency/spend guarantee. All new settings are included in [.env.example](.env.example).
 
 Commands such as “bikin peta konsep” open the existing interactive map workflow. The output-language selector now reaches the backend. Automatic English/Indonesian detection is heuristic; uncertain material is left for model detection and the user can override it.
 
