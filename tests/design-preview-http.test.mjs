@@ -33,6 +33,20 @@ test('design preview routes and public assets respond over HTTP', async () => {
   try {
     const health = await (await fetch(fixture.url+'/api/health')).json();
     assert.equal(health.uiBuild, 'algorithmic-v10.4-pages-1');
+    for (const name of ['/production-preview', '/production-preview.html', '/preview.html']) {
+      const response = await fetch(fixture.url+name);
+      assert.equal(response.status, 200, name+' should return production preview HTML');
+      assert.match(response.headers.get('content-type') || '', /text\/html/);
+      const html = await response.text();
+      assert.match(html, /Production route preview/);
+      assert.match(html, /data-route="\/dashboard\?view=exams"/);
+      assert.match(html, /id="routeFrame"/);
+    }
+    for (const asset of ['/production-preview.css','/production-preview.js']) {
+      const response = await fetch(fixture.url+asset);
+      assert.equal(response.status, 200, asset+' is missing');
+      assert.ok((await response.text()).length > 1000);
+    }
     for (const name of ['/design-preview', '/design-preview.html']) {
       const response = await fetch(fixture.url+name);
       assert.equal(response.status, 200, name+' should return HTML');

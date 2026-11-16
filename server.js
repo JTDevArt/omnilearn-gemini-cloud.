@@ -1728,6 +1728,11 @@ app.get('/dashboard',sendHtml('dashboard'));
 app.get(['/design-preview', '/design-preview.html'], (_req, res) =>
   res.sendFile(path.join(__dirname, 'public/design-preview.html'))
 );
+// Production route preview. The iframe loads the real landing/dashboard routes;
+// it does not contain sample data or a second application shell.
+app.get(['/production-preview', '/production-preview.html', '/preview.html'], (_req, res) =>
+  res.sendFile(path.join(__dirname, 'public/production-preview.html'))
+);
 app.get('/index.html',(_req,res)=>res.redirect('/dashboard'));
 app.get('/landing.html',(_req,res)=>res.redirect('/'));
 

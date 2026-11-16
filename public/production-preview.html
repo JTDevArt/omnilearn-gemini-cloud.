@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b1220">
+  <meta name="description" content="Pratinjau route produksi OmniLearn AI dalam satu tab.">
+  <title>OmniLearn AI · Production Preview</title>
+  <link rel="stylesheet" href="/production-preview.css">
+  <script type="module" src="/production-preview.js"></script>
+</head>
+<body>
+  <header class="preview-header">
+    <div class="brand-lockup">
+      <span class="brand-mark" aria-hidden="true"><i></i><i></i></span>
+      <div>
+        <strong>OmniLearn <b>AI</b></strong>
+        <span>Production route preview</span>
+      </div>
+    </div>
+    <div class="preview-meta">
+      <span class="status-dot" aria-hidden="true"></span>
+      <span id="routeStatus">Route produksi</span>
+      <a id="openRoute" href="/" target="_blank" rel="noreferrer">Buka route ↗</a>
+    </div>
+  </header>
+
+  <main class="preview-main">
+    <section class="intro" aria-labelledby="previewTitle">
+      <div>
+        <p class="eyebrow">LIVE UI REVIEW · DATA APLIKASI ASLI</p>
+        <h1 id="previewTitle">Lihat semua layar tanpa pindah-pindah URL.</h1>
+        <p class="intro-copy">Pilih tab untuk membuka route produksi OmniLearn. Preview ini hanya pembungkus navigasi; konten di bawah berasal dari aplikasi asli.</p>
+      </div>
+      <p class="shortcut-hint"><kbd>←</kbd><kbd>→</kbd> pindah tab</p>
+    </section>
+
+    <nav class="route-tabs" id="routeTabs" aria-label="Route produksi">
+      <button type="button" data-route="/" data-label="Landing">Landing</button>
+      <button type="button" data-route="/dashboard?view=home" data-label="Beranda AI">Beranda AI</button>
+      <button type="button" data-route="/dashboard?view=dashboard" data-label="Dashboard">Dashboard</button>
+      <button type="button" data-route="/dashboard?view=subjects" data-label="Mata Pelajaran">Mata Pelajaran</button>
+      <button type="button" data-route="/dashboard?view=notes" data-label="Catatan">Catatan</button>
+      <button type="button" data-route="/dashboard?view=exams" data-label="Ujian">Ujian</button>
+      <button type="button" data-route="/dashboard?view=streaks" data-label="Streaks">Streaks</button>
+      <button type="button" data-route="/dashboard?view=leaderboard" data-label="Leaderboard">Leaderboard</button>
+      <button type="button" data-route="/dashboard?view=updates" data-label="Update List">Update List</button>
+      <button type="button" data-route="/dashboard?view=profile" data-label="Profil">Profil</button>
+      <button type="button" data-route="/dashboard?view=learn" data-label="Learning Workspace">Workspace</button>
+    </nav>
+
+    <section class="frame-shell" aria-label="Route preview">
+      <div class="frame-toolbar">
+        <span class="frame-led" aria-hidden="true"></span>
+        <span id="frameTitle">Landing</span>
+        <span class="frame-url" id="frameUrl">/</span>
+        <button type="button" id="reloadFrame" class="toolbar-button" title="Muat ulang route">↻ Muat ulang</button>
+      </div>
+      <iframe id="routeFrame" title="Preview route produksi OmniLearn" src="/"></iframe>
+    </section>
+  </main>
+</body>
+</html>
