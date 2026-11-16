@@ -153,6 +153,7 @@ This inventory is specifically for innerHTML assignments, not a proof that every
 - The static assignment guard is a regression aid, not a general JavaScript taint analyzer. It verifies wrappers/literals at the known sinks; it cannot prove all possible paths and payloads safe. Not every renderer branch has an adversarial runtime fixture.
 - Existing home/study browser regression suites passed separately for navigation, persistence, controls and layout. The page-interaction suite passed 40 page/theme/width combinations plus subject rename/delete and profile save/reload/keyboard tabs.
 - Standalone preview export now bundles the sanitizer and shared tokens so opening the export offline keeps the same protections. Export generation and opening the exported file in Chromium passed: lesson cards rendered with zero page errors.
+- Initial GitHub export job 43856678990 failed with ENOENT for node_modules/dompurify/dist/purify.min.js because that workflow did not install dependencies. The export workflow now runs npm ci before bundling, and watches sanitizer/token/lockfile changes. This is a delivery-workflow correction; it does not weaken sanitization.
 
 ## Gemini defaults
 

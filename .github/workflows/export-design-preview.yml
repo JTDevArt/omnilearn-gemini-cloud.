@@ -7,6 +7,9 @@ on:
       - 'public/design-preview.html'
       - 'public/design-preview.css'
       - 'public/design-preview.js'
+      - 'public/safe-html.js'
+      - 'public/design-system.css'
+      - 'package-lock.json'
       - 'public/data/releases.json'
       - 'scripts/export-design-preview.mjs'
       - '.github/workflows/export-design-preview.yml'
@@ -26,6 +29,7 @@ jobs:
           node-version: '22'
       - name: Validate and export offline preview
         run: |
+          npm ci --no-audit --no-fund
           node --check public/design-preview.js
           node scripts/export-design-preview.mjs
       - name: Publish downloadable preview artifact
