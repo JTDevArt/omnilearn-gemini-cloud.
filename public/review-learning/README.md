@@ -2,6 +2,8 @@
 
 Verified on 2026-11-16. This revision replaces the rejected emerald banner/bento layout with the owner's OmniLearn showcase composition and source-first study workflow.
 
+Implementation commit: `292532a1befe2b5c9653075a2c1778294aa5b5ae`. The frontend marker's `sourceCommit` identifies this implementation even when a later documentation commit is at HEAD. Before delivery, the hosted `/ui-build.json` returned HTTP 404; publication must be checked again after GitHub delivery.
+
 ## Production changes
 
 - Home: original OmniLearn mascot, centered heading/composer, one input boundary, six compact tool shortcuts, and the existing searchable saved-material library. General/source-based chat, drafts, recording, upload, YouTube transcripts and cancellation use the existing handlers.

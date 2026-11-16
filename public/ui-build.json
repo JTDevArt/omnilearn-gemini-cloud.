@@ -1,5 +1,6 @@
 {
   "uiBuild": "omnilearn-showcase-2026-11-16",
+  "sourceCommit": "292532a1befe2b5c9653075a2c1778294aa5b5ae",
   "design": "OmniLearn showcase: centered learning composer and four-stat management dashboard",
   "status": "in-development"
 }

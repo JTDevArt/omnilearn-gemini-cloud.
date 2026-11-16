@@ -9,6 +9,28 @@
       "summary": "Milestone 00–08 lengkap di GitHub main; AI Home/Dashboard terpisah, progres dan profil menggunakan data asli, Update List berfungsi, riset memiliki penanganan penyimpanan yang benar, serta unit/lint/build diuji melalui GitHub Actions. v1.0.0 belum dirilis resmi.",
       "changes": [
         {
+          "title": "Home kembali fokus pada composer dan pustaka materi; Dashboard empat statistik mengikuti showcase OmniLearn; palet navy/oranye/biru, font lokal, tema responsif dan penanda build frontend. 171 unit test serta lima pemeriksaan browser lulus; publikasi AI Studio belum terverifikasi.",
+          "category": "UI/UX",
+          "status": "implemented-local",
+          "files": [
+            "public/dashboard-shell.js",
+            "public/design-system.css",
+            "public/home.css",
+            "public/landing.html",
+            "public/landing.css",
+            "public/landing.js",
+            "public/index.html",
+            "public/fonts.css",
+            "public/product.css",
+            "public/theme.js",
+            "public/ui-build.json",
+            "public/review-learning/README.md",
+            "scripts/verify-home-visual.cjs",
+            "scripts/verify-remaining-pages.cjs"
+          ],
+          "commit": "292532a1befe2b5c9653075a2c1778294aa5b5ae"
+        },
+        {
           "title": "V10.4: Mata Pelajaran, Ujian, Profil, Streaks, Leaderboard dan landing terintegrasi; judul topik pada ujian, preferensi profil konsisten, riset 50 referensi, tes browser sintetis; publikasi belum dilakukan",
           "category": "UI/UX",
           "status": "implemented-local",
