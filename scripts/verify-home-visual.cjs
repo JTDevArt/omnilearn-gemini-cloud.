@@ -85,7 +85,7 @@ async function run() {
   await open(base,'home');
   assert.equal(await page.locator('.home-session .chat-message').count(),0,'Fresh Home must not repeat the hero greeting in a decorative chat bubble');
   const build = await (await page.request.get(base+'/ui-build.json')).json();
-  assert.equal(build.uiBuild,'omnilearn-showcase-2026-11-16');
+  assert.equal(build.uiBuild,'omnilearn-v12-recovery-1');
   assert.equal(await page.locator('body').getAttribute('data-ui-build'),build.uiBuild);
   assert.equal(await page.locator('.home-quick').count(),6);
   assert.equal(await page.locator('.home-library').count(),1);
@@ -120,7 +120,10 @@ async function run() {
   assert.equal(await input.evaluate(node=>getComputedStyle(node).outlineStyle),'none');
   assert.equal(await page.locator('.home-composer').evaluate(node=>getComputedStyle(node).outlineStyle),'solid');
   await page.locator('.home-composer [type=submit]').click();
-  await page.getByText('Synthetic provider unavailable',{exact:false}).first().waitFor();
+  await page.getByRole('heading',{name:'Layanan sedang tidak tersedia',exact:true}).waitFor();
+  assert.equal(await page.locator('.ai-error').count(),1);
+  assert.doesNotMatch(await page.locator('.ai-error').innerText(),/Synthetic provider unavailable/);
+  assert.equal(await page.locator('#chatFeedback').textContent(),'');
   assert.notEqual(await input.inputValue(),'','Failed requests must preserve draft');
   await input.fill('Draft for navigation and refresh');
   await page.evaluate(()=>OmniProduct.navigate('dashboard'));

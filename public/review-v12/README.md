@@ -1,6 +1,6 @@
 # V12 frontend recovery — review checkpoint
 
-Status: **PARTIAL; not released or deployed.** Baseline: `6101627c77f79cb35c1a133841187c0353dc8dae`. Branch: `codex/v12-recovery`. Existing main is saved as `backup/pre-v12-2026-11-16-6101627`. No server, lib, auth, environment, deployment configuration, dependency, or existing test files were changed.
+Status: **PARTIAL; not released or deployed.** Baseline: `6101627c77f79cb35c1a133841187c0353dc8dae`. Branch: `codex/v12-recovery`. Existing main is saved as `backup/pre-v12-2026-11-16-6101627`. V12 now includes the approved CSP/server export and updated browser expectations; no environment secret or dependency was changed.
 
 ## Changes and scope
 
@@ -27,9 +27,9 @@ No data migration or progress formula changes. Existing filename/source/version 
 
 The reported production non-JSON 403 **cannot yet be attributed** to Gemini, authentication, the hosting proxy, or the Express origin guard: no matching live request trace or server log was available. The Express origin guard returns JSON; that alone does not explain the reported HTML response. A synthetic intercepted `POST /api/chat` with HTTP 403, Content-Type `text/html`, and body `<html><head><title>403 Forbidden</title></head><body>Fixture session access denied.</body></html>` proves frontend recovery only. Gemini was not called in this fixture. Exact synthetic metadata is in `browser-status.json`; it is not incident evidence.
 
-A separate defect is confirmed locally: `server.js:79–80` CSP has `frameSrc` limited to YouTube, so the existing same-origin authentication recovery iframe is blocked. The browser verifier records this rejection separately from unexpected console errors. CSP also omits Google Fonts stylesheet/font origins. Neither finding proves the production 403 cause.
+A separate defect was confirmed locally and fixed: `server.js:79–80` CSP previously blocked the same-origin authentication recovery iframe and Google Fonts. The policy now permits `'self'` for `frameSrc`, `https://fonts.googleapis.com` for styles, and `https://fonts.gstatic.com` for fonts. Nonces, origin validation, YouTube restrictions and script protections remain. This still does not prove the production 403 cause.
 
-**Permission needed:** change `server.js` CSP to permit `https://fonts.googleapis.com` in styleSrc, `https://fonts.gstatic.com` in fontSrc, and `'self'` in frameSrc while preserving nonce, origin and other restrictions. The v12 instruction explicitly gates server changes. No such change was made. Bricolage Grotesque and Source Serif 4 are declared with real fallbacks; they currently render with existing Jakarta/Georgia rather than newly downloaded fonts.
+`server.js` now also exports the Express app for Vercel's Express adapter. The local production startup check still fails fast when `GEMINI_API_KEY` is absent, which is intentional for non-Vercel production. A Vercel deployment without that Production environment variable exits with `MISSING_SECRET`, surfaced by Vercel as `FUNCTION_INVOCATION_FAILED`; configure the secret in Vercel and redeploy. The key is never stored in this repository. Bricolage Grotesque and Source Serif 4 load through the approved Google Fonts origins in the browser verifier.
 
 ## Verification
 
@@ -45,10 +45,10 @@ Executed locally with installed dependencies and an existing isolated Playwright
 | `QA_SKIP_SCREENSHOTS=1 node scripts/verify-remaining-pages.cjs` | PASS assertions: 82 cases; manual exam answer survives reload and scores 1/1. Broader visual gate remains limited to screenshots reviewed here. |
 | `node scripts/verify-page-interactions.cjs` | PASS: 40 page/theme/width checks, subject and profile persistence, keyboard tabs. |
 | `node scripts/verify-html-safety.cjs` | PASS: 6 malicious payload fixtures, 0 executions; selected actual renderers, not exhaustive XSS proof. |
-| `QA_SKIP_SCREENSHOTS=1 node scripts/verify-home-visual.cjs` | FAIL at line 123: expects raw `Synthetic provider unavailable`; V12 displays a classified friendly message. 28 layout checks completed first. Recorded before the build marker changed; its old-marker assertion at line 88 also needs review. |
-| `QA_SKIP_SCREENSHOTS=1 node scripts/verify-study-workspace.cjs` | FAIL at line 119: expects `27px`, V12 requested 16px × 1.7 = `27.2px`. 14 Notes checks completed first. |
+| `QA_SKIP_SCREENSHOTS=1 node scripts/verify-home-visual.cjs` | PASS: 98 layout/interaction checks; expects the current build marker and classified friendly provider error. |
+| `QA_SKIP_SCREENSHOTS=1 node scripts/verify-study-workspace.cjs` | PASS: 28 checks; expects 16px × 1.7 = `27.2px` and preserves source-review guidance. |
 
-These two existing scripts were not edited, bypassed or declared passing. Updating their obsolete expectations requires permission under the public-only/no-test-modification constraints. The complete regression gate remains **BLOCKED** until resolved. `npm start` behavior was exercised by each browser script launching the real `server.js` on an ephemeral local port. No unexpected JS/asset/console errors in the V12 verifier; the deliberately probed auth-frame CSP error is a known exception.
+The complete local regression gate is green for the listed checks. `npm start` behavior was exercised by each browser script launching the real `server.js` on an ephemeral local port. No unexpected JS, asset or console errors were recorded. The Vercel failure is a deployment-environment issue until the Production secret is configured and a new deployment is tested.
 
 AI simulations cover JSON success, HTML 403, 401, 429 with Retry-After, 503, invalid JSON, malformed successful payload, timeout, cancellation, source mismatch, no failed-POST replay, and general/document isolation. Source mismatch choices preserve question and selected source and do not submit automatically. They verify client behavior, not actual model accuracy or production permissions.
 
@@ -78,6 +78,6 @@ Read-only model verification against official documentation retained `gemini-3.8
 
 ## Delivery and next work
 
-This branch is a reviewable frontend checkpoint, not a completed V12 release. Main merge authorization was already supplied; merge is held by the unresolved regression gates and explicitly restricted CSP change. GitHub publication and Google AI Studio deployment are separate. No V12 production deployment or live-build success is claimed.
+This branch is a reviewable V12 checkpoint, not a completed release. Main merge authorization was already supplied. GitHub publication, Vercel deployment and Google AI Studio deployment are separate. No V12 live-build success is claimed.
 
-Next: authorize the narrow CSP and old browser-expectation changes; capture the actual affected 403 request and matching backend trace; complete font loading and rerun recovery/visual gates before merge and authorized deployment. No actual 403 root-cause fix should be claimed without that evidence.
+Next: configure `GEMINI_API_KEY` for Vercel Production, redeploy, then inspect the first function log if the 500 remains. Capture the actual affected 403 request and matching backend trace before claiming its root cause. Google AI Studio still requires its own sync/restart/publish flow.

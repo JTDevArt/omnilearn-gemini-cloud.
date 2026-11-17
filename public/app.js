@@ -1313,7 +1313,7 @@ async function runTool(task, customTopic = '', forceRegenerate = false) {
     const notice=document.createElement('section');notice.className='study-error';notice.setAttribute('role','alert');
     const title=document.createElement('h2');title.textContent='Hasil belum bisa digunakan';
     const reason=document.createElement('p');reason.textContent=error.message;
-    const evidenceMismatch=/bukti analisis tidak cocok dengan teks sumber/i.test(error.message || '');
+    const evidenceMismatch=error.kind === 'source' || /bukti analisis tidak cocok dengan teks sumber/i.test(error.message || '');
     const actions=document.createElement('div');actions.className='panel-actions';
     const retry=document.createElement('button');retry.type='button';retry.textContent='Coba buat kembali';
     retry.onclick=()=>runTool(task,customTopic,true);

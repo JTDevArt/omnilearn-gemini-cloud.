@@ -116,7 +116,7 @@ async function run() {
   assert.match(await page.locator('.home-source-context').textContent(),/Pencernaan manusia/);
   await page.locator('.home-source-context [data-open=learn]').click();
   await page.getByRole('heading',{name:'Lambung dan usus',exact:true}).waitFor();
-  assert.equal(await page.locator('.journey-workspace .md-rendered').first().evaluate(node=>getComputedStyle(node).lineHeight),'27px');
+  assert.equal(await page.locator('.journey-workspace .md-rendered').first().evaluate(node=>getComputedStyle(node).lineHeight),'27.2px');
   await page.evaluate(()=>OmniProduct.navigate('dashboard'));await page.locator('[data-review-due]').waitFor();
   await page.locator('[data-review-due]').click();
   await page.getByText('Apa yang berpindah pada ikatan ion?',{exact:true}).waitFor();
@@ -141,7 +141,7 @@ async function run() {
   await page.setViewportSize({width:1440,height:900});await page.evaluate(()=>OmniTheme.setPreference('dark'));await navigate('cards');
   await page.locator('#regenCardsBtn').click();await page.locator('.study-error').waitFor();
   assert.equal(calls,1);
-  assert.match(await page.locator('.study-error').textContent(),/Bukti analisis tidak cocok/);
+  assert.match(await page.locator('.study-error').textContent(),/Hasil belum lolos pemeriksaan sumber/);
   assert.match(await page.locator('.study-error').textContent(),/Periksa teks OCR/);
   await page.getByRole('button',{name:'Tinjau sumber',exact:true}).waitFor();
   assert.equal(await page.evaluate(id=>OmniProduct.getSource(id).text,ids[0]),'Lambung mengolah makanan. Usus menyerap zat gizi.');

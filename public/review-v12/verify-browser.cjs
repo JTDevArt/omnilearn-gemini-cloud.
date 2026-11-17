@@ -1,7 +1,7 @@
 const assert=require('node:assert/strict');
 const fs=require('node:fs/promises');
 const path=require('node:path');
-const {spawn}=require('node:child_process');
+const {spawn,execFileSync}=require('node:child_process');
 const {chromium}=require('playwright');
 const output=__dirname;
 const report={status:'BLOCKED',checks:[],screenshots:[],failures:[],fixtures:'Synthetic sources and intercepted AI responses; no live provider calls.'};
@@ -13,6 +13,21 @@ async function run(){
  browser=await chromium.launch({headless:true});
  page=await browser.newPage({viewport:{width:1440,height:1000},reducedMotion:'reduce'});
  const pageErrors=[],assetErrors=[],consoleErrors=[];let checkingFrame=false,frameBlocked=false;
+ // Managed Chromium lacks the inherited proxy CA; bridge only font assets through the TLS-verifying system client.
+ if(process.env.OMNILEARN_QA_FONT_PROXY==='1'){
+  const assets=new Map();
+  await page.route(/^https:\/\/fonts\.(googleapis|gstatic)\.com\//,async route=>{
+   const url=route.request().url();
+   if(!assets.has(url)){
+    const result=JSON.parse(execFileSync('python',['-c',
+     'import urllib.request,sys,json,base64; r=urllib.request.urlopen(sys.argv[1],timeout=30); print(json.dumps({"status":r.status,"contentType":r.headers.get("Content-Type"),"body":base64.b64encode(r.read()).decode()}))',url],{encoding:'utf8',maxBuffer:4*1024*1024}));
+    assets.set(url,{status:result.status,contentType:result.contentType,body:Buffer.from(result.body,'base64'),headers:{'Access-Control-Allow-Origin':'*'}});
+   }
+   await route.fulfill(assets.get(url));
+  });
+  report.fontDelivery='Official Google font bytes fetched through inherited proxy with system TLS verification; no synthetic font responses.';
+ }
+ page.on('requestfailed',request=>{if(['script','stylesheet','font','image'].includes(request.resourceType()))assetErrors.push(request.url()+': '+request.failure()?.errorText);});
  page.on('pageerror',error=>pageErrors.push(error.message));
  page.on('console',message=>{if(message.type()!=='error')return;const text=message.text();if(checkingFrame&&/frame-src|Framing/i.test(text)){frameBlocked=true;return;}if(!/Failed to load resource/.test(text))consoleErrors.push(text);});
  page.on('response',response=>{if(response.status()>=400&&['script','stylesheet','font','image'].includes(response.request().resourceType()))assetErrors.push(response.url());});
@@ -123,9 +138,20 @@ async function run(){
   report.contrast.push({theme,pairs});
   assert.ok(pairs.every(pair=>pair.ratio>=4.5),JSON.stringify({theme,pairs:pairs.filter(pair=>pair.ratio<4.5)}));
  }
- checkingFrame=true;await page.evaluate(()=>refreshAuthBridgeViaHiddenFrame(200));checkingFrame=false;
- report.authFrameCsp={blocked:frameBlocked,component:'server.js CSP frameSrc excludes same-origin auth recovery iframe',production403CauseConfirmed:false};
- assert.equal(frameBlocked,true);
+ const policy=(await page.request.get(base+'/dashboard')).headers()['content-security-policy'];
+ assert.match(policy,/style-src[^;]*https:\/\/fonts\.googleapis\.com/);
+ assert.match(policy,/font-src[^;]*https:\/\/fonts\.gstatic\.com/);
+ assert.match(policy,/frame-src 'self' https:\/\/www\.youtube-nocookie\.com/);
+ assert.match(policy,/script-src-attr 'none'/);assert.doesNotMatch(policy,/script-src[^;]*'unsafe-inline'/);
+ const frameResponse=page.waitForResponse(response=>response.url().includes('/api/health?auth_warmup=')&&response.request().isNavigationRequest());
+ checkingFrame=true;await page.evaluate(()=>refreshAuthBridgeViaHiddenFrame(3500));const framed=await frameResponse;checkingFrame=false;
+ assert.equal(framed.status(),200);assert.equal(frameBlocked,false);
+ report.authFrameCsp={blocked:false,status:framed.status(),component:'Same-origin auth recovery frame permitted; script/nonces and cross-site protections retained',production403CauseConfirmed:false};
+ report.fonts=await page.evaluate(async()=>{
+  const display=await document.fonts.load('600 20px "Bricolage Grotesque"'),reading=await document.fonts.load('400 16px "Source Serif 4"');
+  return {display:display.length>0&&display.every(face=>face.status==='loaded'),reading:reading.length>0&&reading.every(face=>face.status==='loaded')};
+ });
+ assert.equal(report.fonts.display,true);assert.equal(report.fonts.reading,true);
  await page.emulateMedia({reducedMotion:'reduce'});assert.equal(await page.evaluate(()=>document.getAnimations().filter(a=>a.playState==='running').length),0);
  assert.deepEqual(pageErrors,[]);assert.deepEqual(assetErrors,[]);assert.deepEqual(consoleErrors,[]);
  for(const theme of ['light','dark'])for(const[view,width]of[['home',1440],['home',375],['dashboard',1440],['dashboard',375],['journey',1440],['journey',390]]){
