@@ -45,7 +45,7 @@ body[data-study-tool]:not([data-study-tool=chat]) .study-workspace :is(#chatMess
 .journey-workspace article h3 { font-size:17px; }
 .journey-workspace>article { padding:clamp(var(--space-18),2.2vw,var(--space-32)); }
 .journey-workspace>article>:not(details) { max-width:var(--reading-measure); margin-inline:auto; }
-.journey-workspace .md-rendered { font-size:var(--font-body); line-height:var(--reading-leading); overflow-wrap:anywhere; }
+.journey-workspace .md-rendered { font-family:var(--font-reading); font-size:var(--font-body); line-height:var(--reading-leading); overflow-wrap:anywhere; }
 .journey-workspace .md-rendered :is(p,ul,ol) { margin-block:0 1.2em; }
 .journey-workspace .md-rendered :is(h2,h3,h4) { margin-block:1.6em .7em; }
 .journey-workspace .md-rendered :is(pre,table,.katex-display) { max-width:100%; overflow-x:auto; }
@@ -79,6 +79,7 @@ body[data-study-tool]:not([data-study-tool=chat]) .study-workspace :is(#chatMess
  .study-tools>a { width:auto; margin:0; }
  .study-settings[open] .dropzone span { overflow-wrap:anywhere; }
  .product-panel .journey-workspace { grid-template-columns:minmax(0,1fr); }
+ .product-panel .journey-workspace>article { order:-1; }
  .product-panel:has(.journey-workspace)>.panel-actions { display:block; margin-block:var(--space-20); }
  .product-panel:has(.journey-workspace)>.panel-actions h1 { margin:0 0 var(--space-8); font-size:clamp(28px,2vw,28px); }
  .product-panel:has(.journey-workspace)>.panel-actions>span { font-size:13px; color:var(--text-secondary); }

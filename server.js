@@ -77,7 +77,7 @@ app.use((_req,res,next)=>{res.locals.cspNonce=crypto.randomBytes(18).toString('b
 // Disable frameguard and restrictive CORP/COOP so AI Studio's cross-origin preview iframe never blocks requests
 app.use(helmet({
   contentSecurityPolicy: { useDefaults:true,directives:{
-    defaultSrc:["'self'"],scriptSrc:["'self'",(_req,res)=>`'nonce-${res.locals.cspNonce}'`],scriptSrcAttr:["'none'"],styleSrc:["'self'","'unsafe-inline'"],imgSrc:["'self'",'data:','blob:'],fontSrc:["'self'"],connectSrc:["'self'"],mediaSrc:["'self'",'blob:'],frameSrc:['https://www.youtube-nocookie.com'],objectSrc:["'none'"],baseUri:["'self'"],formAction:["'self'"],frameAncestors:["'self'",'https://aistudio.google.com','https://*.ai.studio'],upgradeInsecureRequests:process.env.NODE_ENV==='production'?[]:null
+    defaultSrc:["'self'"],scriptSrc:["'self'",(_req,res)=>`'nonce-${res.locals.cspNonce}'`],scriptSrcAttr:["'none'"],styleSrc:["'self'","'unsafe-inline'",'https://fonts.googleapis.com'],imgSrc:["'self'",'data:','blob:'],fontSrc:["'self'",'https://fonts.gstatic.com'],connectSrc:["'self'"],mediaSrc:["'self'",'blob:'],frameSrc:["'self'",'https://www.youtube-nocookie.com'],objectSrc:["'none'"],baseUri:["'self'"],formAction:["'self'"],frameAncestors:["'self'",'https://aistudio.google.com','https://*.ai.studio'],upgradeInsecureRequests:process.env.NODE_ENV==='production'?[]:null
   }},
   crossOriginEmbedderPolicy: false,
   crossOriginOpenerPolicy: false,
@@ -1826,3 +1826,6 @@ const server = app.listen(PORT, '0.0.0.0', () => {
 });
 server.on('error',error=>{console.error(`[OmniLearn] startup failed: ${error.code||'LISTEN_ERROR'}`);process.exitCode=1;});
 for(const event of ['SIGTERM','SIGINT'])process.once(event,()=>{server.close(()=>process.exit(0));const deadline=setTimeout(()=>process.exit(1),10000);deadline.unref();});
+
+// Vercel can bind the Express app directly; local/container starts still use the listener above.
+export default app;

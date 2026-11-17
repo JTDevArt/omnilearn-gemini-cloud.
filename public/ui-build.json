@@ -1,6 +1,7 @@
 {
-  "uiBuild": "omnilearn-showcase-2026-11-16",
-  "sourceCommit": "292532a1befe2b5c9653075a2c1778294aa5b5ae",
-  "design": "OmniLearn showcase: centered learning composer and four-stat management dashboard",
+  "uiBuild": "omnilearn-v12-recovery-1",
+  "sourceCommit": null,
+  "baseCommit": "6101627c77f79cb35c1a133841187c0353dc8dae",
+  "design": "Source-first Home, compact progress dashboard and explicit AI context",
   "status": "in-development"
 }

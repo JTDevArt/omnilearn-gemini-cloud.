@@ -148,7 +148,7 @@
         } catch (error) {
           button.disabled = false;
           button.textContent = 'Coba susun kembali';
-          const rejectedEvidence = /bukti analisis tidak cocok dengan teks sumber/i.test(error.message || '');
+          const rejectedEvidence = error.kind === 'source' || /bukti analisis tidak cocok dengan teks sumber/i.test(error.message || '');
           const description = document.createElement('p');
           description.textContent = rejectedEvidence
             ? 'Kutipan hasil AI tidak cocok dengan teks PDF yang diekstrak. Hasil ditolak agar tidak menghasilkan bab palsu. Periksa hasil OCR atau revisi teks sumber sebelum mencoba lagi.'

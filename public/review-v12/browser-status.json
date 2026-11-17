@@ -1,0 +1,693 @@
+{
+  "status": "ASSERTIONS_PASSED_VISUAL_REVIEW_PENDING",
+  "checks": [
+    {
+      "view": "home",
+      "width": 375,
+      "theme": "light"
+    },
+    {
+      "view": "dashboard",
+      "width": 375,
+      "theme": "light"
+    },
+    {
+      "view": "journey",
+      "width": 375,
+      "theme": "light"
+    },
+    {
+      "view": "home",
+      "width": 390,
+      "theme": "light"
+    },
+    {
+      "view": "dashboard",
+      "width": 390,
+      "theme": "light"
+    },
+    {
+      "view": "journey",
+      "width": 390,
+      "theme": "light"
+    },
+    {
+      "view": "home",
+      "width": 768,
+      "theme": "light"
+    },
+    {
+      "view": "dashboard",
+      "width": 768,
+      "theme": "light"
+    },
+    {
+      "view": "journey",
+      "width": 768,
+      "theme": "light"
+    },
+    {
+      "view": "home",
+      "width": 1024,
+      "theme": "light"
+    },
+    {
+      "view": "dashboard",
+      "width": 1024,
+      "theme": "light"
+    },
+    {
+      "view": "journey",
+      "width": 1024,
+      "theme": "light"
+    },
+    {
+      "view": "home",
+      "width": 1440,
+      "theme": "light"
+    },
+    {
+      "view": "dashboard",
+      "width": 1440,
+      "theme": "light"
+    },
+    {
+      "view": "journey",
+      "width": 1440,
+      "theme": "light"
+    },
+    {
+      "view": "home",
+      "width": 375,
+      "theme": "dark"
+    },
+    {
+      "view": "dashboard",
+      "width": 375,
+      "theme": "dark"
+    },
+    {
+      "view": "journey",
+      "width": 375,
+      "theme": "dark"
+    },
+    {
+      "view": "home",
+      "width": 390,
+      "theme": "dark"
+    },
+    {
+      "view": "dashboard",
+      "width": 390,
+      "theme": "dark"
+    },
+    {
+      "view": "journey",
+      "width": 390,
+      "theme": "dark"
+    },
+    {
+      "view": "home",
+      "width": 768,
+      "theme": "dark"
+    },
+    {
+      "view": "dashboard",
+      "width": 768,
+      "theme": "dark"
+    },
+    {
+      "view": "journey",
+      "width": 768,
+      "theme": "dark"
+    },
+    {
+      "view": "home",
+      "width": 1024,
+      "theme": "dark"
+    },
+    {
+      "view": "dashboard",
+      "width": 1024,
+      "theme": "dark"
+    },
+    {
+      "view": "journey",
+      "width": 1024,
+      "theme": "dark"
+    },
+    {
+      "view": "home",
+      "width": 1440,
+      "theme": "dark"
+    },
+    {
+      "view": "dashboard",
+      "width": 1440,
+      "theme": "dark"
+    },
+    {
+      "view": "journey",
+      "width": 1440,
+      "theme": "dark"
+    },
+    {
+      "view": "notes",
+      "width": 360,
+      "theme": "light"
+    },
+    {
+      "view": "subjects",
+      "width": 360,
+      "theme": "light"
+    },
+    {
+      "view": "exams",
+      "width": 360,
+      "theme": "light"
+    },
+    {
+      "view": "streaks",
+      "width": 360,
+      "theme": "light"
+    },
+    {
+      "view": "leaderboard",
+      "width": 360,
+      "theme": "light"
+    },
+    {
+      "view": "profile",
+      "width": 360,
+      "theme": "light"
+    },
+    {
+      "view": "updates",
+      "width": 360,
+      "theme": "light"
+    },
+    {
+      "view": "sources",
+      "width": 360,
+      "theme": "light"
+    },
+    {
+      "view": "quiz",
+      "width": 360,
+      "theme": "light"
+    },
+    {
+      "view": "cards",
+      "width": 360,
+      "theme": "light"
+    },
+    {
+      "view": "map",
+      "width": 360,
+      "theme": "light"
+    },
+    {
+      "view": "podcast",
+      "width": 360,
+      "theme": "light"
+    },
+    {
+      "view": "notes",
+      "width": 768,
+      "theme": "light"
+    },
+    {
+      "view": "subjects",
+      "width": 768,
+      "theme": "light"
+    },
+    {
+      "view": "exams",
+      "width": 768,
+      "theme": "light"
+    },
+    {
+      "view": "streaks",
+      "width": 768,
+      "theme": "light"
+    },
+    {
+      "view": "leaderboard",
+      "width": 768,
+      "theme": "light"
+    },
+    {
+      "view": "profile",
+      "width": 768,
+      "theme": "light"
+    },
+    {
+      "view": "updates",
+      "width": 768,
+      "theme": "light"
+    },
+    {
+      "view": "sources",
+      "width": 768,
+      "theme": "light"
+    },
+    {
+      "view": "quiz",
+      "width": 768,
+      "theme": "light"
+    },
+    {
+      "view": "cards",
+      "width": 768,
+      "theme": "light"
+    },
+    {
+      "view": "map",
+      "width": 768,
+      "theme": "light"
+    },
+    {
+      "view": "podcast",
+      "width": 768,
+      "theme": "light"
+    },
+    {
+      "view": "notes",
+      "width": 1280,
+      "theme": "light"
+    },
+    {
+      "view": "subjects",
+      "width": 1280,
+      "theme": "light"
+    },
+    {
+      "view": "exams",
+      "width": 1280,
+      "theme": "light"
+    },
+    {
+      "view": "streaks",
+      "width": 1280,
+      "theme": "light"
+    },
+    {
+      "view": "leaderboard",
+      "width": 1280,
+      "theme": "light"
+    },
+    {
+      "view": "profile",
+      "width": 1280,
+      "theme": "light"
+    },
+    {
+      "view": "updates",
+      "width": 1280,
+      "theme": "light"
+    },
+    {
+      "view": "sources",
+      "width": 1280,
+      "theme": "light"
+    },
+    {
+      "view": "quiz",
+      "width": 1280,
+      "theme": "light"
+    },
+    {
+      "view": "cards",
+      "width": 1280,
+      "theme": "light"
+    },
+    {
+      "view": "map",
+      "width": 1280,
+      "theme": "light"
+    },
+    {
+      "view": "podcast",
+      "width": 1280,
+      "theme": "light"
+    },
+    {
+      "view": "notes",
+      "width": 360,
+      "theme": "dark"
+    },
+    {
+      "view": "subjects",
+      "width": 360,
+      "theme": "dark"
+    },
+    {
+      "view": "exams",
+      "width": 360,
+      "theme": "dark"
+    },
+    {
+      "view": "streaks",
+      "width": 360,
+      "theme": "dark"
+    },
+    {
+      "view": "leaderboard",
+      "width": 360,
+      "theme": "dark"
+    },
+    {
+      "view": "profile",
+      "width": 360,
+      "theme": "dark"
+    },
+    {
+      "view": "updates",
+      "width": 360,
+      "theme": "dark"
+    },
+    {
+      "view": "sources",
+      "width": 360,
+      "theme": "dark"
+    },
+    {
+      "view": "quiz",
+      "width": 360,
+      "theme": "dark"
+    },
+    {
+      "view": "cards",
+      "width": 360,
+      "theme": "dark"
+    },
+    {
+      "view": "map",
+      "width": 360,
+      "theme": "dark"
+    },
+    {
+      "view": "podcast",
+      "width": 360,
+      "theme": "dark"
+    },
+    {
+      "view": "notes",
+      "width": 768,
+      "theme": "dark"
+    },
+    {
+      "view": "subjects",
+      "width": 768,
+      "theme": "dark"
+    },
+    {
+      "view": "exams",
+      "width": 768,
+      "theme": "dark"
+    },
+    {
+      "view": "streaks",
+      "width": 768,
+      "theme": "dark"
+    },
+    {
+      "view": "leaderboard",
+      "width": 768,
+      "theme": "dark"
+    },
+    {
+      "view": "profile",
+      "width": 768,
+      "theme": "dark"
+    },
+    {
+      "view": "updates",
+      "width": 768,
+      "theme": "dark"
+    },
+    {
+      "view": "sources",
+      "width": 768,
+      "theme": "dark"
+    },
+    {
+      "view": "quiz",
+      "width": 768,
+      "theme": "dark"
+    },
+    {
+      "view": "cards",
+      "width": 768,
+      "theme": "dark"
+    },
+    {
+      "view": "map",
+      "width": 768,
+      "theme": "dark"
+    },
+    {
+      "view": "podcast",
+      "width": 768,
+      "theme": "dark"
+    },
+    {
+      "view": "notes",
+      "width": 1280,
+      "theme": "dark"
+    },
+    {
+      "view": "subjects",
+      "width": 1280,
+      "theme": "dark"
+    },
+    {
+      "view": "exams",
+      "width": 1280,
+      "theme": "dark"
+    },
+    {
+      "view": "streaks",
+      "width": 1280,
+      "theme": "dark"
+    },
+    {
+      "view": "leaderboard",
+      "width": 1280,
+      "theme": "dark"
+    },
+    {
+      "view": "profile",
+      "width": 1280,
+      "theme": "dark"
+    },
+    {
+      "view": "updates",
+      "width": 1280,
+      "theme": "dark"
+    },
+    {
+      "view": "sources",
+      "width": 1280,
+      "theme": "dark"
+    },
+    {
+      "view": "quiz",
+      "width": 1280,
+      "theme": "dark"
+    },
+    {
+      "view": "cards",
+      "width": 1280,
+      "theme": "dark"
+    },
+    {
+      "view": "map",
+      "width": 1280,
+      "theme": "dark"
+    },
+    {
+      "view": "podcast",
+      "width": 1280,
+      "theme": "dark"
+    },
+    {
+      "view": "landing",
+      "width": 375,
+      "theme": "light"
+    },
+    {
+      "view": "landing",
+      "width": 768,
+      "theme": "light"
+    },
+    {
+      "view": "landing",
+      "width": 1440,
+      "theme": "light"
+    },
+    {
+      "view": "landing",
+      "width": 375,
+      "theme": "dark"
+    },
+    {
+      "view": "landing",
+      "width": 768,
+      "theme": "dark"
+    },
+    {
+      "view": "landing",
+      "width": 1440,
+      "theme": "dark"
+    }
+  ],
+  "screenshots": [
+    "landing-375-light.png",
+    "landing-1440-dark.png",
+    "home-1440-light.png",
+    "home-375-light.png",
+    "dashboard-1440-light.png",
+    "dashboard-375-light.png",
+    "journey-1440-light.png",
+    "journey-390-light.png",
+    "home-1440-dark.png",
+    "home-375-dark.png",
+    "dashboard-1440-dark.png",
+    "dashboard-375-dark.png",
+    "journey-1440-dark.png",
+    "journey-390-dark.png"
+  ],
+  "failures": [],
+  "fixtures": "Synthetic sources and intercepted AI responses; no live provider calls.",
+  "responseEvidence": {
+    "environment": "Synthetic proxy fixture; not the reported production incident",
+    "method": "POST",
+    "url": "http://127.0.0.1:40557/api/chat",
+    "status": 403,
+    "contentType": "text/html",
+    "first200Bytes": "<html><head><title>403 Forbidden</title></head><body>Fixture session access denied.</body></html>",
+    "geminiCalled": false
+  },
+  "contrast": [
+    {
+      "theme": "light",
+      "pairs": [
+        {
+          "text": "--text",
+          "background": "--bg",
+          "ratio": 13.899664117041102
+        },
+        {
+          "text": "--text-muted",
+          "background": "--surface",
+          "ratio": 7.541693038443241
+        },
+        {
+          "text": "--text-muted",
+          "background": "--surface2",
+          "ratio": 7.317815129455857
+        },
+        {
+          "text": "--accent-ink",
+          "background": "--surface",
+          "ratio": 5.4671416243255635
+        },
+        {
+          "text": "--accent-ink",
+          "background": "--accent-soft",
+          "ratio": 4.813076428748744
+        },
+        {
+          "text": "--on-primary",
+          "background": "--accent",
+          "ratio": 5.536636517688562
+        },
+        {
+          "text": "--success",
+          "background": "--success-soft",
+          "ratio": 7.153008871827929
+        },
+        {
+          "text": "--error",
+          "background": "--error-soft",
+          "ratio": 7.6758095986826085
+        },
+        {
+          "text": "--xp-accent",
+          "background": "--bg",
+          "ratio": 5.613192747709266
+        }
+      ]
+    },
+    {
+      "theme": "dark",
+      "pairs": [
+        {
+          "text": "--text",
+          "background": "--bg",
+          "ratio": 16.30864641512705
+        },
+        {
+          "text": "--text-muted",
+          "background": "--surface",
+          "ratio": 7.184531073810438
+        },
+        {
+          "text": "--text-muted",
+          "background": "--surface2",
+          "ratio": 7.74608953946525
+        },
+        {
+          "text": "--accent-ink",
+          "background": "--surface",
+          "ratio": 9.367971903310144
+        },
+        {
+          "text": "--accent-ink",
+          "background": "--accent-soft",
+          "ratio": 8.535589467537584
+        },
+        {
+          "text": "--on-primary",
+          "background": "--accent",
+          "ratio": 8.818674547353943
+        },
+        {
+          "text": "--success",
+          "background": "--success-soft",
+          "ratio": 7.95617037698222
+        },
+        {
+          "text": "--error",
+          "background": "--error-soft",
+          "ratio": 8.467675402142946
+        },
+        {
+          "text": "--xp-accent",
+          "background": "--bg",
+          "ratio": 10.851082757171435
+        }
+      ]
+    }
+  ],
+  "authFrameCsp": {
+    "blocked": true,
+    "component": "server.js CSP frameSrc excludes same-origin auth recovery iframe",
+    "production403CauseConfirmed": false
+  },
+  "aiCases": [
+    "JSON success",
+    "403 HTML",
+    "401",
+    "429",
+    "503",
+    "invalid JSON",
+    "timeout",
+    "user cancellation",
+    "source mismatch",
+    "general vs document privacy"
+  ],
+  "consoleErrors": [],
+  "assetErrors": []
+}

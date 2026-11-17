@@ -44,6 +44,7 @@
   const key = 'omnilearn-library-v2';
   let sources = [];
   let freeChat = [];
+  let chatScope = materialText.trim() ? 'document' : 'general';
   try {
     freeChat = JSON.parse(
       sessionStorage.getItem('omnilearn-free-chat') || '[]'
@@ -511,6 +512,7 @@
     return true;
   }
   window.OmniProduct = {
+    lessonTitle,
     getSource: id => sources.find(source => source.id === id),
     openTranscript: () => transcriptView(),
     selectSource,
@@ -518,20 +520,78 @@
     async renameLesson(id, title) {
       const source=sources.find(item=>item.id===id);
       const {saveLessonTitle}=await import('/lesson-label.js');
-      return saveLessonTitle(source,title,persistAsync);
+      const savedTitle = await saveLessonTitle(source,title,persistAsync);
+      renderMaterialBadgeAndSidebar();
+      return savedTitle;
     },
     persistAsync,
     storageStatus: () => ({pendingWrites, unsavedChanges}),
     openRecorder(button) { return recordAudio(button); },
     mountDashboardChat(host) { host.append(chatMessages, chatFeedback, $('chatRequestActions')); },
+    getChatScope() { return chatScope === 'document' && sources.some(s => s.id === materialId) ? 'document' : 'general'; },
+    setChatScope(scope) {
+      if (!['general','document'].includes(scope) || busy || uploadInFlight) return false;
+      if (scope === 'document' && !sources.some(s => s.id === materialId)) return false;
+      capture();
+      chatScope = scope;
+      cancelActiveStudyRequest(); materialVersion++;
+      $('retryChat').hidden = true;
+      chatMessages.replaceChildren();
+      for (const item of scope === 'general' ? freeChat : chatHistory) addMessage(item.role, item.content);
+      document.body.dataset.chatScope = scope;
+      if (current === 'home') {
+        document.querySelector('.home-session')?.classList.toggle('has-source', scope === 'document');
+        const label = document.querySelector('.home-source-context span');
+        if (label) label.textContent = scope === 'document' ? 'Sumber percakapan' : 'Percakapan umum';
+        document.querySelectorAll('.chat-scope [data-chat-scope]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.chatScope === scope)));
+      } else if (current === 'chat') {
+        const source = sources.find(s => s.id === materialId);
+        studyShell.update('chat', source, source ? lessonTitle(source) : '', window.OmniProduct);
+      }
+      return true;
+    },
+    chatRequestContext() {
+      const scope = window.OmniProduct.getChatScope();
+      const source = scope === 'document' ? sources.find(s => s.id === materialId) : null;
+      return {
+        scope, history: (source ? chatHistory : freeChat).slice(-24),
+        material: source?.text || '', materialId: source?.id || '',
+        materialName: source ? lessonTitle(source) : '',
+        ...(source ? sourceRequest() : {sourceVersion: undefined, sourcePartial: false, acceptPartial: false}),
+        learningContext: source ? window.OmniProduct.context() : {chapter:null},
+      };
+    },
+    commitChatExchange(message, answer) {
+      const exchange = [{role:'user',content:message},{role:'assistant',content:answer}];
+      if (window.OmniProduct.getChatScope() === 'general') {
+        freeChat = [...freeChat, ...exchange].slice(-24);
+        if (!materialText.trim()) { chatHistory = freeChat; saveSessionState(); }
+        try { sessionStorage.setItem('omnilearn-free-chat', JSON.stringify(freeChat)); } catch {}
+        persist();
+      } else {
+        chatHistory.push(...exchange); saveSessionState(); capture();
+      }
+    },
+    clearVisibleChat() {
+      if (window.OmniProduct.getChatScope() === 'general') {
+        freeChat = [];
+        try { sessionStorage.setItem('omnilearn-free-chat','[]'); } catch {}
+        if (!materialText.trim()) chatHistory = [];
+      } else {
+        const source = sources.find(s => s.id === materialId);
+        if (source) source.chat = [];
+        chatHistory = [];
+      }
+      chatMessages.replaceChildren(); lastOutput = ''; lastOutputHtml = '';
+      saveSessionState(); persist();
+    },
     async submitDashboardChat(message) {
-      const completedBefore = chatHistory.length;
       if (isConceptMapCommand(message)) navigate('chat');
       chatInput.value = message;
-      await sendChat();
+      const answered = await sendChat();
       // sendChat handles failures internally; a resolved promise alone does not
       // mean that Gemini answered. Only clear the Home draft after a saved reply.
-      return { ok: chatHistory.length > completedBefore };
+      return { ok: answered === true };
     },
     capture,
     record,
@@ -803,6 +863,7 @@
     if (busy || uploadInFlight) return false;
     const source = sources.find((s) => s.id === id);
     if (!source) return false;
+    chatScope = 'document';
     if (materialId === id && !force) return true;
     const previous = sources.find((s) => s.id === materialId);
     if (previous && previous.id !== source.id)
@@ -1410,8 +1471,7 @@
     workspace.hidden = !tools.has(view);
     panel.hidden = tools.has(view);
     if (['home','dashboard','notes','subjects','streaks','leaderboard','profile','help','pinned','updates'].includes(view)) {
-      window.OmniDashboard.render(panel, view, window.OmniProduct);
-      return;
+      return window.OmniDashboard.render(panel, view, window.OmniProduct);
     }
     if (tools.has(view)) {
       studyShell.update(view,selected,selected?lessonTitle(selected):'',window.OmniProduct);
@@ -1691,6 +1751,7 @@
     'click',
     async (event) => {
       if (event.target.closest('#clearChat')) {
+        if (window.OmniProduct.getChatScope() === 'general') return;
         const source = sources.find((source) => source.id === materialId);
         if (source) source.chat = [];
         persist();
@@ -1719,6 +1780,13 @@
   document.addEventListener('click', async (event) => {
     const button = event.target.closest('button,a');
     if (!button) return;
+    if (button.dataset.chatScope) {
+      event.preventDefault();
+      if (window.OmniProduct.setChatScope(button.dataset.chatScope)) {
+        button.focus();
+      }
+      return;
+    }
     if (button.matches('.tab[data-tab]')) {
       current = button.dataset.tab;
       history.replaceState(
@@ -1741,6 +1809,7 @@
     }
     if (button.hasAttribute('data-free-chat')) {
       if (busy || uploadInFlight) return;
+      chatScope = 'general';
       const previous = sources.find((source) => source.id === materialId);
       if (previous) previous.chat = chatHistory.slice(-24);
       cancelActiveStudyRequest();
