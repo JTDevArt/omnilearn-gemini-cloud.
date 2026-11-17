@@ -1821,11 +1821,15 @@ app.use((error, req, res, _next) => {
   });
 });
 
-const server = app.listen(PORT, '0.0.0.0', () => {
-  console.log(`OmniLearn Gemini Cloud listening on port ${server.address().port}`);
-});
-server.on('error',error=>{console.error(`[OmniLearn] startup failed: ${error.code||'LISTEN_ERROR'}`);process.exitCode=1;});
-for(const event of ['SIGTERM','SIGINT'])process.once(event,()=>{server.close(()=>process.exit(0));const deadline=setTimeout(()=>process.exit(1),10000);deadline.unref();});
+const runningOnVercel = process.env.VERCEL === '1' || process.env.VERCEL === 'true';
+let server = null;
+if (!runningOnVercel) {
+  server = app.listen(PORT, '0.0.0.0', () => {
+    console.log(`OmniLearn Gemini Cloud listening on port ${server.address().port}`);
+  });
+  server.on('error',error=>{console.error(`[OmniLearn] startup failed: ${error.code||'LISTEN_ERROR'}`);process.exitCode=1;});
+  for(const event of ['SIGTERM','SIGINT'])process.once(event,()=>{server.close(()=>process.exit(0));const deadline=setTimeout(()=>process.exit(1),10000);deadline.unref();});
+}
 
 // Vercel can bind the Express app directly; local/container starts still use the listener above.
 export default app;
