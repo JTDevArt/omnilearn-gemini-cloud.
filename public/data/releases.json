@@ -9,6 +9,27 @@
       "summary": "Beranda dan Dashboard terpisah, progres dan profil memakai data asli, Update List berfungsi, dan penyimpanan riset lebih andal.",
       "changes": [
         {
+          "title": "V16: ubah jawaban tutor menjadi materi dengan pratinjau judul dan bab yang dapat diedit. Simpan ke Catatan dan buka langsung di ruang belajar.",
+          "category": "Added",
+          "status": "implemented-local",
+          "files": ["public/chat-material.js", "public/app.js", "public/product.js"],
+          "commit": null
+        },
+        {
+          "title": "V16: tampilkan halaman OCR yang belum terbaca, pertahankan teks yang berhasil dibaca, dan proses unggahan Vercel dalam satu permintaan.",
+          "category": "AI & OCR",
+          "status": "implemented-local",
+          "files": ["server.js", "lib/ocr-pages.js", "lib/pdf-preprocess.js"],
+          "commit": null
+        },
+        {
+          "title": "V16: perbarui ruang belajar, home, dashboard, catatan, aktivitas, profil, dan halaman depan dengan navigasi responsif.",
+          "category": "UI/UX",
+          "status": "implemented-local",
+          "files": ["public/dashboard-shell.js", "public/study-shell.js", "public/design-system.css", "public/landing.html"],
+          "commit": null
+        },
+        {
           "title": "Home kembali fokus pada composer dan pustaka materi; Dashboard empat statistik mengikuti showcase OmniLearn; palet navy/oranye/biru, font lokal, tema responsif dan penanda build frontend. 171 unit test serta lima pemeriksaan browser lulus; publikasi AI Studio belum terverifikasi.",
           "category": "UI/UX",
           "status": "implemented-local",

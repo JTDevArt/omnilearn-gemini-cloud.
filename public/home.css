@@ -134,3 +134,153 @@
 }
 
 .master-dashboard-mode .dashboard-resources>h2 {position:static;width:auto;height:auto;clip-path:none;overflow:visible}
+
+.master-home-mode {
+  padding-top:clamp(32px,6vw,82px);
+}
+.master-home-mode>.home-hero {
+  flex-direction:row;
+  justify-content:center;
+  text-align:left;
+  margin-bottom:24px;
+  gap:16px;
+}
+.master-home-mode>.home-hero img {
+  flex:none;
+  width:76px;
+  height:76px;
+}
+.master-home-mode>.home-hero h1 {
+  margin-bottom:7px;
+  font-size:clamp(28px,3vw,44px);
+}
+.master-home-mode .home-composer {
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:20px;
+  padding:16px 18px;
+  box-shadow:0 6px 0 var(--surface2);
+}
+.home-composer-actions svg {
+  width:18px;
+  height:18px;
+  stroke:currentColor;
+  stroke-width:1.7;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+  fill:none;
+}
+.master-home-mode .home-composer-actions button {
+  gap:6px;
+  color:var(--workspace-blue);
+  background:var(--workspace-blue-soft);
+}
+.master-home-mode .home-composer-actions button[data-record-audio] {
+  background:var(--accent-soft);
+  color:var(--accent-ink);
+}
+.master-home-mode .home-composer-actions button[data-transcript] {
+  background:var(--review-amber-soft);
+  color:var(--review-amber);
+}
+.master-home-mode .home-composer-actions button.primary {
+  color:var(--on-primary);
+  background:var(--accent);
+}
+.master-home-mode .chat-scope {
+  gap:4px;
+}
+.master-home-mode .home-session .chat-messages {
+  max-height:none;
+  overflow:visible;
+  padding:12px 0 0;
+}
+.master-home-mode .home-continuation {
+  width:min(100%, 720px);
+  margin:16px auto 28px;
+  padding:16px 20px;
+  border:0;
+  background:var(--workspace-blue-soft);
+  border-inline-start:3px solid var(--workspace-blue);
+}
+.master-home-mode .home-continuation h2 {
+  color:var(--workspace-blue);
+  font-size:12px;
+  margin-block-end:5px;
+}
+.master-home-mode .home-continuation h3 { font-size:17px; }
+.master-home-mode .home-library {
+  margin-top:26px;
+  padding-top:24px;
+  border-top:1px solid var(--border);
+}
+.master-home-mode .home-recent-rows article {
+  border:0;
+  border-inline-start:3px solid var(--workspace-blue);
+  background:var(--surface);
+  border-radius:8px 16px 16px 8px;
+}
+.master-dashboard-mode .dashboard-summary {
+  gap:10px;
+}
+.master-dashboard-mode .dashboard-summary>a {
+  flex-direction:row;
+  align-items:center;
+  gap:12px;
+  padding:14px;
+  min-height:80px;
+  border:0;
+  background:var(--surface);
+}
+.dashboard-stat-icon {
+  display:grid;
+  place-items:center;
+  flex:none;
+  width:40px;
+  height:40px;
+  border-radius:12px;
+  background:var(--workspace-blue-soft);
+  color:var(--workspace-blue);
+}
+.dashboard-stat-icon svg { width:22px; height:22px; }
+.dashboard-summary>a:nth-child(2) .dashboard-stat-icon {
+  background:var(--review-amber-soft);
+  color:var(--review-amber);
+}
+.dashboard-summary>a:nth-child(3) .dashboard-stat-icon {
+  background:var(--accent-soft);
+  color:var(--accent-ink);
+}
+.dashboard-summary>a:nth-child(4) .dashboard-stat-icon {
+  background:var(--review-amber-soft);
+  color:var(--review-amber);
+}
+.master-dashboard-mode .dashboard-planning-column>.dashboard-level {
+  border:0;
+  background:var(--workspace-blue-soft);
+}
+.master-dashboard-mode .dashboard-planning-column>.dashboard-focus {
+  border:0;
+  background:var(--surface2);
+}
+.master-dashboard-mode .dashboard-study-column>.dashboard-weekly,
+.master-dashboard-mode .dashboard-study-column>.dashboard-recent {
+  border:0;
+  border-block-start:1px solid var(--border);
+  border-radius:0;
+  background:transparent;
+}
+.master-dashboard-mode .dashboard-bar span { background:var(--workspace-blue); }
+
+@media(max-width:700px) {
+  .master-home-mode { padding-top:22px; }
+  .master-home-mode>.home-hero { align-items:center; gap:10px; }
+  .master-home-mode>.home-hero img { width:48px; height:48px; }
+  .master-home-mode>.home-hero h1 { font-size:clamp(23px,6vw,30px); }
+  .master-home-mode .home-composer { padding:12px; }
+  .master-home-mode .home-composer-actions { flex-wrap:wrap; }
+  .master-home-mode .home-composer-actions svg { width:15px; height:15px; }
+  .master-dashboard-mode .dashboard-summary>a { gap:8px; padding:12px 8px; }
+  .dashboard-stat-icon { width:29px; height:29px; border-radius:8px; }
+  .dashboard-stat-icon svg { width:17px; height:17px; }
+}

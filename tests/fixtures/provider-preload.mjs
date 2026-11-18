@@ -54,6 +54,22 @@ globalThis.fetch = async (input, options = {}) => {
       limitations: [],
       knowledgeGaps: [],
     });
+  } else if (prompt.includes('Build a concise learning journey')) {
+    const grounded = prompt.includes('sole grounding for claims and citations');
+    const general = prompt.includes('Prior assistant claims may be wrong') && !prompt.includes('sole grounding');
+    if ((!grounded && !general) || !prompt.includes('escaped &lt;boundary&gt;')) {
+      return new Response(JSON.stringify({error:{code:400,message:'Missing tutor data boundary'}}), {status:400});
+    }
+    text = JSON.stringify({
+      title: 'Circle geometry',
+      overview: 'Understand circle measurements.',
+      chapters: [{
+        title: 'Radius and diameter', objective: 'Identify the radius',
+        explanation: 'A radius joins the centre to the boundary.',
+        practice: {question:'Where does a radius start?',answer:'The centre.',explanation:'A radius joins the centre to the boundary.'},
+        sourceReferences: grounded ? ['[Page 1]'] : []
+      }]
+    });
   } else {
     // Derive the requested OCR pages from the actual extraction instruction.
     // A PDF-only fallback has no rendered page marker, and defaulting to page
@@ -62,9 +78,12 @@ globalThis.fetch = async (input, options = {}) => {
     const explicit = requested?.[1]?.match(/\d+/g)?.map(Number) || [];
     const markers = [...prompt.matchAll(/\[Halaman (\d+)\]/g)].map(m => Number(m[1]));
     const unique = [...new Set(explicit.length ? explicit : markers.length ? markers : [1])];
+    const blankFirstPage = unique.length === 2 && unique.includes(1) && unique.includes(2);
+    const allBlank = prompt.includes('this 3-page PDF');
     text = unique
       .map(
         (page) =>
+          allBlank || (blankFirstPage && page === 1) ? `[Halaman ${page}]\n[blank page]` :
           `[Halaman ${page}]\nA radius joins the centre to the boundary of a circle. The diameter is twice the radius. This is a deterministic test transport response, not live OCR.`
       )
       .join('\n\n');

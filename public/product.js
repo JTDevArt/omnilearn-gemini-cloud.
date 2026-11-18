@@ -339,7 +339,7 @@
   quizType.innerHTML =
     '<option value="multiple">Pilihan ganda</option><option value="truefalse">Benar / salah</option><option value="blanks">Isian singkat</option><option value="ordering">Urutan</option><option value="matching">Pasangan</option>';
   document.querySelector('#quizOptions').prepend(quizType);
-  quizType.addEventListener('change', () => { if (activeTab === 'quiz' && !busy && !uploadInFlight) runTool('quiz', '', false); });
+  quizType.addEventListener('change', () => { if (activeTab === 'quiz' && !busy && !uploadInFlight) selectTab('quiz'); });
   const optionIds = [
     'summaryStyle',
     'quizDifficulty',
@@ -537,8 +537,7 @@
       chatScope = scope;
       cancelActiveStudyRequest(); materialVersion++;
       $('retryChat').hidden = true;
-      chatMessages.replaceChildren();
-      for (const item of scope === 'general' ? freeChat : chatHistory) addMessage(item.role, item.content);
+      renderChatHistory(scope === 'general' ? freeChat : chatHistory);
       document.body.dataset.chatScope = scope;
       if (current === 'home') {
         document.querySelector('.home-session')?.classList.toggle('has-source', scope === 'document');
@@ -663,8 +662,7 @@
         materialId = '';
         materialMeta = null;
         chatHistory = freeChat;
-        chatMessages.replaceChildren();
-        chatHistory.forEach((m) => addMessage(m.role, m.content));
+        renderChatHistory(chatHistory);
         window.OmniProductSourceChange?.();
         saveSessionState();
       }
@@ -705,6 +703,34 @@
       sources.unshift(source);
       selectSource(source.id);
       persist();
+      return source;
+    },
+    async saveChatLesson(lesson, conversation, context) {
+      const original = context.scope === 'document' ? sources.find(item => item.id === context.materialId) : null;
+      if (context.scope === 'document' && (!original || original.version !== context.sourceVersion || original.text !== context.material)) {
+        throw new Error('Sumber berubah. Buka percakapan di sumber terbaru dan susun lagi.');
+      }
+      if (!durableAvailable) throw new Error('Penyimpanan perangkat belum tersedia untuk Catatan.');
+      const source = {
+        id: crypto.randomUUID(), name: lesson.title, lessonTitle: lesson.title,
+        text: original ? original.text : conversation, journey: lesson, version: 1,
+        createdAt: Date.now(), notes: '', subject: original?.subject || profile.subject || '',
+        analysisSchema: 'forge-1', acceptPartial: original?.acceptPartial === true,
+        meta: {
+          origin: original ? 'tutor-source' : 'tutor-general',
+          ...(original ? {
+            parentSourceId: original.id, parentSourceVersion: original.version,
+            partialRead: Boolean(original.meta?.partialRead || original.meta?.truncated),
+          } : {}),
+        },
+      };
+      sources.unshift(source);
+      try { await persistAsync(); }
+      catch (error) {
+        sources = sources.filter(item => item.id !== source.id);
+        try { sessionStorage.setItem(key, JSON.stringify(sources)); } catch {}
+        throw error;
+      }
       return source;
     },
     async stageUpload(file, id) {
@@ -864,8 +890,10 @@
     if (busy || uploadInFlight) return false;
     const source = sources.find((s) => s.id === id);
     if (!source) return false;
+    if (materialId === id && !force) {
+      return chatScope === 'document' || window.OmniProduct.setChatScope('document');
+    }
     chatScope = 'document';
-    if (materialId === id && !force) return true;
     const previous = sources.find((s) => s.id === materialId);
     if (previous && previous.id !== source.id)
       previous.chat = chatHistory.slice(-24);
@@ -878,8 +906,7 @@
     materialId = source.id;
     materialMeta = source.meta;
     chatHistory = Array.isArray(source.chat) ? source.chat : [];
-    chatMessages.replaceChildren();
-    for (const item of chatHistory) addMessage(item.role, item.content);
+    renderChatHistory(chatHistory);
     lastOutput = '';
     lastOutputHtml = '';
     window.OmniProductSourceChange?.();
@@ -1319,7 +1346,7 @@
     const formats =
       capabilities?.extensions?.join(', ').toUpperCase() ||
       'PDF, DOCX, PPTX, XLSX, TXT, PNG, JPEG, MP3, M4A, WAV, WEBM, MP4';
-    panel.innerHTML = window.OmniHtml.sanitize(`<h1>Pengaturan sesi</h1><p>Sumber, catatan, dan riwayat tersimpan di browser ini. Buka Akun & cloud untuk sinkronisasi jika penyedianya sudah dikonfigurasi.</p><div class="panel-actions"><button data-theme-setting>Ganti tema</button><button data-delete-session>Hapus data perangkat</button></div><h3>Privasi dan AI</h3><p>Materi dikirim ke Gemini saat diproses. Periksa fakta penting dan gunakan materi yang boleh dibagikan kepada penyedia AI.</p><h3>Format yang tersedia</h3><p>Upload ${formats} hingga 15 MB. Caption otomatis memerlukan izin resmi YouTube; transkrip manual dan SRT/VTT tetap tersedia.</p>`);
+    panel.innerHTML = window.OmniHtml.sanitize(`<h1>Pengaturan sesi</h1><p>Sumber, catatan, dan riwayat tersimpan di browser ini. Buka Akun & cloud untuk sinkronisasi jika penyedianya sudah dikonfigurasi.</p><div class="panel-actions"><button data-theme-setting>Ganti tema</button><button data-delete-session>Hapus data perangkat</button></div><h3>Privasi dan AI</h3><p>Materi dikirim ke Gemini saat diproses. Periksa fakta penting dan gunakan materi yang boleh dibagikan kepada penyedia AI.</p><h3>Format yang tersedia</h3><p>Upload ${formats} hingga ${formatFileSize(window.OmniCapabilities?.maxFileBytes || 15 * 1024 * 1024)}. Caption otomatis memerlukan izin resmi YouTube; transkrip manual dan SRT/VTT tetap tersedia.</p>`);
     const form = document.createElement('form');
     form.className = 'profile-form';
     form.innerHTML = window.OmniHtml.sanitize(`<h2>Preferensi belajar (opsional)</h2><p>Disimpan di perangkat; bukan akun atau profil psikologis.</p><label>Nama panggilan<input name="learnerName" maxlength="50" value="${html(profile.name || '')}"></label><label>Jenjang pendidikan<input name="education" maxlength="100" value="${html(profile.education || '')}"></label><label>Mata pelajaran<input name="subject" maxlength="100" value="${html(profile.subject || '')}"></label><label>Target belajar<input name="goal" maxlength="200" value="${html(profile.goal || '')}"></label><label>Mode tutor<select name="teachingMode">${teaching.innerHTML}</select></label><label>Tema<select name="theme" data-theme-select><option value="system">Ikuti sistem</option><option value="light">Terang</option><option value="dark">Gelap</option></select></label><button class="primary">Simpan preferensi</button><p role="status" data-profile-status></p>`);
@@ -1438,11 +1465,12 @@
     view=({ujian:'exams',flashcards:'cards',mindmap:'map',update:'updates'})[view] || view;
     if (current === 'podcast') disposePodcast();
     panel.dashboardRenderId = null;
-    panel.classList.remove('master-home-mode', 'master-dashboard-mode', 'exam-page', 'page-subjects', 'page-streaks', 'page-profile', 'page-leaderboard');
+    panel.classList.remove('master-home-mode', 'master-dashboard-mode', 'exam-page', 'page-subjects', 'page-streaks', 'page-profile', 'page-leaderboard', 'page-notes', 'page-pinned', 'page-updates');
     chatHome.after(chatMessages);
     feedbackHome.after(chatFeedback, $('chatRequestActions'));
     if (!views[view] && !tools.has(view)) view = 'dashboard';
     current = view;
+    document.body.dataset.appView = view;
     if (!tools.has(view)) delete document.body.dataset.studyTool;
     document.body.classList.toggle('ai-home-view', view === 'home');
     const modeLabel = top.querySelector(':scope > span');
@@ -1536,7 +1564,7 @@
       const chunks = [];
       let size = 0;
       recorder = new MediaRecorder(recordingStream);
-      const limit = 15 * 1024 * 1024;
+      const limit = window.OmniCapabilities?.maxFileBytes || 15 * 1024 * 1024;
       recorder.ondataavailable = (e) => {
         if (e.data.size) {
           size += e.data.size;
@@ -1550,7 +1578,7 @@
       recorder.onstop = async () => {
         recordingStream.getTracks().forEach((track) => track.stop());
         if (size > limit) {
-          toast('Rekaman melebihi 15 MB; coba rekam lebih singkat.');
+          toast('Rekaman melebihi ' + formatFileSize(limit) + '. Coba rekam lebih singkat.');
           return;
         }
         const type = recorder.mimeType;
@@ -2066,8 +2094,7 @@
   if (restoredSource) selectSource(restoredSource.id, true);
   else if (!materialText && freeChat.length) {
     chatHistory = freeChat;
-    chatMessages.replaceChildren();
-    for (const item of freeChat) addMessage(item.role, item.content);
+    renderChatHistory(freeChat);
   }
   persist();
   window.OmniUploads?.restore();

@@ -109,6 +109,16 @@
       return;
     }
     if (!source.journey) {
+      if (!source.text?.trim()) {
+        const review = document.createElement('button');
+        review.className = 'primary';
+        review.textContent = 'Tinjau hasil ekstraksi';
+        review.onclick = () => api.navigate('sources');
+        const status = document.createElement('p');
+        status.textContent = 'Teks sumber belum tersedia untuk membuat bab.';
+        panel.append(status, review);
+        return;
+      }
       const button = document.createElement('button');
       button.className = 'primary';
       button.textContent = 'Susun jalur dari materi ini';
@@ -159,7 +169,7 @@
           review.onclick = () => api.navigate('sources');
           errorNotice.replaceChildren(description, review);
           errorNotice.hidden = false;
-          toast(rejectedEvidence ? 'Analisis ditolak: bukti tidak cocok. File asli tetap aman.' : error.message);
+
         }
       };
       return;
@@ -180,7 +190,25 @@
     tools.setAttribute('aria-label', 'Alat belajar');
     tools.innerHTML = '<h2>Alat belajar</h2><button data-open="summary">Ringkas dengan AI</button><button data-open="note-editor">Buat catatan</button><button data-open="cards">Buat flashcard</button><button data-open="quiz">Latihan soal</button><button data-open="chat">Tanya AI</button>';
     panel.querySelector('.journey-workspace').append(tools);
-    if (source.lessonTitle) panel.querySelector('h1').textContent = source.lessonTitle;
+    const title = panel.querySelector('h1');
+    if (source.lessonTitle) title.textContent = source.lessonTitle;
+    if (source.meta?.origin?.startsWith('tutor-')) {
+      const origin = document.createElement('p');
+      origin.className = 'note-status';
+      origin.textContent = source.meta.origin === 'tutor-general'
+        ? 'Dari percakapan AI umum'
+        : 'Turunan percakapan dari sumber';
+      title.parentElement.after(origin);
+      const original = api.getSource(source.meta.parentSourceId);
+      if (original) {
+        const link = document.createElement('button');
+        link.type = 'button';
+        link.className = 'secondary';
+        link.textContent = 'Buka sumber asli';
+        link.onclick = () => { if (api.selectSource(original.id)) api.navigate('sources'); };
+        origin.after(link);
+      }
+    }
     const practice = panel.querySelector('[aria-label="Jawaban latihan"]');
     if (practice) {
       practice.value = source.practiceDrafts?.[chapter.id] || '';

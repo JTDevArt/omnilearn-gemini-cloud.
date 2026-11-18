@@ -13,9 +13,11 @@
 3. The active source carries the original filename, extracted text and reviewed lesson title. `public/lesson-label.js` provides the shared title resolver. `public/backup-format.js` validates backups.
 4. `public/product.js` prepares the source version and context. `/api/source/analyze` validates evidence through `lib/source-intelligence.js`. `/api/study` returns structured lessons, cards, quizzes and maps. Source-linked tool results persist through `saveTool`.
 5. `public/app.js` sends `/api/chat`. General mode sends its own history without document text. Source mode requests verified analysis. `public/ai-response.js` classifies failures and keeps diagnostic details separate from the user-facing error.
-6. `lib/provider-manager.js` and `lib/provider-request.js` manage Gemini routing and deadlines. `lib/text-provider-pilot.js` is a separate test adapter.
+6. `public/chat-material.js` previews an individual chat exchange. `public/app.js` calls `/api/study` with `task: journey` and `tutorConversation`, including original source fields only in document scope. `OmniProduct.saveChatLesson` persists the edited preview as a separate library record.
+7. `lib/provider-manager.js` and `lib/provider-request.js` manage Gemini routing and deadlines. `lib/text-provider-pilot.js` is a separate test adapter.
 
 ## Regression entry points
 - AI, source and OCR fixtures: `tests/provider-http.test.mjs`, `tests/source-intelligence.test.mjs`, `tests/origin-check.test.mjs`, `tests/pdf-pipeline.test.mjs`.
-- V15 study cases: `tests/study-recovery.test.mjs`.
+- Chat-to-material browser fixture: `scripts/verify-chat-material.cjs`.
+- Study cases: `tests/study-recovery.test.mjs`.
 - Browser interactions and screenshots: `scripts/verify-archive-home.cjs`, `scripts/verify-home-visual.cjs`, `scripts/verify-study-workspace.cjs`, `scripts/verify-remaining-pages.cjs`.

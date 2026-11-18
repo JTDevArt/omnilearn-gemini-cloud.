@@ -19,7 +19,7 @@ import { assessmentPrompt, validateAssessment } from './lib/exam-assessment.js';
 import { installAccountRoutes } from './lib/account-routes.js';
 import { readFileSync } from 'node:fs';
 import { preprocessOcrImage } from './lib/ocr-preprocess.js';
-import { parseOcrPagesMap } from './lib/ocr-pages.js';
+import { parseOcrPagesMap, hasReadableOcrText, isBlankOcrPage } from './lib/ocr-pages.js';
 import { pdfOcrImages, pdfPageCount, pageExtractionQuality } from './lib/pdf-preprocess.js';
 import { BoundedWorkQueue } from './lib/work-queue.js';
 import { researchPrompt,validateResearchSynthesis } from './lib/research-synthesis.js';
@@ -45,7 +45,8 @@ import {
   normalizeFlashcardsData,
   formatFlashcardsToMarkdown,
   normalizeConceptMapData,
-  formatConceptMapToMarkdown
+  formatConceptMapToMarkdown,
+  sanitizeJsonLatexEscapes
 } from './lib/learning-engine.js';
 
 // Prevent internal pdf.js v1.10.100 worker rejections or async OCR exceptions from crashing Node.js
@@ -64,7 +65,10 @@ if(!Number.isInteger(PORT)||PORT<0||PORT>65535)throw Object.assign(new Error('PO
 if(process.env.NODE_ENV==='production'&&!isConfiguredKey(process.env.GEMINI_API_KEY))throw Object.assign(new Error('Production startup requires the server secret GEMINI_API_KEY.'),{code:'MISSING_SECRET'});
 const MODEL = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
 const SPEECH_MODEL = process.env.GEMINI_SPEECH_MODEL || 'gemini-2.5-flash-preview-tts';
-const MAX_FILE_SIZE = 15 * 1024 * 1024;
+const runningOnVercel = process.env.VERCEL === '1' || process.env.VERCEL === 'true';
+// Allow room for multipart metadata below Vercel's 4.5 MB request body limit.
+const MAX_FILE_SIZE = (runningOnVercel ? 4 : 15) * 1024 * 1024;
+const maxFileSizeMessage = `Ukuran file melebihi batas maksimal ${MAX_FILE_SIZE / 1024 ** 2} MB.`;
 const MAX_MATERIAL_CHARS = 50000;
 const MAX_INLINE_OCR_BYTES = 15 * 1024 * 1024;
 const OCR_PAGE_BATCH_SIZE = 4;
@@ -363,7 +367,12 @@ async function generateText({
         if (sourceContext !== undefined) validateSourceReferences(text, sourceContext, stage);
         if (responseMimeType === 'application/json') {
           try {
-            const data = JSON.parse(text);
+            let data;
+            try {
+              data = JSON.parse(text);
+            } catch {
+              data = JSON.parse(sanitizeJsonLatexEscapes(text));
+            }
             if (!data || typeof data !== 'object') throw new Error('Expected structured JSON.');
             if (validateOutput && validateOutput(text, data) === false) throw new Error('Invalid schema.');
           } catch (cause) {
@@ -663,7 +672,8 @@ async function extractPdfWithGeminiOcr(buffer, inspection, onProgress = null, si
   const collectedOcrMap = new Map();
   let actualModelUsed = MODEL;
   let ocrRetried = false;
-  const preprocessing=[];
+  let interruptedError = null;
+  const preprocessing = [];
 
   for (let bIdx = 0; bIdx < batches.length; bIdx++) {
     signal?.throwIfAborted();
@@ -676,70 +686,41 @@ async function extractPdfWithGeminiOcr(buffer, inspection, onProgress = null, si
     }
     let images=[];try{images=await pdfOcrImages(buffer,batchPages,signal);preprocessing.push(...images.map(image=>({page:image.page,...image.preprocessing})));}catch{signal?.throwIfAborted();preprocessing.push(...batchPages.map(page=>({page,status:'original-pdf-fallback',reason:'page-rendering-unavailable-or-failed',ocrConfidence:null})));}
 
-    let batchSuccess = false;
-    let lastBatchError = null;
-
-    // Bounded completeness retry, not a guarantee of OCR accuracy: maximum 1 time if OCR fails, is too short (< 20 chars), or misses target pages
+    const needsReading = page => {
+      const text = collectedOcrMap.get(page) || '';
+      return !isBlankOcrPage(text) && (!hasReadableOcrText(text) || text.replace(/\s+/g, '').length < 20);
+    };
     for (let attempt = 0; attempt < 2; attempt++) {
+      const pagesToRequest = attempt === 0 ? batchPages : batchPages.filter(needsReading);
+      if (!pagesToRequest.length) break;
       if (attempt === 1) {
         ocrRetried = true;
-        if (typeof onProgress === 'function') {
-          onProgress(`Mengulang pembacaan OCR untuk kelengkapan halaman (${batchPages.join(', ')})…`);
-        }
+        onProgress?.(`Mengulang halaman yang belum terbaca (${pagesToRequest.join(', ')})…`);
       }
       try {
-        const pagesToRequest = attempt === 0
-          ? batchPages
-          : batchPages.filter(p => {
-            const existing = collectedOcrMap.get(p) || '';
-            return existing.replace(/\s+/g, '').length < 20;
-          });
-
-        if (!pagesToRequest.length) {
-          batchSuccess = true;
-          break;
-        }
-
         const { text: rawOcrText, actualModel } = await runOcrForPagesBatch(
-          base64Pdf,
-          pagesToRequest,
-          totalPages,
-          isMixed,
-          inspection.hasImagesOrDiagrams,
-          images, signal
+          base64Pdf, pagesToRequest, totalPages, isMixed, inspection.hasImagesOrDiagrams, images, signal
         );
         actualModelUsed = actualModel || MODEL;
-
         const parsedMap = parseOcrPagesMap(rawOcrText, pagesToRequest);
-        if (parsedMap.size > 0) {
-          for (const [pNum, pContent] of parsedMap.entries()) {
-            const cleanContent = deduplicateExtractedText(pContent);
-            if (cleanContent) {
-              collectedOcrMap.set(pNum, cleanContent);
-            }
+        for (const [page, content] of parsedMap) {
+          const cleanContent = deduplicateExtractedText(content);
+          const existing = collectedOcrMap.get(page) || '';
+          // A second pass may produce less text. Keep the more usable read.
+          if ((hasReadableOcrText(cleanContent) && cleanContent.length >= existing.length) ||
+              (!hasReadableOcrText(existing) && isBlankOcrPage(cleanContent))) {
+            collectedOcrMap.set(page, cleanContent);
           }
         }
-
-        // Verify all requested pages in this batch were processed and aren't abnormally short
-        const missingPages = batchPages.filter(p => {
-          const content = collectedOcrMap.get(p) || '';
-          return content.replace(/\s+/g, '').length < 15;
-        });
-
-        if (missingPages.length === 0) {
-          batchSuccess = true;
-          break;
-        }
-      } catch (err) {
+      } catch (error) {
         signal?.throwIfAborted();
-        lastBatchError = err;
-        if (err?.retryAt || ['GEMINI_AUTH_ERROR','MISSING_SECRET'].includes(err?.code) || attempt === 1) break;
+        if (error?.code === 'INVALID_OCR_OUTPUT') continue;
+        interruptedError = error;
+        break;
       }
+      if (!batchPages.some(needsReading)) break;
     }
-
-    if (!batchSuccess && collectedOcrMap.size === 0 && lastBatchError) {
-      throw lastBatchError;
-    }
+    if (interruptedError) break;
   }
 
   // Merge all pages (1..totalPages) in exact sequential order without duplication
@@ -751,7 +732,7 @@ async function extractPdfWithGeminiOcr(buffer, inspection, onProgress = null, si
       let pageFinal = ocrContent;
 
       if (!pageFinal && sparseTextLayer) {
-        pageFinal = sparseTextLayer;
+        pageFinal = `${sparseTextLayer}\n\n[unreadable]`;
       } else if (pageFinal && sparseTextLayer && sparseTextLayer.length >= 10) {
         // Only prepend sparse text layer lines that are not already present in the OCR output
         const ocrLower = pageFinal.toLowerCase();
@@ -775,7 +756,9 @@ async function extractPdfWithGeminiOcr(buffer, inspection, onProgress = null, si
   }
 
   const finalCombined = deduplicateExtractedText(mergedPages.join('\n\n'));
-  const pageQuality=pageExtractionQuality(mergedPages,targetPages),partialRead=pageQuality.some(page=>page.flags.includes('sparse-or-unreadable')||page.flags.includes('uncertain-text'));
+  if (interruptedError && !hasReadableOcrText(finalCombined)) throw interruptedError;
+  const pageQuality = pageExtractionQuality(mergedPages, targetPages);
+  const partialRead = pageQuality.some(page => page.flags.length > 0);
   return {
     text: finalCombined,
     pageCount: totalPages,
@@ -893,7 +876,7 @@ async function extractFileContentFromBuffer(fileMeta, buffer, sessionId, onStage
   });
 
   const cleanedText = String(result.text || '').replace(/\u0000/g, '').trim();
-  const meaningfulCheck = cleanedText.replace(/\[(?:Halaman|Page)\s+\d+\]/gi, '').replace(/\[(?:blank|unreadable|unclear|Halaman kosong(?: atau teks tidak terbaca)?)\]/gi, '').trim();
+  const meaningfulCheck = hasReadableOcrText(cleanedText) || (extension !== '.pdf' && !result.ocrUsed && !!cleanedText);
   if (!cleanedText || !meaningfulCheck) {
     throw createApiError('Tidak ada teks atau konten visual yang dapat diekstrak dari dokumen tersebut.', {
       status: 422,
@@ -1004,12 +987,16 @@ function startBackgroundUploadJob(job, fileMeta, rawBuffer) {
   });
 }
 
+let uiBuild = null;
+try {
+  uiBuild = JSON.parse(readFileSync(path.join(__dirname, 'public/ui-build.json'), 'utf8')).uiBuild ?? null;
+} catch {}
 app.get('/api/health', (_req, res) => {
   const ready = isConfiguredKey(process.env.GEMINI_API_KEY);
   res.json({
     version: 'concise-ai-v4',
     productVersion: 'forge-2.1',
-    uiBuild: 'algorithmic-v10.4-pages-1',
+    uiBuild,
     ready,
     provider: 'Gemini Cloud',
     model: MODEL,
@@ -1017,7 +1004,7 @@ app.get('/api/health', (_req, res) => {
   });
 });
 
-app.get('/api/capabilities',(_req,res)=>res.json({maxFileBytes:MAX_FILE_SIZE,maxFilesPerQueue:5,extensions:[...ALLOWED_EXTENSIONS],mediaTypes:MEDIA_TYPES,imageTypes:IMAGE_TYPES,quizTypes:['multiple',...QUIZ_V4_TYPES],examTypes:['multiple','truefalse','numeric','short','essay','case','multipart'],youtube:{automatic:youtubeProvider.status().configured,manualTranscript:true,subtitleFiles:['srt','vtt']},storage:{local:'indexeddb',cloudConfigured:accounts.status().configured,cloudOriginalFiles:false},backup:'omnilearn-backup/1',sourceAnalysis:'forge-1'}));
+app.get('/api/capabilities',(_req,res)=>res.json({maxFileBytes:MAX_FILE_SIZE,uploadMode:runningOnVercel?'sync':'async',maxFilesPerQueue:5,extensions:[...ALLOWED_EXTENSIONS],mediaTypes:MEDIA_TYPES,imageTypes:IMAGE_TYPES,quizTypes:['multiple',...QUIZ_V4_TYPES],examTypes:['multiple','truefalse','numeric','short','essay','case','multipart'],youtube:{automatic:youtubeProvider.status().configured,manualTranscript:true,subtitleFiles:['srt','vtt']},storage:{local:'indexeddb',cloudConfigured:accounts.status().configured,cloudOriginalFiles:false},backup:'omnilearn-backup/1',sourceAnalysis:'forge-1'}));
 app.get('/api/provider/status',(_req,res)=>res.json(providerManager.status()));
 const accounts=installAccountRoutes(app);
 const youtubeProvider=new YoutubeCaptionProvider(),researchProvider=new ResearchProvider();
@@ -1348,9 +1335,10 @@ Langsung mulai tanpa kalimat pembuka basa-basi, dan susun dengan 7 bagian wajib 
 
 const STUDY_THINKING_LEVELS = {
   summary: ThinkingLevel.LOW,
-  quiz: ThinkingLevel.MEDIUM,
+  quiz: ThinkingLevel.LOW,
   cards: ThinkingLevel.LOW,
   map: ThinkingLevel.LOW,
+  journey: ThinkingLevel.LOW,
   plan: ThinkingLevel.MEDIUM,
   translate: ThinkingLevel.LOW,
   research: ThinkingLevel.HIGH,
@@ -1375,6 +1363,14 @@ app.post('/api/study', aiLimiter, async (req, res, next) => {
 
     const material = requestMaterial(req, cachedSessionEntry);
     const topic = asText(req.body?.topic, 5000);
+    const conversationInput = req.body?.tutorConversation;
+    if (conversationInput !== undefined &&
+        (task !== 'journey' || typeof conversationInput !== 'string' || !conversationInput.trim() || conversationInput.length > 12000)) {
+      throw createApiError('Pilih percakapan yang berisi jawaban tutor dengan panjang maksimal 12.000 karakter.', {
+        status: 400, code: 'INVALID_TUTOR_CONVERSATION', stage: 'study-validate'
+      });
+    }
+    const tutorConversation = conversationInput?.trim() || '';
     const subject = asText(req.body?.subject, 160);
     const materialName = asText(req.body?.materialName, 180) || cachedSessionEntry?.filename || '';
     const targetLanguage = asText(req.body?.targetLanguage, 80) || 'Bahasa Inggris';
@@ -1407,7 +1403,7 @@ app.post('/api/study', aiLimiter, async (req, res, next) => {
       ? ([5, 10, 15, 20].includes(requestedCount) ? requestedCount : Math.max(5, Math.min(20, requestedCount)))
       : Math.max(5, Math.min(20, requestedCount));
 
-    const outputLanguage = resolveOutputLanguage({ requestedLanguage: req.body?.outputLanguage, materialText: material || topic });
+    const outputLanguage = resolveOutputLanguage({ requestedLanguage: req.body?.outputLanguage, materialText: material || tutorConversation || topic });
     const analysis = material && task !== 'translate' ? await analyzeSourceRequest(req, material) : null;
     let prompt = STUDY_TASKS[task]({
       source,
@@ -1419,7 +1415,11 @@ app.post('/api/study', aiLimiter, async (req, res, next) => {
     });
     if (task === 'summary') prompt = buildSummaryPrompt({ source: sampledMaterial || topic, summaryStyle, outputLanguage });
     if(task==='quiz' && questionType!=='multiple')prompt=buildQuizV4Prompt({source:sampledMaterial||topic,count,difficulty,questionType,language:outputLanguage});
-    if(task==='journey')prompt=buildJourneyPrompt({source:sampledMaterial||topic,language:outputLanguage});
+    const journeyReference = sampledMaterial || (tutorConversation ? '' : topic);
+    if (task === 'journey') {
+      prompt = buildJourneyPrompt({ source: journeyReference, tutorConversation, language: outputLanguage });
+    }
+    if (['cards','quiz','map','journey'].includes(task)) prompt += '\nEscape LaTeX backslashes as required by JSON.';
     if (analysis) prompt += '\n' + blueprintContext(analysis.blueprint) + '\nMaintain the terminology and conceptual relationships in this shared analysis. Check all generated claims against the original source excerpts. Do not treat automated gate status as a claim of independent fact checking.';
     const thinkingLevel = STUDY_THINKING_LEVELS[task] || ThinkingLevel.MEDIUM;
 
@@ -1433,7 +1433,7 @@ app.post('/api/study', aiLimiter, async (req, res, next) => {
       signal: req.aiSignal, stage: `study-${task}`, requestScope:sessionId, forceRegenerate:req.body?.forceRegenerate===true,
       sourceContext: sampledMaterial + (analysis ? blueprintContext(analysis.blueprint) : ''),
       validateOutput: raw => {
-        if (task === 'journey') return Boolean(normalizeJourney(raw, sampledMaterial || topic));
+        if (task === 'journey') return Boolean(normalizeJourney(raw, journeyReference));
         if (task === 'quiz') {
           const questions = questionType !== 'multiple' ? normalizeQuizV4(raw, questionType, count)
             : normalizeQuizData(raw, count, difficulty, outputLanguage.code);
@@ -1449,9 +1449,10 @@ app.post('/api/study', aiLimiter, async (req, res, next) => {
     let structuredData = null;
 
     if(task==='journey'){
-      const journey=normalizeJourney(rawResult,sampledMaterial||topic);
+      const journey=normalizeJourney(rawResult, journeyReference);
       if(!journey)throw createApiError('Jalur belajar belum valid. Coba materi yang lebih jelas.',{status:422,code:'INVALID_AI_OUTPUT',stage:'study-journey'});
       structuredData={type:'journey',...journey};result=journey.title+'\n\n'+journey.chapters.map(c=>c.title).join('\n');
+      if (tutorConversation) structuredData.provenance = material ? 'source-tutor' : 'general-tutor';
     } else if(task==='quiz' && questionType!=='multiple'){
       const questions=normalizeQuizV4(rawResult,questionType,count);structuredData={type:'quiz-v4',questionType,questions,count:questions.length};result=questions.map(q=>q.question).join('\n\n');
     } else if (task === 'quiz') {
@@ -1525,7 +1526,7 @@ function handleMultipartUpload(req, res, next) {
     if (!err) return next();
     if (err instanceof multer.MulterError) {
       if (err.code === 'LIMIT_FILE_SIZE') {
-        return next(createApiError('Ukuran file melebihi batas maksimal 15 MB.', {
+        return next(createApiError(maxFileSizeMessage, {
           status: 413,
           code: 'FILE_TOO_LARGE',
           stage: 'upload-multer'
@@ -1580,7 +1581,7 @@ app.post('/api/upload', uploadLimiter, handleMultipartUpload, async (req, res, n
       });
     }
     if (fileSize > MAX_FILE_SIZE) {
-      throw createApiError('Ukuran file melebihi batas maksimal 15 MB.', {
+      throw createApiError(maxFileSizeMessage, {
         status: 413,
         code: 'FILE_TOO_LARGE',
         stage: 'upload-validate'
@@ -1610,7 +1611,7 @@ app.post('/api/upload', uploadLimiter, handleMultipartUpload, async (req, res, n
     }
 
     const sessionId = sanitizeSessionId(req.body?.sessionId || req.headers['x-session-id']);
-    const wantSync = req.query.sync === '1' || req.headers['x-upload-mode'] === 'sync' || req.body?.sync === '1';
+    const wantSync = runningOnVercel || req.query.sync === '1' || req.headers['x-upload-mode'] === 'sync' || req.body?.sync === '1';
     if (MEDIA_TYPES[extension]) validateMedia(fileBuffer, extension, mimeType);
     if (IMAGE_TYPES[extension]) validateImage(fileBuffer, extension);
 
@@ -1661,17 +1662,12 @@ app.post('/api/upload', uploadLimiter, handleMultipartUpload, async (req, res, n
       });
     }
 
-    // Standard synchronous mode (also registers a completed jobId for unified status inspection)
+    // Finish within this request so serverless instances never depend on a separate poll.
     const fileMeta = { originalname: originalName, size: fileSize, mimetype: mimeType };
     const extracted = await fileQueue.run(()=>extractFileContentFromBuffer(fileMeta, fileBuffer, sessionId, null, req.aiSignal));
     const payload = buildCompletedUploadPayload(fileMeta, extracted, req.requestId);
-    const jobId = `job-${crypto.randomBytes(8).toString('hex')}`;
-
     logProcessEvent(req, `upload-${payload.extractionMode}`, 200, 'NONE');
-    return res.json({
-      jobId,
-      ...payload
-    });
+    return res.json(payload);
   } catch (error) {
     next(error);
   } finally {
@@ -1800,7 +1796,7 @@ app.use((error, req, res, _next) => {
   if (error instanceof multer.MulterError && error.code === 'LIMIT_FILE_SIZE') {
     logProcessEvent(req, 'upload-multer', 413, 'FILE_TOO_LARGE');
     return res.status(413).json({
-      error: 'Ukuran file melebihi batas maksimal 15 MB.',
+      error: maxFileSizeMessage,
       code: 'FILE_TOO_LARGE',
       stage: 'upload-multer',
       requestId: req.requestId
@@ -1825,7 +1821,6 @@ app.use((error, req, res, _next) => {
   });
 });
 
-const runningOnVercel = process.env.VERCEL === '1' || process.env.VERCEL === 'true';
 let server = null;
 if (!runningOnVercel) {
   server = app.listen(PORT, '0.0.0.0', () => {
