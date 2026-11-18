@@ -185,6 +185,10 @@
     if (view === "home") {
       const hero = host.querySelector('.master-heading');
       hero.classList.add('home-hero');
+      const stage = document.createElement('div');
+      stage.className = 'home-learning-stage';
+      hero.before(stage);
+      stage.append(hero);
       hero.querySelector('h1').textContent = profile.name ? `${profile.name}, mau belajar apa?` : 'Mau belajar apa hari ini?';
       hero.querySelector('p').textContent = 'Tulis pertanyaan, unggah materi, atau mulai dari video.';
       const chat = document.createElement('section');
@@ -219,7 +223,7 @@
         choice.setAttribute('aria-pressed', String(choice.dataset.chatScope === chatScope));
         choice.disabled = choice.dataset.chatScope === 'document' && !selectedSource;
       }
-      host.append(chat);
+      stage.append(chat);
       const draftInput = chat.querySelector("textarea");
       try { draftInput.value = sessionStorage.getItem(HOME_DRAFT_KEY) || ''; }
       catch { /* Session storage can be unavailable in private mode. */ }
@@ -355,15 +359,19 @@
       const weekMax=Math.max(1,...dashboard.week.map(day=>day.count));
       section('Progres mingguan', window.OmniHtml.fragment(`<div class="dashboard-week">${dashboard.week.map(day=>`<div><div class="dashboard-bar" aria-hidden="true"><span style="--activity:${day.count / weekMax}"></span></div><strong>${day.count}</strong><time datetime="${day.day}">${escape(new Date(day.day+'T00:00:00Z').toLocaleDateString('id-ID',{weekday:'short',timeZone:'UTC'}))}</time></div>`).join('')}</div><p>Jumlah aktivitas per hari. Waktu Jakarta.</p>`)).classList.add('dashboard-weekly');
       section('Aktivitas terbaru', window.OmniHtml.fragment(dashboard.recent.length ? `<ul class="dashboard-activity">${dashboard.recent.map(event=>`<li><span><strong>${escape(({lesson:'Pelajaran',quiz:'Kuis',review:'Flashcard',note:'Catatan'})[event.type] || 'Aktivitas')}</strong><span>${escape(event.topic || 'Belajar')}</span></span><time datetime="${escape(event.day)}">${escape(event.day)}</time></li>`).join('')}</ul>` : '<p class="master-empty">Belum ada aktivitas. Mulai belajar untuk melihat progresmu.</p>')).classList.add('dashboard-recent');
-      const planning = document.createElement('div');
+      const planning = document.createElement('aside');
       planning.className = 'dashboard-planning-column';
-      planning.append(level, timer);
-      const study = document.createElement('div');
-      study.className = 'dashboard-study-column';
-      study.append(host.querySelector('.dashboard-weekly'), host.querySelector('.dashboard-recent'));
+      planning.setAttribute('aria-label', 'Fokus dan aktivitas');
+      planning.append(timer, host.querySelector('.dashboard-weekly'), host.querySelector('.dashboard-recent'));
       const materials = library(false, "Materi tersimpan");
       materials.classList.add('dashboard-resources');
-      host.append(planning, materials, study);
+      const libraryColumn = document.createElement('div');
+      libraryColumn.className = 'dashboard-library-column';
+      libraryColumn.append(materials, level);
+      const workspace = document.createElement('div');
+      workspace.className = 'dashboard-overview';
+      workspace.append(libraryColumn, planning);
+      host.append(workspace);
       const video = section(
         "Lanjutkan dari video",
         window.OmniHtml.fragment(`<p>Video, transkrip, dan ide penting dalam satu tempat.</p><div class="panel-actions"><button data-upload>Unggah video</button>${action("YouTube & transkrip", "sources")}</div><div class="master-video"></div>`),

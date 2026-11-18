@@ -1,7 +1,7 @@
 {
-  "uiBuild": "omnilearn-v16-product-recovery-1",
+  "uiBuild": "omnilearn-v17-layout-1",
   "sourceCommit": null,
-  "baseCommit": "6ed55c0f3121c78320985fae7cb3483d67b8766d",
-  "design": "Redesigned workspace and tutor conversation to editable material",
+  "baseCommit": "0f257ae4fc7ec1d2f0454080d753919465d209d5",
+  "design": "Split tutor entry and library-first dashboard",
   "status": "in-development"
 }
