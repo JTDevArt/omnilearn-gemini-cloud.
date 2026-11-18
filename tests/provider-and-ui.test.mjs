@@ -85,10 +85,11 @@ test('concept-map titles and relations escape provider HTML', () => {
 test('sendChat invokes the existing map workflow without submitting a chat request', async () => {
   const routes = []; let chatCalls = 0;
   const ctx = vm.createContext({ chatInput: { value: 'bikin peta konsep' }, busy: false, uploadInFlight: false,
+    window: { OmniProduct: { navigate: route => routes.push([route]) } },
     addMessage() {}, selectTab: (...args) => routes.push(args), askAI: () => { chatCalls++; } });
   vm.runInContext(extract('function isConceptMapCommand', 'const taskNames'), ctx);
   await ctx.sendChat({ preventDefault() {} });
-  assert.deepEqual(routes, [['map', 'bikin peta konsep']]);
+  assert.deepEqual(routes, [['map'], ['map', 'bikin peta konsep']]);
   assert.equal(chatCalls, 0);
 });
 test('Markdown stays plain escaped text if DOMPurify is unavailable', () => {

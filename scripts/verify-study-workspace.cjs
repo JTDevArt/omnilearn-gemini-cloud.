@@ -136,6 +136,9 @@ async function run() {
   await page.getByRole('heading',{name:'Sistem Pencernaan',exact:true}).waitFor();
   assert.equal(await page.locator('#chatForm').isVisible(),false);
   assert.equal(await page.locator('#dropzone').isVisible(),false);
+  if (!await page.locator('.study-outline').evaluate(node => node.open)) {
+    await page.locator('.study-outline summary').click();
+  }
   assert.equal(await page.locator('.study-chapters').isVisible(),true);
   assert.equal(await page.locator('.study-tools').isVisible(),true);
   await page.locator('#cardsCount').selectOption('12');
@@ -164,7 +167,11 @@ async function run() {
   await navigate('cards');
   await page.getByText('Apa yang berpindah pada ikatan ion?',{exact:true}).waitFor();await overflow();
   const positions=await page.evaluate(()=>({content:document.querySelector('.study-workspace .content-panel').getBoundingClientRect().y,tools:document.querySelector('.study-tools').getBoundingClientRect().y}));
-  assert.ok(positions.content<positions.tools,'Mobile study content must precede the tools panel');
+  assert.ok(positions.tools < positions.content, 'Mobile study tools must remain above long results');
+  assert.equal(await page.locator('.study-outline').evaluate(node => node.open), false);
+  await page.locator('.study-outline summary').click();
+  assert.equal(await page.locator('.study-outline .study-chapters').isVisible(), true);
+  await page.locator('.study-outline summary').click();
   assert.equal(calls,1,'Saved flashcards must not regenerate');
   await page.evaluate(()=>OmniProduct.persistAsync());await page.reload();await page.getByText('Apa yang berpindah pada ikatan ion?',{exact:true}).waitFor();
   assert.equal(calls,1);await overflow();

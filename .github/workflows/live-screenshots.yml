@@ -32,6 +32,7 @@ jobs:
           OMNILEARN_QA_OUTPUT=visual-qa node scripts/verify-archive-home.cjs
           QA_SKIP_SCREENSHOTS=1 node scripts/verify-home-visual.cjs
           QA_SKIP_SCREENSHOTS=1 node scripts/verify-study-workspace.cjs
+          node scripts/verify-chat-material.cjs
           QA_SKIP_SCREENSHOTS=1 node scripts/verify-remaining-pages.cjs
           node scripts/verify-page-interactions.cjs
           node scripts/verify-html-safety.cjs

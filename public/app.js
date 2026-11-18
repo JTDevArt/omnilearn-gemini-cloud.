@@ -250,6 +250,61 @@ function addMessage(role, text, extra = '') {
   return el;
 }
 
+function attachChatMaterialAction(messageNode, question, answer) {
+  if (!question?.trim() || !answer?.trim()) return;
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'chat-material-action';
+  button.textContent = 'Jadikan Materi';
+  button.onclick = async () => {
+    const product = window.OmniProduct;
+    if (!product || busy || uploadInFlight) return;
+    const context = product.chatRequestContext();
+    button.disabled = true;
+    try {
+      const {openChatMaterial} = await import('./chat-material.js');
+      await openChatMaterial({
+        trigger: button, question, answer, context,
+        async generate(tutorConversation, externalSignal) {
+          const {scope, material, materialId, materialName, sourceVersion, sourcePartial, acceptPartial} = context;
+          if (scope === 'document' && !material.trim()) {
+            throw new Error('Teks sumber belum tersedia. Tinjau hasil ekstraksi di Sumber.');
+          }
+          const response = await safeRequestJson('/api/study', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+              task: 'journey', tutorConversation, sessionId, material, materialId, materialName,
+              sourceVersion, sourcePartial, acceptPartial, outputLanguage: $('outputLanguage').value,
+            }),
+          }, {timeoutMs:120000, stageContext:'chat-material', externalSignal});
+          return response.structuredData;
+        },
+        save: (lesson, conversation) => product.saveChatLesson(lesson, conversation, context),
+        open: source => product.selectSource(source.id) && product.navigate('journey'),
+      });
+    } catch (error) {
+      toast(error.message || 'Pratinjau materi belum bisa dibuka.');
+    } finally {
+      button.disabled = false;
+    }
+  };
+  messageNode.append(button);
+}
+
+function renderChatHistory(history) {
+  chatMessages.replaceChildren();
+  let question = '';
+  for (const message of history) {
+    const node = addMessage(message.role, message.content);
+    if (message.role === 'user') question = message.content;
+    else {
+      attachChatMaterialAction(node, question, message.content);
+      question = '';
+    }
+  }
+}
+
 function saveSessionState() {
   window.OmniProduct?.capture();
   try {
@@ -340,8 +395,7 @@ function restoreSessionState() {
     if (!Array.isArray(savedChat) || !savedChat.length) return;
     chatHistory = savedChat.slice(-24).filter(x => x && ['user', 'assistant'].includes(x.role) && typeof x.content === 'string');
     if (chatHistory.length) {
-      chatMessages.innerHTML = '';
-      for (const item of chatHistory) addMessage(item.role, item.content);
+      renderChatHistory(chatHistory);
     }
   } catch (_) {
     chatHistory = [];
@@ -587,6 +641,7 @@ async function sendChat(event) {
   if (isConceptMapCommand(message)) {
     chatInput.value = '';
     addMessage('user', message);
+    window.OmniProduct?.navigate('map');
     selectTab('map', message);
     return;
   }
@@ -611,6 +666,7 @@ async function sendChat(event) {
     setRenderedContent(pending, 'assistant', answer);
     lastOutput = answer;
     lastOutputHtml = pending.innerHTML;
+    attachChatMaterialAction(pending, message, answer);
     if (window.OmniProduct?.commitChatExchange) window.OmniProduct.commitChatExchange(message, answer);
     else {
       chatHistory.push({ role: 'user', content: message }, { role: 'assistant', content: answer });
@@ -1325,7 +1381,8 @@ async function runTool(task, customTopic = '', forceRegenerate = false) {
       notice.append(title,reason,guidance,actions);
     } else notice.append(title,reason,actions);
     toolOutput.append(notice);
-    chatFeedback.textContent = 'Permintaan belum selesai. Periksa penjelasan pada area hasil.';
+    chatFeedback.textContent = '';
+    window.OmniRecovery?.notice(null);
   } finally {
     if (activeStudyAbortController === abortController) {
       activeStudyAbortController = null;
@@ -1428,7 +1485,7 @@ async function submitUploadInitialRequest(fileBuffer, fileName, mimeType, reqId,
   form.append('sessionId', sessionId);
   // A transport error is ambiguous. A manual retry reuses this idempotency key.
   return safeRequestJson('/api/upload', {method:'POST',headers:{'X-Upload-Mode':'async','X-Upload-Id':reqId},body:form},
-    {timeoutMs:45000,stageContext:'upload',externalSignal:signal});
+    {timeoutMs:window.OmniCapabilities?.uploadMode === 'sync' ? 120000 : 45000,stageContext:'upload',externalSignal:signal});
 }
 async function pollUploadJobStatus(jobId, reqId, signal, onProgress) {
   const startTime=Date.now();
@@ -1465,8 +1522,9 @@ async function uploadFile(file, task = {}) {
     const msg = `File "${fileName}" kosong (0 byte). Pilih dokumen yang berisi materi. (ID: ${reqId})`;
     throw new Error(msg);
   }
-  if (file.size > (window.OmniCapabilities?.maxFileBytes || 15 * 1024 * 1024)) {
-    const msg = `Ukuran file (${formatFileSize(file.size)}) melebihi batas maksimal 15 MB. (ID: ${reqId})`;
+  const maxFileBytes = window.OmniCapabilities?.maxFileBytes || 15 * 1024 * 1024;
+  if (file.size > maxFileBytes) {
+    const msg = `Ukuran file (${formatFileSize(file.size)}) melebihi batas maksimal ${formatFileSize(maxFileBytes)}. (ID: ${reqId})`;
     throw new Error(msg);
   }
 

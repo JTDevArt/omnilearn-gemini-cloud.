@@ -63,3 +63,19 @@ test('JSON syntax and schema failures use exactly one fallback, then return INVA
     } finally {f.child.kill();}
   }
 });
+
+
+test('a valid deck with unescaped LaTeX in its JSON survives using the existing parser', async () => {
+  const f = await fixture('latex-cards');
+  try {
+    const response = await fetch(f.base+'/api/study', {
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({task:'cards',count:5,topic:'Geometry',sessionId:'latex-test'})
+    });
+    const payload = await response.json();
+    assert.equal(response.status,200,JSON.stringify(payload));
+    assert.equal(payload.structuredData.cards.length,5);
+    assert.match(payload.structuredData.cards[0].back,/\\Delta/);
+    assert.equal(f.calls(),1);
+  } finally {f.child.kill();}
+});

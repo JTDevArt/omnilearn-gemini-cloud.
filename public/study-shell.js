@@ -18,7 +18,18 @@
     modeAction.type='button';
     chatMode.append(modeDescription,modeAction);
     center.prepend(chatMode);
-    const chapters=document.createElement('nav');chapters.className='study-chapters';chapters.setAttribute('aria-label','Daftar bab');
+    const chapters = document.createElement('nav');
+    chapters.className = 'study-chapters';
+    chapters.setAttribute('aria-label', 'Daftar bab');
+    const outline = document.createElement('details');
+    outline.className = 'study-outline';
+    const outlineSummary = document.createElement('summary');
+    outlineSummary.textContent = 'Daftar bab';
+    outline.append(outlineSummary, chapters);
+    const desktopOutline = matchMedia('(min-width: 1151px)');
+    const syncOutline = () => { outline.open = desktopOutline.matches; };
+    desktopOutline.addEventListener('change', syncOutline);
+    syncOutline();
     const tools=document.createElement('aside');tools.className='study-tools';tools.setAttribute('aria-label','Alat belajar');
     const title=document.createElement('h2');title.textContent='Alat belajar';tools.append(title);
     for(const [route,label] of [['journey','Materi dan bab'],['summary','Ringkas dengan AI'],['note-editor','Buat catatan'],['cards','Flashcard'],['quiz','Latihan soal'],['chat','Tanya AI'],['map','Mindmap']]) {
@@ -29,14 +40,16 @@
       const link=document.createElement('a');link.href='/dashboard?view='+route;link.dataset.view=route;link.textContent=labels[route];more.append(link);
     }
     tools.append(more);
-    body.replaceChildren(chapters,center,tools);
+    body.replaceChildren(outline,center,tools);
     const heading=workspace.querySelector('.workspace-head h3');
     const h1=document.createElement('h1');h1.className='study-title';heading.replaceWith(h1);
     const context=document.createElement('p');context.className='study-context';h1.after(context);
     return {update(view,source,title,api) {
       document.body.dataset.studyTool=view;
-      h1.textContent=source?title:'Ruang belajar';
-      context.textContent=[labels[view],source?.subject || (source?'Tanpa mata pelajaran':'Pilih sumber atau gunakan pertanyaan bebas')].join(' · ');
+      h1.textContent = source ? title : labels[view] || 'Ruang belajar';
+      context.textContent = source
+        ? [labels[view], source.subject || 'Tanpa mata pelajaran'].filter(Boolean).join(' · ')
+        : 'Pilih sumber atau gunakan pertanyaan bebas';
       chatMode.hidden=view!=='chat';
       const documentChat = source && api.getChatScope() === 'document';
       modeDescription.textContent=documentChat
@@ -51,8 +64,8 @@
         modeAction.dataset.open = 'notes';
       }
       chapters.replaceChildren();
-      const h2=document.createElement('h2');h2.textContent='Daftar bab';chapters.append(h2);
-      const items=source?.journey?.chapters;
+      const items = source?.journey?.chapters;
+      outlineSummary.textContent = items?.length ? `Daftar bab (${items.length})` : 'Daftar bab';
       if(Array.isArray(items) && items.length) {
         items.forEach((chapter,index)=>{
           const button=document.createElement('button');button.textContent=(index+1)+'. '+chapter.title;

@@ -8,9 +8,21 @@
 
   function failure({status = 0, data = {}, requestId = '', contentType = '', retryAfter = '', method = '', url = ''} = {}) {
     const code = typeof data.code === 'string' ? data.code.slice(0,80) : '';
-    const sourceMismatch = /EVIDENCE|SOURCE_ANALYSIS|BLUEPRINT|SOURCE_MISMATCH/.test(code);
+    const sourceMismatch = /EVIDENCE|SOURCE_ANALYSIS|BLUEPRINT|SOURCE_MISMATCH|PARTIAL_SOURCE|INSUFFICIENT_SOURCE/.test(code);
     let kind = 'unexpected', title = 'Respons belum bisa dibaca', message = 'Coba lagi. Jika tetap terjadi, muat ulang halaman.';
-    if (sourceMismatch) {
+    if (code === 'CROSS_SITE_REQUEST') {
+      kind = 'origin'; title = 'Permintaan lintas situs ditolak';
+      message = 'Buka OmniLearn langsung di tab browser dan kirim ulang dari sana.';
+    } else if (code === 'GEMINI_AUTH_ERROR' || code === 'MISSING_SECRET' || data.failureKind === 'authentication') {
+      kind = 'provider-auth'; title = 'Izin layanan AI bermasalah';
+      message = 'Admin perlu memeriksa kunci dan izin model Gemini. Pertanyaan dan materi tetap tersimpan.';
+    } else if (code === 'GEMINI_TIMEOUT' || data.failureKind === 'timeout') {
+      kind = 'timeout'; title = 'Waktu tunggu layanan AI habis';
+      message = 'Coba lagi dengan materi lebih pendek atau jumlah soal lebih sedikit.';
+    } else if (code === 'INVALID_AI_OUTPUT' || code === 'OUTPUT_TRUNCATED') {
+      kind = 'result'; title = 'Hasil AI belum lengkap';
+      message = cleanReason(data.error) || 'Periksa materi atau turunkan jumlah soal atau kartu, lalu coba buat kembali.';
+    } else if (sourceMismatch) {
       kind = 'source'; title = 'Materi perlu ditinjau';
       message = 'Hasil belum lolos pemeriksaan sumber. Periksa teks materi atau pilih jawaban umum.';
     } else if (status === 401) {
@@ -20,7 +32,7 @@
     } else if (status === 429) {
       kind = 'limit'; title = 'Batas permintaan tercapai'; message = 'Tunggu sebentar sebelum mencoba lagi. Permintaan tidak dikirim ulang otomatis.';
     } else if (status === 413) {
-      kind = 'upload'; title = 'File terlalu besar'; message = 'Gunakan file berukuran paling besar 15 MB.';
+      kind = 'upload'; title = 'File terlalu besar'; message = cleanReason(data.error) || 'Pilih file yang lebih kecil sesuai batas unggahan.';
     } else if (status >= 500) {
       kind = 'unavailable'; title = 'Layanan sedang tidak tersedia'; message = 'Coba lagi nanti. Pertanyaan dan materi tetap tersimpan.';
     } else if (status >= 400) {

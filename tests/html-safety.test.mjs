@@ -44,7 +44,7 @@ test('every audited innerHTML assignment is a literal, clear, sanitized template
       assert.ok(/^(?:window\.OmniHtml\.sanitize\(|(?:window\.)?renderMarkdownToSafeHtml\(|'(?:[^'\\]|\\.)*'\s*;|"(?:[^"\\]|\\.)*"\s*;|`[^`$]*`\s*;)/.test(rhs),name+':'+source.slice(0,match.index).split('\n').length);
     }
   }
-  assert.equal(sites,67,'Update the audit inventory when introducing or removing a sink.');
+  assert.equal(sites,66,'Update the audit inventory when introducing or removing a sink.');
   const html=readFileSync(new URL('../public/index.html',import.meta.url),'utf8');
   assert.ok(html.indexOf('/vendor/purify.min.js') < html.indexOf('/safe-html.js'));
   assert.ok(html.indexOf('/safe-html.js') < html.indexOf('/app.js'));

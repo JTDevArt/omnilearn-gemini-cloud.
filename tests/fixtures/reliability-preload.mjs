@@ -20,7 +20,8 @@ globalThis.fetch = async (input, options) => {
       : JSON.stringify({cards:Array.from({length:5},(_,i)=>({front:`Question ${i}`,back:`Answer ${i}`}))});
     return new Response(JSON.stringify({candidates:[{content:{role:'model',parts:[{text}]},finishReason:'STOP'}]}),{headers:{'Content-Type':'application/json'}});
   }
-  const text = ({empty:'',citation:'Unseen source [Page 999]',malformed:'{"cards":[{}]}',success:'Fixture tutor explanation.'})[mode];
+  const latexCards = mode === 'latex-cards' ? JSON.stringify({cards:Array.from({length:5},(_,i)=>({front:`Question ${i}`,back:'Radius \\Delta relation'}))}).replaceAll('\\\\Delta','\\Delta') : null;
+  const text = latexCards ?? ({empty:'',citation:'Unseen source [Page 999]',malformed:'{"cards":[{}]}',success:'Fixture tutor explanation.'})[mode];
   return new Response(JSON.stringify({candidates:[{content:{role:'model',parts:[{text}]},finishReason:'STOP'}]}),
     {headers:{'Content-Type':'application/json'}});
 };

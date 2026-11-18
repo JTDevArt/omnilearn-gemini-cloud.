@@ -32,7 +32,8 @@ test('design preview routes and public assets respond over HTTP', async () => {
   const fixture = await startFixture();
   try {
     const health = await (await fetch(fixture.url+'/api/health')).json();
-    assert.equal(health.uiBuild, 'algorithmic-v10.4-pages-1');
+    const release = await (await fetch(fixture.url+'/ui-build.json')).json();
+    assert.equal(health.uiBuild, release.uiBuild);
     for (const name of ['/production-preview', '/production-preview.html', '/preview.html']) {
       const response = await fetch(fixture.url+name);
       assert.equal(response.status, 200, name+' should return production preview HTML');

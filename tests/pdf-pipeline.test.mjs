@@ -149,3 +149,69 @@ test('MP3, WAV, MP4 and MOV reach the multimodal adapter after signature validat
     assert.match(result.data.extractionMode,/gemini-(?:audio|video)/);
   }
 });
+
+
+test('OCR retains explicit blank pages without re-reading them and rejects a wholly blank document', async () => {
+  const mixed = await upload(['scan', 'scan']);
+  assert.equal(mixed.pageQuality[0].status, 'blank-page');
+  assert.match(mixed.text, /\[Halaman 1\][\s\S]+\[blank page\][\s\S]+\[Halaman 2\]/);
+  assert.equal(mixed.ocrRetried, false);
+  const blank = await sendFile('blank.pdf', await pdfFixture(['scan','scan','scan']), {sync:true});
+  assert.equal(blank.status, 422);
+  assert.equal(blank.data.code, 'EXTRACTION_FAILED');
+});
+
+test('tutor journeys retain only document citations and label general provenance', async () => {
+  const tutorConversation = 'Murid: Jelaskan jari-jari. Tutor: A radius joins the centre to the boundary, escaped <boundary>.';
+  const request = body => fetch(base+'/api/study', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({task:'journey',sessionId:'tutor-journey-test',...body})
+  });
+  for (const [material, provenance, references] of [
+    ['', 'general-tutor', []],
+    ['[Page 1] A radius joins the centre to the boundary of a circle. Diameter is twice the radius.', 'source-tutor', ['[Page 1]']]
+  ]) {
+    const response = await request({tutorConversation, material});
+    const payload = await response.json();
+    assert.equal(response.status, 200, JSON.stringify(payload));
+    assert.equal(payload.structuredData.provenance, provenance);
+    assert.deepEqual(payload.structuredData.chapters[0].sourceReferences, references);
+    assert.equal(Boolean(payload.sourceAnalysis), Boolean(material));
+  }
+  const rejected = await request({tutorConversation:'a'.repeat(12001)});
+  assert.equal(rejected.status, 400);
+  assert.equal((await rejected.json()).code, 'INVALID_TUTOR_CONVERSATION');
+});
+
+test('serverless uploads complete on the same request and expose the platform limit', async () => {
+  const child = spawn(process.execPath, ['--input-type=module', '-e', `
+    import app from './server.js';
+    const server = app.listen(0,'127.0.0.1',()=>console.log(server.address().port));
+  `], {
+    env:{...process.env, VERCEL:'1', GEMINI_API_KEY:'TEST_ONLY_FIXTURE_KEY'},
+    stdio:['ignore','pipe','ignore']
+  });
+  try {
+    const serverlessBase = await new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error('Serverless fixture did not start')),10000);
+      child.once('exit',code=>{clearTimeout(timeout);reject(new Error('Serverless fixture exited: '+code));});
+      child.stdout.on('data',data=>{
+        const port = String(data).match(/^\d+$/m)?.[0];
+        if (port) {clearTimeout(timeout);resolve('http://127.0.0.1:'+port);}
+      });
+    });
+    const capabilities = await (await fetch(serverlessBase+'/api/capabilities')).json();
+    assert.equal(capabilities.uploadMode,'sync');
+    assert.equal(capabilities.maxFileBytes,4*1024*1024);
+    const data = new FormData();
+    data.append('file',new Blob(['A diagram explains circle geometry.']),'sample.txt');
+    const response = await fetch(serverlessBase+'/api/upload',{
+      method:'POST',body:data,headers:{'X-Upload-Mode':'async','X-Session-Id':'fixture-serverless'}
+    });
+    const result = await response.json();
+    assert.equal(response.status,200,JSON.stringify(result));
+    assert.equal(result.status,'completed');
+    assert.equal(result.jobId,undefined);
+    assert.equal(result.text,'A diagram explains circle geometry.');
+  } finally {child.kill();}
+});

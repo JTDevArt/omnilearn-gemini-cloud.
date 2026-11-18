@@ -1,21 +1,22 @@
 # OmniLearn state
 
-## Base
-- V15 branch `codex/v15-study-recovery` started at main `65ebe9cafb046f817d811c5cc848c6910d97bce3` after PR #5.
-- Frontend marker: `omnilearn-v15-study-recovery-1` at `/ui-build.json`. The server health marker is older.
+## Branch and delivery
 
-## V15
-- Home starts with the composer and keeps scope visible below it. Saved materials use canonical titles, actual progress and existing controls.
-- Dashboard uses four real summary metrics, a level and focus row, searchable material management, and weekly and recent activity views.
-- Landing preview comes from the rendered OmniLearn Home. References and V15 differences are recorded in `docs/design/archive-home-dashboard.md`.
-- Legacy chapters open and can be edited without practice. Existing practice retains persisted drafts. Source selection stays in place when returning to General chat.
-- General topic cache includes typed text. Saved tool results are restored on reopening. Document decks remain isolated from general decks.
-- Lint and build passed locally. Unit suite: 177 passed. Browser checks use a local Express instance and synthetic content. They cover both themes, responsive layouts, source switching, quiz/flashcard controls, and access to saved content.
-- Browser upload test verified extraction and original retention across failure, refresh and retry. The workspace fixture passed chapter edits, map edits, five quiz types, flashcard review, chat retry/cancel, and source version history.
-- Visual workflow captures three required screenshots and runs on pull requests targeting main.
+- V15 shipped from main commit `6ed55c0f3121c78320985fae7cb3483d67b8766d`.
+- Product recovery branch `codex/v16-product-recovery` starts at that commit. Production verification uses the marker in `/ui-build.json` and the dashboard HTML before any claim about the live version.
+- Merge tested OmniLearn PRs into `main` after GitHub checks pass. The owner gave standing approval on 18 November 2026.
 
-## Open
-- Public baseline assets were sampled before the V15 change. Check the UI marker and rendered behavior after an approved merge and successful deployment.
-- Historical non-JSON 403 has no correlated provider or hosting trace. The local Express origin fixture returns a JSON 403. See the research report for available evidence.
-- Gemini requester credentials, real scanned-PDF provider calls and alternate-provider benchmarks require approved deployment access. Fixture tests consume no provider quota.
-- Keep Gemini in production until a synthetic provider comparison actually validates an alternative. Preserve the current source and backup contracts.
+## Implemented in product recovery
+
+- Tutor answers have a **Jadikan Materi** action. An editable title and ordered chapter preview precede the IndexedDB save. General tutor material has its own provenance and no document citations. Material derived from a source records the original ID and version.
+- Native PDF extraction runs before OCR. Incomplete OCR is reported per page and valid early pages survive a later failure. Vercel completes upload in a single request subject to its body limit.
+- Redesign decisions and links to references are in `docs/design/v16-product-recovery.md`. The original screenshot evidence stays in the owner's Library. The two OmniLearn screenshots are pre-fix evidence.
+- Existing library IDs, session account boundaries, original upload files, review progress, and backup schema stay compatible.
+- Local verification: 183 unit/integration tests, lint, build, desktop and mobile browser checks. Coverage includes upload retry/original retention, five quiz types, flashcard review persistence, and mindmap editing.
+- Browser verification exercises Einstein chat, synthetic failure and explicit retry, editable chapters, persisted material after reload, and document grounding. Fixture calls consume no provider quota.
+
+## Open checks
+
+- Historical HTML 403 has no correlated hosting or provider trace. The Express origin fixture yields a JSON 403. Provider denial and unsupported output use distinct handling.
+- Direct Gemini and alternate-provider benchmarks require authorized credentials. Keep the active provider until a real comparison verifies alternatives.
+- Cross-account opt-in rankings need deployed storage, a consent/revocation contract, and trustworthy score publication. The app renders the current availability honestly.
