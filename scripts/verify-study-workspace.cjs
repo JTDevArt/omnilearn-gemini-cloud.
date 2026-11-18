@@ -50,6 +50,15 @@ async function run() {
     const second=make('scan_kimia.pdf','Ikatan Kimia','Ikatan ion melibatkan perpindahan elektron.','Ikatan ion');second.subject='Kimia';second.deck=[{front:'Apa yang berpindah pada ikatan ion?',back:'Elektron.'}];
     await OmniProduct.persistAsync();OmniProduct.selectSource(first.id);return [first.id,second.id];
   });
+  await page.evaluate(id => {
+    const source = OmniProduct.getSource(id);
+    delete source.journey.chapters[0].practice;
+    OmniProduct.selectSource(id);
+    OmniProduct.navigate('journey');
+  }, ids[1]);
+  await page.getByRole('heading',{name:'Ikatan ion',exact:true}).waitFor();
+  assert.equal(await page.getByRole('textbox',{name:'Jawaban latihan',exact:true}).count(),0);
+  await page.evaluate(id => OmniProduct.selectSource(id), ids[0]);
   // The source library must use reviewed lesson titles, never raw PDF filenames.
   await page.evaluate(()=>OmniProduct.navigate('sources'));
   await page.getByRole('heading',{name:'Pustaka sumbermu'}).waitFor();
@@ -176,9 +185,9 @@ async function run() {
   const draft='Jelaskan teori relativitas Einstein';
   await page.locator('#chatInput').fill(draft);
   await page.getByRole('button',{name:'Beralih ke tanya umum',exact:true}).click();
-  await page.getByRole('button',{name:'Pilih materi untuk dibahas',exact:true}).waitFor();
+  await page.getByRole('button',{name:'Pakai materi terpilih',exact:true}).waitFor();
   assert.equal(await page.locator('#chatInput').inputValue(),draft);
-  assert.equal(await page.evaluate(()=>OmniProduct.getCurrentSource()),undefined);
+  assert.equal(await page.evaluate(()=>OmniProduct.getCurrentSource()?.id),ids[0]);
   const analysisCalls=calls;
   let chatRequest;
   await page.route('**/api/chat',route=>{

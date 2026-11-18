@@ -1,7 +1,7 @@
 const {chromium}=await import(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const base=process.env.DASHBOARD_TEST_URL || 'http://127.0.0.1:3106';
 import assert from 'node:assert/strict';
-const browser=await chromium.launch({executablePath:'/usr/bin/chromium',args:['--no-sandbox']});
+const browser=await chromium.launch({...(process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:{}),args:['--no-sandbox']});
 try {
 const page=await browser.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('dialog',d=>d.accept());
 await page.goto(base+'/dashboard');await page.waitForFunction(()=>!!window.OmniProduct);

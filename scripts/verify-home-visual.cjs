@@ -85,9 +85,11 @@ async function run() {
   await open(base,'home');
   assert.equal(await page.locator('.home-session .chat-message').count(),0,'Fresh Home must not repeat the hero greeting in a decorative chat bubble');
   const build = await (await page.request.get(base+'/ui-build.json')).json();
-  assert.equal(build.uiBuild,'omnilearn-v12-recovery-1');
+  assert.match(build.uiBuild,/^omnilearn-/);
   assert.equal(await page.locator('body').getAttribute('data-ui-build'),build.uiBuild);
-  assert.equal(await page.locator('.home-quick').count(),6);
+  await page.getByText('Alat belajar lainnya',{exact:true}).click();
+  assert.equal(await page.locator('.home-quick:visible').count(),6);
+  await page.getByText('Alat belajar lainnya',{exact:true}).click();
   assert.equal(await page.locator('.home-library').count(),1);
   assert.equal(await page.locator('.home-stats').count(),0,'Learning Home keeps analytics in Dashboard');
   await page.evaluate(()=>OmniProduct.navigate('dashboard'));

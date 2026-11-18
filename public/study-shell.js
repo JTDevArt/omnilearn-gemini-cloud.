@@ -43,10 +43,13 @@
         ? 'Berdasarkan materi: '+title+'. Jawaban harus sesuai sumber ini.'
         : 'Tanya umum. Dokumen tersimpan tidak dikirim dalam percakapan ini.';
       modeAction.textContent=source?(documentChat?'Beralih ke tanya umum':'Pakai materi terpilih'):'Pilih materi untuk dibahas';
-      modeAction.toggleAttribute('data-free-chat', !!documentChat);
-      if (source && !documentChat) modeAction.dataset.chatScope = 'document';
-      else delete modeAction.dataset.chatScope;
-      modeAction.dataset.open=source?'chat':'notes';
+      if (source) {
+        modeAction.dataset.chatScope = documentChat ? 'general' : 'document';
+        delete modeAction.dataset.open;
+      } else {
+        delete modeAction.dataset.chatScope;
+        modeAction.dataset.open = 'notes';
+      }
       chapters.replaceChildren();
       const h2=document.createElement('h2');h2.textContent='Daftar bab';chapters.append(h2);
       const items=source?.journey?.chapters;

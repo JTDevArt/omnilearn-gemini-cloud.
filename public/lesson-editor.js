@@ -2,8 +2,13 @@ const fields = [['title','Judul bab'],['objective','Tujuan belajar'],['explanati
 export function chapterEdit(values, sourceText) {
   const read = key => String(values[key] || '').trim().slice(0,20000);
   const result = Object.fromEntries(fields.slice(0,6).map(([key])=>[key,read(key)]));
-  result.practice = {question:read('question'),answer:read('answer'),explanation:read('practiceExplanation')};
-  if (![result.title,result.objective,result.explanation,...Object.values(result.practice)].every(Boolean)) throw new Error('Isi judul, tujuan, penjelasan, serta latihan dan pembahasannya.');
+  if (!result.title || !result.explanation) throw new Error('Isi judul dan penjelasan bab.');
+  const practice = {question:read('question'), answer:read('answer'), explanation:read('practiceExplanation')};
+  const practiceFields = Object.values(practice);
+  if (practiceFields.some(Boolean)) {
+    if (!practiceFields.every(Boolean)) throw new Error('Lengkapi pertanyaan, jawaban, dan pembahasan latihan.');
+    result.practice = practice;
+  }
   const markers = new Set(String(sourceText).match(/\[(?:(?:Halaman|Page)\s+\d+|\d{1,2}:\d{2}(?::\d{2})?)\]/gi) || []);
   result.sourceReferences = [...new Set(read('sourceReferences').split('\n').map(s=>s.trim()).filter(Boolean))];
   if (result.sourceReferences.some(reference=>!markers.has(reference))) throw new Error('Gunakan hanya penanda halaman/waktu yang ada di sumber asli.');
@@ -28,6 +33,7 @@ export function openChapterEditor(chapter, source, api, onSaved) {
     try {
       const edit=chapterEdit(Object.fromEntries(new FormData(form)),source.text);
       source.journeyOriginal ||= structuredClone(source.journey);
+      if (!edit.practice) delete chapter.practice;
       Object.assign(chapter,edit,{editedAt:Date.now()});
       await api.persistAsync();dialog.close();onSaved();
     } catch(error) {status.textContent='Belum tersimpan. '+error.message;submit.disabled=false;}

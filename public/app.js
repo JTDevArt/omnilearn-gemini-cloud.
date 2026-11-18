@@ -560,7 +560,7 @@ async function askAI(message, externalSignal) {
     history: chatHistory.slice(-24), material: materialText, materialId, materialName,
     learningContext: window.OmniProduct?.context?.(), ...window.OmniProduct?.sourceRequest(),
   };
-  if (context.material.trim()) await window.OmniProduct?.ensureAnalysis(externalSignal);
+  if (context.scope === 'document' || context.material.trim()) await window.OmniProduct?.ensureAnalysis(externalSignal);
   const data = await safeRequestJson('/api/chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -1141,7 +1141,7 @@ function getTabCacheKey(task, customTopic = '') {
   const targetLang = $('targetLanguage') ? $('targetLanguage').value : 'Bahasa Inggris';
   const outputLanguage = $('outputLanguage') ? $('outputLanguage').value : 'auto';
   const subjectText = $('subjectResult').textContent.startsWith('Bidang pilihan:') ? $('subjectResult').textContent.replace('Bidang pilihan:', '').trim() : '';
-  const topicSig = materialText.trim() ? `mat:${materialId || materialName}:r${window.OmniProduct?.sourceRequest().sourceVersion || 1}:${materialText.length}` : `top:${customTopic || subjectText || 'default'}`;
+  const topicSig = materialText.trim() ? `mat:${materialId || materialName}:r${window.OmniProduct?.sourceRequest().sourceVersion || 1}:${materialText.length}` : `top:${customTopic || chatInput.value.trim() || subjectText || 'default'}`;
 
   let optSig = '';
   if (task === 'summary') optSig = summaryStyle;
@@ -1356,6 +1356,12 @@ function selectTab(tab, customTopic = '') {
   const cacheKey = getTabCacheKey(tab, customTopic);
   if (tabViewCache.has(cacheKey)) {
     restoreCachedTabView(tabViewCache.get(cacheKey), tab);
+    return;
+  }
+  const saved = window.OmniProduct?.getSavedTool(cacheKey);
+  if (saved) {
+    tabViewCache.set(cacheKey, saved);
+    restoreCachedTabView(saved, tab);
     return;
   }
   const savedDeck=window.OmniProduct?.getCurrentSource()?.deck;

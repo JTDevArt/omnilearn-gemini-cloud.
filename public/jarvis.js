@@ -171,7 +171,10 @@
     source.completedChapters ||= [];
     const active = source.activeChapter || chapters[0].id;
     const chapter = chapters.find((c) => c.id === active) || chapters[0];
-    panel.innerHTML = window.OmniHtml.sanitize(`<div class="panel-actions"><h1>${safe(source.journey.title)}</h1><span>${source.completedChapters.length}/${chapters.length} bab ditandai selesai</span></div><progress max="${chapters.length}" value="${source.completedChapters.length}" aria-label="Progres bab"></progress><div class="journey-workspace"><nav aria-label="Bab pembelajaran">${chapters.map((c, i) => `<button data-chapter="${safe(c.id)}" class="${c.id === chapter.id ? 'active' : ''}">${source.completedChapters.includes(c.id) ? '✓' : i + 1} ${safe(c.title)}</button>`).join('')}</nav><article><h2>${safe(chapter.title)}</h2><p>${safe(chapter.objective)}</p><div class="md-rendered">${renderMarkdownToSafeHtml(chapter.explanation)}</div>${chapter.example ? `<h3>Contoh</h3><div class="md-rendered">${renderMarkdownToSafeHtml(chapter.example)}</div>` : ''}${chapter.formula ? `<div class="md-rendered">${renderMarkdownToSafeHtml(chapter.formula)}</div>` : ''}${Array.isArray(chapter.sourceReferences) && chapter.sourceReferences.length ? `<p class="note-status">${chapter.sourceReferences.map(safe).join(' · ')}</p>` : ''}${chapter.recap ? `<h3>Rangkuman bab</h3><div class="md-rendered">${renderMarkdownToSafeHtml(chapter.recap)}</div>` : ''}<div class="panel-actions"><button data-edit-chapter>Edit bab</button>${source.journeyOriginal ? '<button data-original-journey>Lihat versi AI asli</button>' : ''}</div><h3>Coba jelaskan sendiri</h3><p>${safe(chapter.practice.question)}</p><textarea aria-label="Jawaban latihan" placeholder="Coba tulis pemahamanmu…"></textarea><details><summary>Lihat jawaban dan pembahasan</summary><div class="md-rendered">${renderMarkdownToSafeHtml(chapter.practice.answer + '\n\n' + chapter.practice.explanation)}</div></details><div class="panel-actions"><button data-complete>✓ Tandai sudah dipelajari</button><button data-ask-chapter>Tanya tutor tentang bab ini</button><button data-next-chapter ${chapters.indexOf(chapter) === chapters.length - 1 ? 'disabled' : ''}>Bab berikutnya →</button></div><p>Penanda selesai mencatat aktivitasmu; bukan penilaian otomatis atas penguasaan materi.</p></article></div>`);
+    const exercise = chapter.practice?.question
+      ? `<h3>Coba jelaskan sendiri</h3><p>${safe(chapter.practice.question)}</p><textarea aria-label="Jawaban latihan" placeholder="Coba tulis pemahamanmu…"></textarea><details><summary>Lihat jawaban dan pembahasan</summary><div class="md-rendered">${renderMarkdownToSafeHtml([chapter.practice.answer, chapter.practice.explanation].filter(Boolean).join('\n\n'))}</div></details>`
+      : '';
+    panel.innerHTML = window.OmniHtml.sanitize(`<div class="panel-actions"><h1>${safe(source.journey.title)}</h1><span>${source.completedChapters.length}/${chapters.length} bab ditandai selesai</span></div><progress max="${chapters.length}" value="${source.completedChapters.length}" aria-label="Progres bab"></progress><div class="journey-workspace"><nav aria-label="Bab pembelajaran">${chapters.map((c, i) => `<button data-chapter="${safe(c.id)}" class="${c.id === chapter.id ? 'active' : ''}">${source.completedChapters.includes(c.id) ? '✓' : i + 1} ${safe(c.title)}</button>`).join('')}</nav><article><h2>${safe(chapter.title)}</h2><p>${safe(chapter.objective)}</p><div class="md-rendered">${renderMarkdownToSafeHtml(chapter.explanation)}</div>${chapter.example ? `<h3>Contoh</h3><div class="md-rendered">${renderMarkdownToSafeHtml(chapter.example)}</div>` : ''}${chapter.formula ? `<div class="md-rendered">${renderMarkdownToSafeHtml(chapter.formula)}</div>` : ''}${Array.isArray(chapter.sourceReferences) && chapter.sourceReferences.length ? `<p class="note-status">${chapter.sourceReferences.map(safe).join(' · ')}</p>` : ''}${chapter.recap ? `<h3>Rangkuman bab</h3><div class="md-rendered">${renderMarkdownToSafeHtml(chapter.recap)}</div>` : ''}<div class="panel-actions"><button data-edit-chapter>Edit bab</button>${source.journeyOriginal ? '<button data-original-journey>Lihat versi AI asli</button>' : ''}</div>${exercise}<div class="panel-actions"><button data-complete>✓ Tandai sudah dipelajari</button><button data-ask-chapter>Tanya tutor tentang bab ini</button><button data-next-chapter ${chapters.indexOf(chapter) === chapters.length - 1 ? 'disabled' : ''}>Bab berikutnya →</button></div><p>Penanda selesai mencatat aktivitasmu; bukan penilaian otomatis atas penguasaan materi.</p></article></div>`);
     const tools = document.createElement('aside');
     tools.className = 'journey-tools';
     tools.setAttribute('aria-label', 'Alat belajar');
@@ -179,11 +182,16 @@
     panel.querySelector('.journey-workspace').append(tools);
     if (source.lessonTitle) panel.querySelector('h1').textContent = source.lessonTitle;
     const practice = panel.querySelector('[aria-label="Jawaban latihan"]');
-    practice.value = source.practiceDrafts?.[chapter.id] || '';
-    practice.oninput = () => { (source.practiceDrafts ||= {})[chapter.id] = practice.value; api.persist(); };
-    panel.querySelector('[data-edit-chapter]').onclick = async () => {
+    if (practice) {
+      practice.value = source.practiceDrafts?.[chapter.id] || '';
+      practice.oninput = () => { (source.practiceDrafts ||= {})[chapter.id] = practice.value; api.persist(); };
+    }
+    const editButton = panel.querySelector('[data-edit-chapter]');
+    editButton.onclick = async () => {
       const {openChapterEditor} = await import('./lesson-editor.js');
-      openChapterEditor(chapter, source, api, () => { if (practice.isConnected) renderJourney(panel,api); });
+      if (editButton.isConnected) openChapterEditor(chapter, source, api, () => {
+        if (editButton.isConnected) renderJourney(panel, api);
+      });
     };
     panel.querySelector('[data-original-journey]')?.addEventListener('click', () => {
       const dialog = document.createElement('dialog');dialog.className='forge-dialog';
