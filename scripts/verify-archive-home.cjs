@@ -67,7 +67,7 @@ async function run() {
     }
     await page.evaluate(()=>OmniProduct.navigate('home'));
     await page.locator('.home-library').waitFor();
-    await page.locator('.home-recent-rows [data-resume]').last().click();
+    await page.locator('.home-recent-rows article').filter({has: page.getByRole('heading',{name:'Ikatan kimia',exact:true})}).locator('[data-resume]').click();
     await page.locator('.journey-workspace').waitFor();
     assert.equal(await page.evaluate(()=>OmniProduct.getCurrentSource().lessonTitle),'Ikatan kimia');
     for(const [view,width] of [['home',1440],['dashboard',1440],['home',390]]) {

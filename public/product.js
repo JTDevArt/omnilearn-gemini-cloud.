@@ -437,6 +437,7 @@
   async function ensureAnalysis(signal) {
     const source = sources.find((source) => source.id === materialId);
     if (!source) throw new Error('Pilih materi terlebih dahulu.');
+    if (!source.text?.trim()) throw new Error('Tinjau teks sumber sebelum meminta analisis.');
     const version = source.version;
     const language = $('outputLanguage').value;
     // The server may have restarted since the local blueprint was saved. Always
@@ -487,8 +488,8 @@
     if (!window.OmniWorkbench) return false;
     const source = sources.find((s) => s.id === materialId);
     window.OmniWorkbench.installFlashcards(toolOutput, {
-      cards: source?.deck || (freeDeck.length && freeDeck) || cards,
-      reviews: source?.reviews || freeReviews,
+      cards: source ? (source.deck || cards) : (freeDeck.length ? freeDeck : cards),
+      reviews: source ? (source.reviews || {}) : freeReviews,
       session: source?.reviewSession,
       onSessionChange(session) { if (source) { source.reviewSession = session; persist(); } },
       onCardsChange(updated) {

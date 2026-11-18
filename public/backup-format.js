@@ -106,7 +106,7 @@ export function validateLibrary(raw) {
             !object(c) ||
             typeof c.id !== 'string' ||
             typeof c.title !== 'string' ||
-            !object(c.practice)
+            (c.practice !== undefined && !object(c.practice))
         ))
     )
       throw new Error('Jalur belajar tidak valid.');

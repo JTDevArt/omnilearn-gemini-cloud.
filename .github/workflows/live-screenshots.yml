@@ -3,25 +3,8 @@ name: OmniLearn production UI visual QA
 on:
   push:
     branches: [main]
-    paths:
-      - '.github/workflows/live-screenshots.yml'
-      - 'scripts/verify-home-visual.cjs'
-      - 'scripts/verify-study-workspace.cjs'
-      - 'scripts/verify-remaining-pages.cjs'
-      - 'scripts/verify-page-interactions.cjs'
-      - 'scripts/verify-html-safety.cjs'
-      - 'public/safe-html.js'
-      - 'public/app.js'
-      - 'public/exam-*.js'
-      - 'public/landing.*'
-      - 'public/*.css'
-      - 'public/dashboard-shell.js'
-      - 'public/product.js'
-      - 'public/theme.js'
-      - 'public/ui-motion.js'
-      - 'public/study-shell.js'
-      - 'public/index.html'
-      - 'server.js'
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -46,8 +29,9 @@ jobs:
         env:
           NODE_PATH: /tmp/omnilearn-capture/node_modules
         run: |
-          node scripts/verify-home-visual.cjs
-          node scripts/verify-study-workspace.cjs
+          OMNILEARN_QA_OUTPUT=visual-qa node scripts/verify-archive-home.cjs
+          QA_SKIP_SCREENSHOTS=1 node scripts/verify-home-visual.cjs
+          QA_SKIP_SCREENSHOTS=1 node scripts/verify-study-workspace.cjs
           QA_SKIP_SCREENSHOTS=1 node scripts/verify-remaining-pages.cjs
           node scripts/verify-page-interactions.cjs
           node scripts/verify-html-safety.cjs
