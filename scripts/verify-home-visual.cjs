@@ -44,7 +44,7 @@ async function checkLayout(view,width,theme) {
         const r=node.getBoundingClientRect();return r.width>0 && (r.right>innerWidth+1 || r.left< -1);
       }).map(node=>node.tagName+'.'+node.className).slice(0,8),
       mascot:box('.home-hero img'),header:box('.product-top'),composer:box('.home-composer'),
-      send:box('.home-composer [type=submit]'),level:box('.dashboard-level'),timer:box('.dashboard-focus'),
+      send:box('.home-composer [type=submit]'),hero:box('.home-hero'),library:box('.dashboard-resources'),timer:box('.dashboard-focus'),
       inputBorder:input?getComputedStyle(input).borderTopWidth:null,
       imageLoaded:document.querySelector('.home-hero img')?.naturalWidth>0,
       theme:document.documentElement.dataset.theme,scrollY,
@@ -60,10 +60,11 @@ async function checkLayout(view,width,theme) {
     assert.equal(measurements.imageLoaded,true,'Mascot must load');
     assert.ok(measurements.mascot.y>=measurements.header.bottom,'Mascot must not sit beneath the header');
     assert.ok(measurements.send.bottom<=900,'Send action must fit initial viewport');
-    assert.equal(await page.locator('.home-session>.master-section').count(),0);
+    assert.equal(await page.locator('.home-learning-stage>.home-session').count(),1);
+    if(width>=1024) assert.ok(measurements.composer.x>measurements.hero.x,'Tutor sits beside the welcome panel');
   } else if(width>=1024) {
-    assert.ok(Math.abs(measurements.level.y-measurements.timer.y)<2,'Level and timer must share a row');
-    assert.ok(measurements.timer.x>measurements.level.x,'Timer belongs in right column');
+    assert.ok(Math.abs(measurements.library.y-measurements.timer.y)<2,'Library and focus start together');
+    assert.ok(measurements.timer.x>measurements.library.x,'Focus belongs beside the library');
   }
   report.checks.push({view,width,theme,...measurements});
 }
