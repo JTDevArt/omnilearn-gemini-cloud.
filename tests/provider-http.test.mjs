@@ -4,7 +4,7 @@ import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 async function fixture(mode) {
   let output='';
-  const child=spawn(process.execPath,['--import',fileURLToPath(new URL('./fixtures/reliability-preload.mjs',import.meta.url)),'server.js'], {
+  const child=spawn(process.execPath,['--import',new URL('./fixtures/reliability-preload.mjs',import.meta.url).href,'server.js'], {
     env:{...process.env,PORT:'0',GEMINI_API_KEY:'TEST_ONLY_FIXTURE_KEY',OMNILEARN_TEST_PROVIDER_MODE:mode},stdio:['ignore','pipe','pipe'],
   });
   child.stdout.on('data',chunk=>{output+=chunk;});

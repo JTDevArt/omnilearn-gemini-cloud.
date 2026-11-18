@@ -6,7 +6,7 @@
       "title": "OmniLearn AI — rilis awal",
       "releasedAt": null,
       "status": "in-development",
-      "summary": "Milestone 00–08 lengkap di GitHub main; AI Home/Dashboard terpisah, progres dan profil menggunakan data asli, Update List berfungsi, riset memiliki penanganan penyimpanan yang benar, serta unit/lint/build diuji melalui GitHub Actions. v1.0.0 belum dirilis resmi.",
+      "summary": "Beranda dan Dashboard terpisah, progres dan profil memakai data asli, Update List berfungsi, dan penyimpanan riset lebih andal.",
       "changes": [
         {
           "title": "Home kembali fokus pada composer dan pustaka materi; Dashboard empat statistik mengikuti showcase OmniLearn; palet navy/oranye/biru, font lokal, tema responsif dan penanda build frontend. 171 unit test serta lima pemeriksaan browser lulus; publikasi AI Studio belum terverifikasi.",

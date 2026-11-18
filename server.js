@@ -107,8 +107,12 @@ app.use('/api', (req, res, next) => {
   if (!['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
     let invalidOrigin = false;
     if (req.get('origin')) {
-      try { invalidOrigin = new URL(req.get('origin')).origin !== new URL(`${req.protocol}://${req.get('host')}`).origin; }
-      catch { invalidOrigin = true; }
+      // Compare hosts, not protocol: TLS-terminating proxies may report http upstream. Accept the proxy's forwarded host too.
+      try {
+        const originHost = new URL(req.get('origin')).host.toLowerCase();
+        const hosts = [req.get('host'), String(req.get('x-forwarded-host') || '').split(',')[0]].map(h => h.trim().toLowerCase());
+        invalidOrigin = !hosts.includes(originHost);
+      } catch { invalidOrigin = true; }
     }
     if (req.get('sec-fetch-site') === 'cross-site' || invalidOrigin) {
       return res.status(403).json({ error: 'Permintaan lintas situs ditolak.', code: 'CROSS_SITE_REQUEST', requestId: req.requestId });

@@ -11,9 +11,8 @@ before(async () => {
     process.execPath,
     [
       '--import',
-      fileURLToPath(
-        new URL('./fixtures/provider-preload.mjs', import.meta.url)
-      ),
+      // href, not a path: Windows drive letters parse as URL schemes in --import
+      new URL('./fixtures/provider-preload.mjs', import.meta.url).href,
       'server.js',
     ],
     {
