@@ -1,7 +1,7 @@
 {
-  "uiBuild": "omnilearn-v17-layout-1",
+  "uiBuild": "omnilearn-v153-layout-1",
   "sourceCommit": null,
-  "baseCommit": "0f257ae4fc7ec1d2f0454080d753919465d209d5",
-  "design": "Split tutor entry and library-first dashboard",
-  "status": "in-development"
+  "baseCommit": "a5ce722c680f943483f63148c9d8601920612eb7",
+  "design": "Centered tutor entry and study dashboard",
+  "status": "release"
 }

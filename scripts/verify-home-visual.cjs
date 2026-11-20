@@ -4,7 +4,7 @@ const path = require('node:path');
 const {spawn} = require('node:child_process');
 const {chromium} = require('playwright');
 
-const output = path.resolve('visual-qa');
+const output = path.resolve(process.env.OMNILEARN_QA_OUTPUT || 'visual-qa');
 const report = {status:'BLOCKED',build:process.env.GITHUB_SHA || 'local',screenshots:[],checks:[],failures:[]};
 let server, browser, page;
 
@@ -45,6 +45,7 @@ async function checkLayout(view,width,theme) {
       }).map(node=>node.tagName+'.'+node.className).slice(0,8),
       mascot:box('.home-hero img'),header:box('.product-top'),composer:box('.home-composer'),
       send:box('.home-composer [type=submit]'),hero:box('.home-hero'),library:box('.dashboard-resources'),timer:box('.dashboard-focus'),
+      level:box('.dashboard-level'),stats:box('.dashboard-summary'),
       inputBorder:input?getComputedStyle(input).borderTopWidth:null,
       imageLoaded:document.querySelector('.home-hero img')?.naturalWidth>0,
       theme:document.documentElement.dataset.theme,scrollY,
@@ -61,10 +62,13 @@ async function checkLayout(view,width,theme) {
     assert.ok(measurements.mascot.y>=measurements.header.bottom,'Mascot must not sit beneath the header');
     assert.ok(measurements.send.bottom<=900,'Send action must fit initial viewport');
     assert.equal(await page.locator('.home-learning-stage>.home-session').count(),1);
-    if(width>=1024) assert.ok(measurements.composer.x>measurements.hero.x,'Tutor sits beside the welcome panel');
-  } else if(width>=1024) {
-    assert.ok(Math.abs(measurements.library.y-measurements.timer.y)<2,'Library and focus start together');
-    assert.ok(measurements.timer.x>measurements.library.x,'Focus belongs beside the library');
+    assert.ok(measurements.composer.y>=measurements.hero.bottom,'Tutor starts beneath the hero');
+    assert.ok(Math.abs(measurements.mascot.x+measurements.mascot.width/2-measurements.composer.x-measurements.composer.width/2)<2,'Mascot and tutor share a center line');
+  } else {
+    assert.ok(measurements.level.y>=measurements.stats.bottom,'Level panel follows statistics');
+    assert.ok(measurements.library.y>=measurements.level.bottom,'Collection follows the wide level panel');
+    assert.ok(measurements.timer.y>=measurements.library.bottom,'Focus and activity follow the collection');
+    assert.ok(Math.abs(measurements.level.width-measurements.library.width)<2,'Level and collection use the full dashboard width');
   }
   report.checks.push({view,width,theme,...measurements});
 }
@@ -168,6 +172,7 @@ async function run() {
     for(const view of ['sources','subjects','exams','streaks','leaderboard','profile','updates']) {
       await page.goto(base+'/dashboard?view='+view);
       await page.locator('.product-panel h1').waitFor();
+      if(view==='updates') await page.locator('.release-filters').waitFor();
       const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth);
       assert.equal(overflow,false,`${view} overflows at ${width}px in ${theme}`);
       assert.ok(await page.locator('.product-panel button,.product-panel a,.product-panel summary,.product-panel select').count() || ['streaks','leaderboard'].includes(view),`${view} has no controls`);
@@ -180,7 +185,7 @@ async function run() {
   const clean=await browser.newContext({deviceScaleFactor:1,colorScheme:'dark',locale:'id-ID',reducedMotion:'reduce'});
   page=await clean.newPage();
   await page.addInitScript(()=>localStorage.setItem('omnilearn-theme','dark'));
-  const captures=process.env.QA_SKIP_SCREENSHOTS==='1'?[]:[['01-home-desktop','home',1440],['02-dashboard-desktop','dashboard',1440]];
+  const captures=process.env.QA_SKIP_SCREENSHOTS==='1'?[]:[['01-home-desktop','home',1440],['02-dashboard-desktop','dashboard',1440],['03-home-mobile','home',390],['04-dashboard-mobile','dashboard',390]];
   for(const [name,view,width] of captures) {
     await page.setViewportSize({width,height:900});
     await open(base,view);

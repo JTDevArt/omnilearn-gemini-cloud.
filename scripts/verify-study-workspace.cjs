@@ -209,6 +209,28 @@ async function run() {
   assert.equal(chatRequest.learningContext.chapter,null);
   assert.equal(calls,analysisCalls,'General chat must not analyze the previously selected source');
   assert.equal(await page.evaluate(id=>OmniProduct.getSource(id).text,ids[0]),'Lambung mengolah makanan. Usus menyerap zat gizi.');
+  const revisedSource = await page.evaluate(async () => {
+    const id = crypto.randomUUID();
+    await OmniProduct.stageUpload(new File(['original fixture bytes'], 'unreadable.pdf', {type:'application/pdf'}), id);
+    OmniProduct.selectSource(id);
+    return id;
+  });
+  await page.evaluate(()=>OmniProduct.navigate('sources'));
+  await page.getByRole('heading',{name:'Pustaka sumbermu',exact:true}).waitFor();
+  await page.getByText('Teks sumber, versi & cadangan',{exact:true}).click();
+  await page.getByRole('button',{name:'Revisi teks sumber',exact:true}).click();
+  const revisedText = 'Sumber yang diperiksa: jari-jari menghubungkan pusat dengan tepi lingkaran.';
+  await page.getByRole('textbox',{name:'Teks sumber versi baru',exact:true}).fill(revisedText);
+  await page.getByRole('button',{name:'Simpan sebagai versi baru',exact:true}).click();
+  await page.getByRole('dialog').waitFor({state:'hidden'});
+  await page.reload();
+  await page.getByRole('heading',{name:'Pustaka sumbermu',exact:true}).waitFor();
+  assert.equal(await page.evaluate(id=>OmniProduct.getSource(id).text,revisedSource),revisedText);
+  await page.getByText('Teks sumber, versi & cadangan',{exact:true}).click();
+  const download = page.waitForEvent('download');
+  await page.getByRole('button',{name:'Unduh file asli',exact:true}).click();
+  assert.equal((await download).suggestedFilename(),'unreadable.pdf');
+  assert.equal(await page.evaluate(async id=>(await OmniLocalLibrary.readFile(id,1)).text(),revisedSource),'original fixture bytes');
   assert.deepEqual(errors,[]);
   report.status='ASSERTIONS_PASSED_VISUAL_REVIEW_PENDING';report.inferenceCalls=calls;
   report.behavior='PASS: seven tools × seven widths × two themes without AI, source-bound chapter/content isolation, original source retained after rejected analysis, saved deck on refresh, contextual chat, source review action and mobile overflow.';

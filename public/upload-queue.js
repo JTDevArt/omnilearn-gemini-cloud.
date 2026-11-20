@@ -25,7 +25,14 @@
       if(['failed','cancelled'].includes(task.state)) {
         const retry=element('button','Coba lagi');retry.type='button';retry.disabled=task.retryAt>Date.now();
         if(retry.disabled)row.append(element('p','Coba setelah '+new Date(task.retryAt).toLocaleString('id-ID')));
-        retry.onclick=()=>{if(busy && !running){toast('Tunggu proses AI selesai.');return;}task.state='queued';task.cancelled=false;task.message='Menunggu';draw();pump();};row.append(retry);
+        retry.onclick=()=>{
+          if (OmniProduct.getSource(task.sourceId)?.meta?.extractionMode === 'user-revised-text') {
+            task.state='completed';task.stage=7;task.message='Teks hasil tinjauan tersimpan.';draw();
+            return;
+          }
+          if(busy && !running){toast('Tunggu proses AI selesai.');return;}
+          task.state='queued';task.cancelled=false;task.message='Menunggu';draw();pump();
+        };row.append(retry);
       }
       if(['completed','failed','cancelled'].includes(task.state) && window.OmniProduct?.getSource(task.sourceId)) {
         const source=window.OmniProduct.getSource(task.sourceId);

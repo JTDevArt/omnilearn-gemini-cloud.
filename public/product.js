@@ -1002,9 +1002,12 @@
         source.meta = {
           ...source.meta,
           partialRead: false,
+          partialReadNotice: null,
           truncated: false,
+          pageQuality: [],
           characters: text.length,
           extractionMode: 'user-revised-text',
+          ...(source.meta?.uploadState ? {uploadState: 'completed', uploadError: ''} : {}),
         };
         for (const field of [
           'blueprint',
@@ -1038,11 +1041,14 @@
         window.OmniSourceTools.editSource(active, api)
       );
       add('Arsip versi', () => window.OmniSourceTools.history(active, api));
-      if (active.hasOriginal)
+      const attachmentVersion = active.hasOriginal
+        ? active.version
+        : active.versions?.findLast(version => version.hasOriginal)?.version;
+      if (attachmentVersion)
         add('Unduh file asli', async () => {
           const file = await window.OmniLocalLibrary.readFile(
             active.id,
-            active.version
+            attachmentVersion
           );
           if (!file) {
             toast('File asli tidak tersedia di perangkat ini.');
@@ -1980,7 +1986,7 @@
           window.OmniProductSourceChange?.();
         }
         await window.OmniLocalLibrary.deleteSourceFiles(id).catch(error => toast(error.message));
-        if (['notes','pinned','dashboard'].includes(current)) window.OmniDashboard.render(panel,current,window.OmniProduct);
+        if (['home','notes','pinned','dashboard'].includes(current)) window.OmniDashboard.render(panel,current,window.OmniProduct);
         else sourcesView(current === 'learn');
         } finally { setBusy(false); }
       } else if (selectSource(id)) navigate(button.dataset.action);
