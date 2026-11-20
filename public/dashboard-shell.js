@@ -91,9 +91,11 @@
     const subjectNames = value => Array.isArray(value)
       ? value.filter(name => typeof name === 'string') : [];
     function library(pinned = false, heading = pinned ? "Materi disematkan" : "Catatan") {
+      const folders = [...new Set([...subjectNames(profile.subjects), ...sources.map(s => s.subject)].filter(Boolean))]
+        .sort((a, b) => a.localeCompare(b, 'id'));
       const node = section(
         heading,
-        window.OmniHtml.fragment(`<div class="master-filters"><input type="search" aria-label="Cari catatan" placeholder="Cari catatan…"><select aria-label="Format catatan"><option value="all">Semua</option><option value="document">Dokumen</option><option value="tutor">Dari tutor</option><option value="slide">Slide</option><option value="audio">Audio</option><option value="video">Video</option><option value="youtube">YouTube</option></select><select aria-label="Mata pelajaran"><option value="">Semua pelajaran</option>${[...new Set(sources.map((s) => s.subject).filter(Boolean))].map((s) => `<option>${escape(s)}</option>`).join("")}</select><select aria-label="Urutan"><option value="new">Terbaru</option><option value="old">Terlama</option></select><button data-layout="grid" aria-pressed="true">Galeri</button><button data-layout="list" aria-pressed="false">Daftar</button></div><div class="master-library"></div>`),
+        window.OmniHtml.fragment(`<div class="master-filters"><input type="search" aria-label="Cari catatan" placeholder="Cari judul atau isi…"><select aria-label="Format catatan"><option value="all">Semua sumber</option><option value="document">Dokumen</option><option value="tutor">Dari tutor</option><option value="slide">Slide</option><option value="audio">Audio</option><option value="video">Video</option><option value="youtube">YouTube</option><option value="paste">Teks tempel</option></select><select aria-label="${view === 'home' ? 'Filter mata pelajaran' : 'Mata pelajaran'}"><option value="">Semua folder</option>${folders.map((s) => `<option>${escape(s)}</option>`).join("")}</select><select aria-label="Urutan"><option value="new">Terbaru</option><option value="old">Terlama</option><option value="title">Judul A–Z</option></select><div class="library-layout" role="group" aria-label="Tampilan catatan"><button type="button" data-layout="grid" aria-pressed="true">Galeri</button><button type="button" data-layout="list" aria-pressed="false">Daftar</button></div></div><p class="library-result-count" role="status"></p><div class="master-library"></div>`),
       );
       const [search, type, subject, sort] =
           node.querySelectorAll("input,select"),
@@ -105,39 +107,49 @@
             ? "slide"
             : /video/.test(s.meta?.extractionMode || "")
               ? "video"
-              : /audio/.test(s.meta?.extractionMode || "")
+              : s.meta?.extractionMode === 'paste'
+                ? 'paste'
+                : /audio/.test(s.meta?.extractionMode || "")
               ? "audio"
               : "document";
       function draw() {
+        const query = search.value.trim().toLocaleLowerCase('id');
+        const hasFilters = query || type.value !== 'all' || subject.value;
         const list = sources
           .filter(
             (s) =>
               (!pinned || s.pinned) &&
-              ([lessonTitle(s), s.subject, s.notes, s.text].some(value => String(value || '').toLowerCase().includes(search.value.trim().toLowerCase()))) &&
+              (!query || [lessonTitle(s), s.subject, s.notes, s.text].some(value => String(value || '').toLocaleLowerCase('id').includes(query))) &&
               (type.value === "all" || kind(s) === type.value) &&
               (!subject.value || s.subject === subject.value),
           )
           .sort(
-            (a, b) =>
-              (sort.value === "old" ? 1 : -1) * (a.createdAt - b.createdAt),
+            (a, b) => sort.value === 'title' ? lessonTitle(a).localeCompare(lessonTitle(b), 'id')
+              : (sort.value === "old" ? 1 : -1) * (a.createdAt - b.createdAt),
           );
         results.innerHTML = window.OmniHtml.sanitize(list.length
           ? list
               .map(
                 (s) =>
-                  `<article class="master-note"><div class="note-identity"><span class="note-subject">${escape(s.subject || 'Tanpa pelajaran')}</span>${s.pinned ? '<span class="note-pin">Disematkan</span>' : ''}</div><h3><button class="note-title" data-source-id="${escape(s.id)}">${escape(lessonTitle(s))}</button></h3><p class="note-excerpt">${escape((s.notes || s.text || '').trim().slice(0, 180)) || 'Belum ada teks untuk dipelajari.'}</p><div class="note-metadata"><span>${escape(assistantLessonLabel(s) || ({document:'Dokumen',slide:'Slide',audio:'Audio',video:'Video',youtube:'YouTube'})[kind(s)])}</span><span>${Array.isArray(s.journey?.chapters) ? `${s.journey.chapters.length} bab` : 'Bab belum disusun'}</span></div>${s.meta?.uploadState && s.meta.uploadState !== 'completed' ? '<p class="note-warning">Ekstraksi belum selesai. Tinjau sumber asli.</p>' : s.meta?.partialRead || s.meta?.truncated ? '<p class="note-warning">Teks sebagian; periksa sumber asli.</p>' : ''}<div class="note-footer"><time>${escape(new Date(s.lastOpenedAt || s.createdAt).toLocaleDateString('id-ID'))}</time><details class="note-actions"><summary aria-label="Kelola ${escape(lessonTitle(s))}">Kelola</summary><div class="panel-actions"><button data-edit-note="${escape(s.id)}">Edit catatan</button><button data-rename-id="${escape(s.id)}">Ubah judul</button><button data-pin-id="${escape(s.id)}" aria-pressed="${!!s.pinned}">${s.pinned ? 'Lepas pin' : 'Sematkan'}</button><button data-source="${escape(s.id)}" data-action="delete">Hapus</button></div><details><summary>Sumber asli</summary><p>${escape(s.name)}</p></details></details></div></article>`,
+                  `<article class="master-note"><div class="note-identity"><span class="note-subject">${escape(s.subject || 'Tanpa folder')}</span>${s.pinned ? '<span class="note-pin">Disematkan</span>' : ''}</div><h3><button class="note-title" data-source-id="${escape(s.id)}">${escape(lessonTitle(s))}</button></h3><p class="note-excerpt">${escape((s.notes || s.text || '').trim().slice(0, 180)) || 'Belum ada teks untuk dipelajari.'}</p><div class="note-metadata"><span>${escape(assistantLessonLabel(s) || ({document:'Dokumen',slide:'Slide',audio:'Audio',video:'Video',youtube:'YouTube',paste:'Teks tempel'})[kind(s)])}</span><span>${Array.isArray(s.journey?.chapters) ? `${s.journey.chapters.length} bab` : 'Bab belum disusun'}</span></div>${s.meta?.uploadState && s.meta.uploadState !== 'completed' ? '<p class="note-warning">Ekstraksi belum selesai. Tinjau sumber asli.</p>' : s.meta?.partialRead || s.meta?.truncated ? '<p class="note-warning">Teks sebagian; periksa sumber asli.</p>' : ''}<div class="note-footer"><time>${escape(new Date(s.lastOpenedAt || s.createdAt).toLocaleDateString('id-ID'))}</time><details class="note-actions"><summary aria-label="Kelola ${escape(lessonTitle(s))}">Kelola</summary><div class="panel-actions">${s.text?.trim() ? `<button data-tutor-source="${escape(s.id)}">Pakai di tutor</button>` : ''}<button data-edit-note="${escape(s.id)}">Edit catatan</button><button data-rename-id="${escape(s.id)}">Ubah judul</button><button data-pin-id="${escape(s.id)}" aria-pressed="${!!s.pinned}">${s.pinned ? 'Lepas pin' : 'Sematkan'}</button><button data-source="${escape(s.id)}" data-action="delete">Hapus</button></div><details><summary>Sumber asli</summary><p>${escape(s.name)}</p></details></details></div></article>`,
               )
               .join("")
-          : `<p class="master-empty">${sources.some(s => !pinned || s.pinned) ? 'Tidak ada materi yang cocok. Ubah pencarian atau filter.' : pinned ? 'Belum ada materi disematkan.' : 'Belum ada materi. Unggah sumber pertama untuk mulai belajar.'}</p>`);
+          : `<div class="master-empty"><p>${hasFilters ? 'Tidak ada materi yang cocok.' : pinned ? 'Belum ada materi disematkan.' : 'Belum ada catatan. Tambahkan materi pertamamu.'}</p>${hasFilters ? '<button type="button" data-reset-filters>Atur ulang filter</button>' : pinned ? '' : '<button type="button" data-upload>Unggah materi</button>'}</div>`);
         node.querySelector('.library-result-count').textContent = `${list.length} materi`;
       }
       node.classList.add('notes-collection');
-      results.insertAdjacentHTML('beforebegin', '<p class="library-result-count" role="status" aria-live="polite"></p>');
-      node.oninput = draw;
-      node.onchange = draw;
+      search.oninput = draw;
+      for (const filter of [type, subject, sort]) filter.onchange = draw;
       node.onclick = async (e) => {
         const b = e.target.closest("button");
         if (!b) return;
+        if (b.hasAttribute('data-reset-filters')) {
+          search.value = '';
+          type.value = 'all';
+          subject.value = '';
+          draw();
+          search.focus();
+        }
         if (b.dataset.layout) {
           results.classList.toggle("list", b.dataset.layout === "list");
           node
@@ -147,6 +159,10 @@
         if (b.dataset.sourceId) {
           if (api.selectSource(b.dataset.sourceId)) api.navigate(api.getSource(b.dataset.sourceId)?.text?.trim() ? 'journey' : 'sources');
           else saveStatus.textContent='Materi belum dapat dibuka. Tunggu proses yang sedang berjalan.';
+        }
+        if (b.dataset.tutorSource) {
+          if (api.selectSource(b.dataset.tutorSource) && api.setChatScope('document')) api.navigate('home', view !== 'home');
+          else saveStatus.textContent = 'Sumber belum dapat dipakai. Tunggu proses yang sedang berjalan.';
         }
         if (b.dataset.editNote) {
           if (api.selectSource(b.dataset.editNote)) api.navigate('note-editor');
@@ -182,6 +198,42 @@
       draw();
       return node;
     }
+    function openMaterialDialog(trigger, note = false) {
+      const dialog = document.createElement('dialog');
+      dialog.className = 'create-material-dialog';
+      dialog.setAttribute('aria-labelledby', 'createMaterialTitle');
+      dialog.append(window.OmniHtml.fragment(`<form><h2 id="createMaterialTitle">${note ? 'Buat Catatan' : 'Tempel materi'}</h2><label>Judul<input name="materialTitle" required maxlength="180" autofocus></label><label>${note ? 'Isi catatan' : 'Teks sumber'}<textarea name="materialBody" required maxlength="50000"></textarea></label><p role="status"></p><div class="panel-actions"><button class="primary" type="submit">${note ? 'Simpan catatan' : 'Simpan materi'}</button><button type="button" data-dialog-close>Batal</button></div></form>`));
+      document.body.append(dialog);
+      dialog.showModal();
+      dialog.onclose = () => { dialog.remove(); trigger.focus(); };
+      dialog.querySelector('[data-dialog-close]').onclick = () => dialog.close();
+      const form = dialog.querySelector('form');
+      form.onsubmit = async event => {
+        event.preventDefault();
+        const title = form.elements.materialTitle.value.trim(), text = form.elements.materialBody.value.trim();
+        const status = form.querySelector('[role=status]'), button = form.querySelector('[type=submit]');
+        if (!title || text.length < (note ? 1 : 20)) {
+          status.textContent = note ? 'Tulis judul dan isi catatan.' : 'Tulis judul dan setidaknya 20 karakter teks sumber.';
+          return;
+        }
+        button.disabled = true;
+        try {
+          if (!dialog.dataset.sourceId) {
+            const source = api.addSource({name:title, text, meta:{extractionMode:'paste'}});
+            dialog.dataset.sourceId = source.id;
+          }
+          const source = api.getSource(dialog.dataset.sourceId);
+          source.lessonTitle = title;
+          source.text = text;
+          if (note) source.notes = text;
+          await api.persistAsync();
+          if (dialog.open) {
+            dialog.close();
+            api.navigate(view, false);
+          }
+        } catch (error) { status.textContent = error.message; button.disabled = false; }
+      };
+    }
     if (view === "home") {
       const hero = host.querySelector('.master-heading');
       hero.classList.add('home-hero');
@@ -189,8 +241,8 @@
       stage.className = 'home-learning-stage';
       hero.before(stage);
       stage.append(hero);
-      hero.querySelector('h1').textContent = profile.name ? `${profile.name}, mau belajar apa?` : 'Mau belajar apa hari ini?';
-      hero.querySelector('p').textContent = 'Tulis pertanyaan, unggah materi, atau mulai dari video.';
+      hero.querySelector('h1').textContent = 'Apa yang ingin kamu pahami?';
+      hero.querySelector('p').remove();
       const chat = document.createElement('section');
       chat.className = 'home-session';
       chat.setAttribute('aria-label', 'Tutor AI');
@@ -209,7 +261,7 @@
           <button type="button" data-chat-scope="general">Tanya umum</button>
           <button type="button" data-chat-scope="document">Berdasarkan materi</button>
         </fieldset>
-        <div class="home-source-context"><span></span><strong></strong><button type="button" data-open="notes"></button></div>
+      <div class="home-source-context"><span></span><strong></strong><button type="button" data-choose-source></button></div>
       </div>`;
       const selectedSource = api.getCurrentSource();
       const chatScope = api.getChatScope();
@@ -258,24 +310,7 @@
       const tools = document.createElement('details');
       tools.className = 'home-secondary-tools';
       tools.append(window.OmniHtml.fragment('<summary>Alat belajar lainnya</summary><button type="button" data-paste-material>Tempel materi</button>'));
-      tools.querySelector('[data-paste-material]').onclick = () => {
-        const dialog = document.createElement('dialog');
-        dialog.innerHTML = '<form><h2>Tempel materi</h2><label>Judul<input name="title" required maxlength="200"></label><label>Teks sumber<textarea name="text" required minlength="20" maxlength="50000"></textarea></label><p role="status"></p><div class="panel-actions"><button type="submit">Simpan materi</button><button type="button">Batal</button></div></form>';
-        document.body.append(dialog); dialog.showModal();
-        dialog.onclose = () => { dialog.remove(); tools.querySelector('[data-paste-material]')?.focus(); };
-        dialog.querySelector('[type=button]').onclick = () => dialog.close();
-        dialog.querySelector('form').onsubmit = async event => {
-          event.preventDefault();
-          const button = dialog.querySelector('[type=submit]'); button.disabled = true;
-          try {
-            if (!dialog.dataset.sourceId) {
-              const source = api.addSource({name: dialog.querySelector('[name=title]').value.trim(), text: dialog.querySelector('[name=text]').value.trim(), meta: {extractionMode:'paste'}});
-              dialog.dataset.sourceId = source.id;
-            }
-            await api.persistAsync(); dialog.close(); api.navigate('dashboard');
-          } catch (error) { dialog.querySelector('[role=status]').textContent = error.message; button.disabled = false; }
-        };
-      };
+      tools.querySelector('[data-paste-material]').onclick = event => openMaterialDialog(event.currentTarget);
       api.mountDashboardChat(chat);
       const quick=section('Alat belajar',window.OmniHtml.fragment('<div class="home-quick-grid">'+[
         ['sources','Unggah materi','<path d="M12 16V3m-4 4 4-4 4 4M4 14v7h16v-7"/>'],
@@ -296,8 +331,8 @@
       const continueHtml=ordered.filter(s=>s.text?.trim()).slice(0,1).map(source=>{
         const chapters=source.journey?.chapters||[],done=chapters.filter(c=>source.completedChapters?.includes(c.id)).length;
         const current=chapters.find(c=>c.id===source.activeChapter);
-        return '<article><h3>'+escape(lessonTitle(source))+'</h3><p>'+escape(source.subject||'Tanpa mata pelajaran')+'</p><p>'+escape(current?.title||'Bab belum dipilih')+'</p>'+
-          (chapters.length?'<progress aria-label="Progres '+escape(lessonTitle(source))+'" value="'+done+'" max="'+chapters.length+'"></progress><small>'+done+'/'+chapters.length+' bab selesai</small>':'<small>Bab belum disusun</small>')+
+        return '<article>'+(chapters.length?'<progress aria-label="Progres '+escape(lessonTitle(source))+'" value="'+done+'" max="'+chapters.length+'"></progress>':'')+
+          '<div class="resume-copy"><h3>'+escape(lessonTitle(source))+'</h3><p>'+escape(current?.title||source.subject||'Bab belum disusun')+(chapters.length?' · '+done+'/'+chapters.length+' bab selesai':'')+'</p></div>'+
           '<button data-resume="'+escape(source.id)+'">Lanjutkan belajar</button></article>';
       }).join('');
       if (continueHtml) {
@@ -305,52 +340,38 @@
         continuation.classList.add('home-continuation');
         continuation.onclick = resume;
       }
-      const collection=section('Pustaka belajarmu',window.OmniHtml.fragment('<div class="home-recent-controls"><input type="search" aria-label="Cari catatan" placeholder="Cari judul atau pelajaran…"><select aria-label="Filter mata pelajaran"><option value="">Semua pelajaran</option>'+[...new Set(sources.map(s=>s.subject).filter(Boolean))].map(subject=>'<option>'+escape(subject)+'</option>').join('')+'</select><div class="home-layout-controls" role="group" aria-label="Tampilan materi"><button type="button" data-home-layout="grid" aria-pressed="true">Galeri</button><button type="button" data-home-layout="list" aria-pressed="false">Daftar</button></div><button data-open="notes">Kelola catatan</button></div><div class="home-recent-rows"></div>'));
-      collection.classList.add('home-library');
-      collection.onclick = resume;
-      const libraryHeading = document.createElement('header');
-      const progressLabel = document.createElement('a');
-      progressLabel.className = 'home-progress-label';
-      progressLabel.href = '/dashboard?view=streaks';
-      progressLabel.dataset.view = 'streaks';
-      progressLabel.textContent = `${metrics.xp} XP · ${summary.streak} hari beruntun`;
-      libraryHeading.append(collection.querySelector('h2'), progressLabel);
-      collection.prepend(libraryHeading);
-      const search=collection.querySelector('input'),rows=collection.querySelector('.home-recent-rows'),subjectFilter=collection.querySelector('select');
-      collection.querySelectorAll('[data-home-layout]').forEach(button=>button.onclick=()=>{
-        rows.classList.toggle('list',button.dataset.homeLayout==='list');
-        collection.querySelectorAll('[data-home-layout]').forEach(choice=>choice.setAttribute('aria-pressed',String(choice===button)));
-      });
-      const draw=()=>{
-        const query=search.value.toLocaleLowerCase('id-ID');
-        const matches=ordered.filter(source=>(!subjectFilter.value||source.subject===subjectFilter.value)&&(lessonTitle(source)+' '+(source.subject||'')).toLocaleLowerCase('id-ID').includes(query)).slice(0,8);
-        rows.replaceChildren(window.OmniHtml.fragment(matches.length?matches.map(source=>{
-          const date=new Date(source.lastOpenedAt||source.createdAt).toLocaleDateString('id-ID');
-          const chapters=source.journey?.chapters||[];
-          return '<article><div class="home-resource-kind"><span>'+escape(assistantLessonLabel(source) || source.subject || 'Materi')+'</span><span>'+chapters.length+' bab</span></div><div><h3>'+escape(lessonTitle(source))+'</h3><p>'+escape((source.notes||source.text||'Belum ada teks. Tinjau sumber asli.').trim().slice(0,130))+'</p></div><footer><time>'+escape(date)+'</time><button data-resume="'+escape(source.id)+'">Buka materi</button></footer></article>';
-        }).join(''):'<p class="master-empty">'+(query||subjectFilter.value?'Tidak ada materi yang cocok.':'Belum ada materi. Unggah sumber pertamamu untuk mulai belajar.')+'</p>'));
+      const collection = library(false, 'Catatan belajarmu');
+      collection.classList.add('home-library', 'workspace-library');
+      collection.querySelector('h2').insertAdjacentHTML('afterend', '<a class="manage-folders" href="/dashboard?view=subjects" data-view="subjects">Kelola folder</a>');
+      context.querySelector('[data-choose-source]').onclick = () => {
+        if (sources.length) collection.querySelector('input[type=search]').focus();
+        else api.navigate('sources');
       };
-      search.oninput=draw;subjectFilter.onchange=draw;draw();
     }
     if (view === "dashboard") {
       const hour = new Date().getHours();
       host.querySelector('h1').textContent = `Selamat ${hour < 11 ? 'pagi' : hour < 15 ? 'siang' : hour < 18 ? 'sore' : 'malam'}${profile.name ? ', ' + profile.name : ''}!`;
-      host.querySelector('.master-heading').insertAdjacentHTML('beforeend', '<button class="primary" data-upload>Tambah materi</button>');
+      host.querySelector('.master-heading').insertAdjacentHTML('beforeend', '<button type="button" class="primary" data-create-note>Buat Catatan</button>');
+      host.querySelector('[data-create-note]').onclick = event => openMaterialDialog(event.currentTarget, true);
       host.querySelector('.master-heading p').textContent=summary.answered
         ? summary.answered+' jawaban kuis tersimpan'+(summary.accuracy===null?'':' · '+summary.accuracy+'% benar')
         : 'Progres belajar dan materi tersimpan.';
       const summaryItems = [
-        [dashboard.notes, 'Catatan', 'notes', 'M5 3h14v18H5zM8 8h8m-8 4h8m-8 4h5'],
+        [dashboard.notes, 'Catatan ditulis', 'notes', 'M5 3h14v18H5zM8 8h8m-8 4h8m-8 4h5'],
         [summary.streak, 'Hari beruntun', 'streaks', 'M12 3c1 5 6 6 6 11a6 6 0 1 1-12 0c0-3 2-5 3-6 0 3 1 4 3 4 1-3 1-6 0-9Z'],
-        [dashboard.exams, 'Ujian selesai', 'exams', 'M7 5h12v15H7zM4 17V3h12m-6 7h6m-6 4h4'],
-        [metrics.xp, 'Total XP', 'streaks', 'm14 2-9 12h6l-1 8 9-12h-6z']
+        [metrics.cardsDue, 'Flashcard siap diulang', dashboard.reviewSourceId ? 'cards' : 'notes', 'M5 7h15v13H5zM3 16V3h14M8 11h9m-9 4h6'],
+        [dashboard.exams, 'Ujian selesai', 'exams', 'M7 5h12v15H7zM4 17V3h12m-6 7h6m-6 4h4']
       ];
-      host.insertAdjacentHTML('beforeend',window.OmniHtml.sanitize('<div class="master-stats dashboard-summary">'+summaryItems.map(([value,label,route,path])=>'<a href="/dashboard?view='+route+'" data-view="'+route+'"><i class="dashboard-stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="'+path+'"/></svg></i><div><strong>'+escape(value)+'</strong><span>'+escape(label)+'</span></div></a>').join('')+'</div>'));
-      const level = section('Progres level', window.OmniHtml.fragment(`<div class="progress-level"><div><strong>Level ${metrics.level}</strong><span>${summary.streak} hari beruntun</span></div><progress max="100" value="${metrics.levelProgress}" aria-label="Progres XP">${metrics.levelProgress}%</progress><p>${metrics.nextLevelXp-metrics.xp} XP menuju level ${metrics.level+1}</p><div class="dashboard-next-step"><span>${metrics.cardsDue ? `${metrics.cardsDue} flashcard siap diulang` : 'Belum ada flashcard jatuh tempo'}</span>${dashboard.reviewSourceId ? '<button data-review-due>Mulai review</button>' : action('Buka materi','notes')}</div></div>`));
+      host.insertAdjacentHTML('beforeend',window.OmniHtml.sanitize('<div class="master-stats dashboard-summary">'+summaryItems.map(([value,label,route,path])=>'<a href="/dashboard?view='+route+'" data-view="'+route+'"'+(route === 'cards' ? ' data-review-due' : '')+'><i class="dashboard-stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="'+path+'"/></svg></i><div><strong>'+escape(value)+'</strong><span>'+escape(label)+'</span></div></a>').join('')+'</div>'));
+      const level = section('Progres level', window.OmniHtml.fragment(`<div class="progress-level"><div><strong>Level ${metrics.level}</strong><span>${metrics.xp} XP</span></div><progress max="100" value="${metrics.levelProgress}" aria-label="Progres XP">${metrics.levelProgress}%</progress><p>${metrics.nextLevelXp-metrics.xp} XP menuju level ${metrics.level+1}</p></div>`));
       level.classList.add('dashboard-level');
-      level.querySelector('[data-review-due]')?.addEventListener('click', () => {
+      host.querySelector('[data-review-due]')?.addEventListener('click', event => {
+        if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+        event.preventDefault();
+        event.stopPropagation();
         if (api.selectSource(dashboard.reviewSourceId)) api.navigate('cards');
       });
+      library(false, 'Catatan belajarmu').classList.add('dashboard-resources', 'workspace-library');
       const timer = section('Timer fokus', window.OmniHtml.fragment('<div class="focus-timer"></div>'));
       timer.classList.add('dashboard-focus');
       import('./focus-timer.js').then(({ mountTimer }) => {
@@ -363,15 +384,7 @@
       planning.className = 'dashboard-planning-column';
       planning.setAttribute('aria-label', 'Fokus dan aktivitas');
       planning.append(timer, host.querySelector('.dashboard-weekly'), host.querySelector('.dashboard-recent'));
-      const materials = library(false, "Materi tersimpan");
-      materials.classList.add('dashboard-resources');
-      const libraryColumn = document.createElement('div');
-      libraryColumn.className = 'dashboard-library-column';
-      libraryColumn.append(materials, level);
-      const workspace = document.createElement('div');
-      workspace.className = 'dashboard-overview';
-      workspace.append(libraryColumn, planning);
-      host.append(workspace);
+      host.append(planning);
       const video = section(
         "Lanjutkan dari video",
         window.OmniHtml.fragment(`<p>Video, transkrip, dan ide penting dalam satu tempat.</p><div class="panel-actions"><button data-upload>Unggah video</button>${action("YouTube & transkrip", "sources")}</div><div class="master-video"></div>`),

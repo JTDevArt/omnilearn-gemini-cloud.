@@ -2,6 +2,8 @@
 
 Repository: JTDevArt/omnilearn-gemini-cloud. Base: fb4946dff9e583b00103549ad2677743a34345d9.
 
+V15.3 replaced the `public/dashboard-shell.js` material-dialog assignment with `OmniHtml.fragment()`. The regression inventory decreases from 66 assignments before that change to 65. The reference lines below describe the original audit.
+
 ## Scope and findings
 
 Reviewed every assignment to innerHTML in all top-level public/*.js using a parser-assisted inventory and caller/data-flow inspection. Initially 68 assignments: 44 dynamic values, 23 static markup/clears, one raw section() renderer. Now 67 assignments remain: all 44 dynamic assignment boundaries sanitize the assembled string; 23 static/clear assignments remain unchanged. The section renderer no longer uses innerHTML. These are 44 hardened sinks, not 44 demonstrated exploitable vulnerabilities: many fields already used escapeHtml or the safe Markdown renderer.
