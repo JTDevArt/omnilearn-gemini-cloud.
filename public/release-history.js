@@ -82,21 +82,24 @@ export function mountReleaseHistory(host, input) {
   function draw() {
     results.replaceChildren();
     let total = 0;
-    for (const release of manifest.releases) {
+    for (const [index, release] of manifest.releases.entries()) {
       const filtered = filterReleaseChanges(release.changes, {
         query: search.value, category: category.value
       });
       if (!filtered.length && (search.value.trim() || category.value !== 'all')) continue;
       total += filtered.length;
       const card = element('article', 'release-card');
-      const heading = element('h3', null, 'v' + release.version + ' — ' + release.title);
+      const header = element('header', 'release-card-header');
+      const heading = element('h3', null, release.title);
+      const version = element('p', 'release-version', 'v' + release.version);
       const status = element('p', 'release-status',
         release.status === 'released' ? 'Dirilis: ' + release.releasedAt :
         'Dalam pengembangan · belum dirilis');
       const summary = element('p', null, release.summary);
-      card.append(heading, status, summary);
+      header.append(version, heading, status);
+      card.append(header, summary);
       const details = element('details');
-      if (search.value.trim() || category.value !== 'all') details.open = true;
+      if (index === 0 || search.value.trim() || category.value !== 'all') details.open = true;
       const detailsTitle = element('summary', null, 'Lihat perubahan (' + filtered.length + ')');
       const list = element('ul', 'release-changes');
       details.append(detailsTitle, list);

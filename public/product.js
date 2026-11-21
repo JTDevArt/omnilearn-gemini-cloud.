@@ -315,6 +315,7 @@
     }
   });
   shell.prepend(materialNav);
+  window.OmniStudyShell.mountMaterialNavigation(materialNav);
   window.OmniTheme?.refreshControls?.();
   safeRequestJson(
     '/api/capabilities',
@@ -954,7 +955,7 @@
     return `<div class="source-grid">${list.map((s) => `<article class="source-card"><div class="source-card-kicker"><span>${{ audio: 'Audio', video: 'Video', transcript: 'Transkrip', document: 'Dokumen' }[kind(s)]}</span><span>${html(s.subject || 'Tanpa pelajaran')}</span></div><h3>${html(lessonTitle(s))}</h3><p>${Number(s.meta?.pageCount || 1)} bagian · ${s.text.length.toLocaleString('id-ID')} karakter<br>${new Date(s.createdAt).toLocaleDateString('id-ID')}</p><p class="subject-tag">${s.meta?.uploadState && s.meta.uploadState !== 'completed' ? 'Ekstraksi belum selesai; file asli tersimpan jika tersedia' : s.meta?.partialRead || s.meta?.truncated ? 'Teks sebagian; periksa sumber asli' : 'Teks siap dipakai'}</p><details class="source-original"><summary>Sumber asli</summary><p>${html(s.name)}</p><div class="panel-actions"><button data-source="${html(s.id)}" data-action="preview">Pratinjau</button><button data-source="${html(s.id)}" data-action="download">Unduh teks</button></div></details><div class="panel-actions"><button data-source="${html(s.id)}" data-action="rename">Ubah judul</button><button data-source="${html(s.id)}" data-action="chat">Buka</button></div><details class="source-card-tools"><summary>Alat belajar &amp; kelola</summary><div class="panel-actions"><button data-source="${html(s.id)}" data-action="summary">Ringkas</button><button data-source="${html(s.id)}" data-action="quiz">Kuis</button><button data-source="${html(s.id)}" data-action="cards">Kartu</button><button data-source="${html(s.id)}" data-action="map">Mindmap</button><button data-source="${html(s.id)}" data-action="delete">Hapus</button></div></details></article>`).join('')}</div>`;
   }
   function sourcesView(home = false, query = '') {
-    panel.innerHTML = window.OmniHtml.sanitize(`<span class="handwriting">${home ? 'selangkah lebih paham hari ini' : 'semua materi, satu tempat'}</span><h1>${home ? 'Mau belajar apa hari ini?' : 'Pustaka sumbermu'}</h1><p>${home ? 'Lanjutkan materimu, atau mulai dari rasa ingin tahu yang baru.' : 'Dokumen dan transkrip disimpan di browser perangkat ini. Pilih sumber untuk menghubungkannya ke seluruh alat belajar.'}</p><div class="panel-actions"><button data-explorer>Jelajahi bidang ilmu</button><button data-free-chat data-open="chat">Tanya tanpa dokumen ↗</button></div><div id="sourceResults">${sourceCards(query)}</div>`);
+    panel.innerHTML = window.OmniHtml.sanitize(`<h1>${home ? 'Mau belajar apa hari ini?' : 'Pustaka sumbermu'}</h1><p>Dokumen dan transkrip tersimpan di perangkat ini.</p><section class="source-inventory" aria-labelledby="sourceInventoryHeading"><h2 id="sourceInventoryHeading">Sumber tersimpan</h2><div id="sourceResults">${sourceCards(query)}</div></section><div class="panel-actions"><button data-explorer>Jelajahi bidang ilmu</button><button data-free-chat data-open="chat">Tanya tanpa dokumen</button></div>`);
     const intro = panel.querySelector('h1');
     const active = sources.find((source) => source.id === materialId);
     const sourceControls = document.createElement('section');
@@ -1098,7 +1099,8 @@
     const managementLabel=document.createElement('summary');
     managementLabel.textContent='Teks sumber, versi & cadangan';
     management.append(managementLabel,sourceControls);
-    panel.querySelector('#sourceResults').after(management);
+    const inventory = panel.querySelector('.source-inventory');
+    inventory.after(management);
     if (home) {
       const hour = Number(
         new Intl.DateTimeFormat('en-GB', {
@@ -1110,40 +1112,10 @@
       intro.textContent = `Selamat ${hour < 11 ? 'pagi' : hour < 15 ? 'siang' : hour < 18 ? 'sore' : 'malam'}${profile.name ? ', ' + profile.name : ''}. Mau belajar apa?`;
     }
     const hub = document.createElement('section');
-    hub.className = 'smart-input-hub';
+    hub.className = 'source-import-actions panel-actions';
     hub.setAttribute('aria-label', 'Tambahkan sumber belajar');
-    const hubCards = [
-      [
-        'document',
-        '▤',
-        'Dokumen & slide',
-        'Bawa catatanmu. Kita petakan ide pentingnya.',
-        'PDF, DOCX, PPTX, XLSX, TXT, PNG, JPG',
-      ],
-      [
-        'audio',
-        '♫',
-        'Audio & rekaman',
-        'Tangkap penjelasan, ubah jadi pemahaman.',
-        'MP3, WAV, M4A, rekaman browser',
-      ],
-      [
-        'video',
-        '▷',
-        'Video',
-        'Pelajari ucapan dan visual yang relevan.',
-        'MP4, MOV, WEBM',
-      ],
-      [
-        'youtube',
-        '▶',
-        'YouTube & transkrip',
-        'Simpan tautan dan caption yang boleh digunakan.',
-        'Transkrip manual; tanpa mengambil video',
-      ],
-    ];
-    hub.innerHTML = window.OmniHtml.sanitize(`<div class="input-hub-grid">${hubCards.map(([type, icon, title, copy, formats], i) => `<button class="input-hub-card" data-source="${type}" data-input-kind="${type}"><span class="input-hub-number">0${i + 1}</span><span class="input-hub-icon" aria-hidden="true">${icon}</span><h3>${title}</h3><p class="input-hub-copy">${copy}</p><span class="input-hub-formats">${formats}</span><span class="input-hub-cta">${type === 'youtube' ? 'Tempel transkrip' : 'Pilih file'}</span></button>`).join('')}</div><div class="panel-actions"><button data-record-audio>● Rekam audio</button><span role="status" id="recordStatus"></span></div>`);
-    panel.querySelector('#sourceResults').before(hub);
+    hub.innerHTML = '<button type="button" class="primary" data-input-kind="document">Unggah dokumen</button><button type="button" data-input-kind="audio">Unggah audio</button><button type="button" data-input-kind="video">Unggah video</button><button type="button" data-input-kind="youtube">YouTube &amp; transkrip</button><button type="button" data-record-audio>Rekam audio</button><span role="status" id="recordStatus"></span>';
+    inventory.before(hub);
     const filters = document.createElement('div');
     filters.className = 'source-filters';
     filters.innerHTML = window.OmniHtml.sanitize(`<select id="sourceType" aria-label="Filter tipe sumber"><option value="all">Semua tipe</option><option value="document">Dokumen</option><option value="audio">Audio</option><option value="video">Video</option><option value="transcript">Transkrip</option></select><select id="sourceSubject" aria-label="Filter mata pelajaran"><option value="all">Semua pelajaran</option>${[...new Set(sources.map((s) => s.subject).filter(Boolean))].map((s) => `<option>${html(s)}</option>`).join('')}</select><select id="sourceSort" aria-label="Urutkan sumber"><option value="newest">Terbaru</option><option value="oldest">Terlama</option><option value="title">Judul A–Z</option><option value="subject">Mata pelajaran</option></select>`);
@@ -1492,6 +1464,7 @@
       a.classList.toggle(
         'active',
         a.dataset.view === view ||
+          (view === 'learn' && !!materialId && a.dataset.view === 'journey') ||
           (materialId && (tools.has(view) || ['journey','note-editor'].includes(view)) && a.dataset.view === 'notes')
       );
       if (a.classList.contains('active'))
@@ -1500,19 +1473,20 @@
     });
     setDrawer(false);
     document.body.classList.toggle('has-lesson',!!materialId);
-    materialNav.hidden = !materialId || ![...tools,'journey','note-editor','sources','podcast','sticky','video'].includes(view);
+    materialNav.hidden = !materialId || ![...tools,'journey','learn','note-editor','sources','podcast','sticky','video'].includes(view);
     const selected=sources.find(s=>s.id===materialId);
     materialNav.querySelector('[data-view=video]').hidden=!(/video/.test(selected?.meta?.extractionMode || '') || selected?.meta?.youtubeUrl);
     panel.tabIndex=-1;panel.setAttribute('aria-label',views[view]?.[1] || view);
-    if(push)panel.focus({preventScroll:true});
     if (['home', 'dashboard'].includes(view)) window.scrollTo({top:0,left:0,behavior:'instant'});
     workspace.hidden = !tools.has(view);
     panel.hidden = tools.has(view);
+    if (push && !panel.hidden) panel.focus({preventScroll:true});
     if (['home','dashboard','notes','subjects','streaks','leaderboard','profile','help','pinned','updates'].includes(view)) {
       return window.OmniDashboard.render(panel, view, window.OmniProduct);
     }
     if (tools.has(view)) {
       studyShell.update(view,selected,selected?lessonTitle(selected):'',window.OmniProduct);
+      if (push) workspace.querySelector('.study-title')?.focus({preventScroll:true});
       window.scrollTo({top:0,left:0,behavior:'instant'});
       if (view === 'research')
         window.OmniResearch?.mount(workspace, window.OmniProduct);

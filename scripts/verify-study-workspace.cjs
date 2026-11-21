@@ -3,7 +3,7 @@ const fs=require('node:fs/promises');
 const path=require('node:path');
 const {spawn}=require('node:child_process');
 const {chromium}=require('playwright');
-const output=path.resolve('visual-qa');
+const output=path.resolve(process.env.OMNILEARN_QA_OUTPUT || 'visual-qa');
 const report={status:'BLOCKED',build:process.env.GITHUB_SHA || 'local',fixtures:'Two synthetic sources; no real Gemini or OCR requests.',checks:[],screenshots:[],failures:[]};
 let server,browser,page;
 async function start() {
@@ -24,15 +24,16 @@ async function overflow() {
   assert.deepEqual(outside,[]);
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
 }
-async function shot(name) {
+async function shot(name, fullPage=false) {
   if(process.env.QA_SKIP_SCREENSHOTS==='1') return;
   await page.evaluate(()=>scrollTo(0,0));
-  await page.screenshot({path:path.join(output,name+'.png'),animations:'disabled'});
-  report.screenshots.push({file:name+'.png',viewport:page.viewportSize(),route:new URL(page.url()).searchParams.get('view'),theme:'dark'});
+  await page.screenshot({path:path.join(output,name+'.png'),animations:'disabled',fullPage});
+  const theme=await page.locator('html').getAttribute('data-theme');
+  report.screenshots.push({file:name+'.png',viewport:page.viewportSize(),route:new URL(page.url()).searchParams.get('view'),theme});
 }
 async function run() {
   await fs.mkdir(output,{recursive:true});const base=await start();
-  browser=await chromium.launch({headless:true,args:['--no-sandbox','--disable-dev-shm-usage']});
+  browser=await chromium.launch({headless:true,...(process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:{}),args:['--no-sandbox','--disable-dev-shm-usage']});
   page=await browser.newPage({viewport:{width:1440,height:900},colorScheme:'dark',reducedMotion:'reduce'});
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   let calls=0;
@@ -47,7 +48,9 @@ async function run() {
       source.activeChapter='intro';return source;
     };
     const first=make('scan_biologi.pdf','Sistem Pencernaan','Lambung mengolah makanan. Usus menyerap zat gizi.','Lambung dan usus');first.subject='Biologi';
-    const second=make('scan_kimia.pdf','Ikatan Kimia','Ikatan ion melibatkan perpindahan elektron.','Ikatan ion');second.subject='Kimia';second.deck=[{front:'Apa yang berpindah pada ikatan ion?',back:'Elektron.'}];
+    const second=make('scan_kimia.pdf','Ikatan Kimia','Ikatan ion melibatkan perpindahan elektron.','Ikatan ion');second.subject='Kimia';
+    const longAnswer=['Elektron.',...Array.from({length:9},(_,i)=>`Contoh ${i+1}. Perpindahan elektron menghasilkan ion dengan muatan yang berlawanan.`)].join('\n\n');
+    second.deck=[{front:'Apa yang berpindah pada ikatan ion?',back:longAnswer}];
     await OmniProduct.persistAsync();OmniProduct.selectSource(first.id);return [first.id,second.id];
   });
   await page.evaluate(id => {
@@ -163,11 +166,77 @@ async function run() {
   await page.evaluate(id=>OmniProduct.selectSource(id),ids[1]);await navigate('learn');
   await page.getByRole('heading',{name:'Ikatan ion',exact:true}).waitFor();
   assert.equal(await page.getByRole('heading',{name:'Lambung dan usus',exact:true}).count(),0);
-  await page.setViewportSize({width:390,height:900});await overflow();await shot('03-learning-workspace-mobile');
+  for(const theme of ['dark','light']) for(const width of [1440,768,390,360]) {
+    await page.setViewportSize({width,height:900});await page.evaluate(theme=>OmniTheme.setPreference(theme),theme);
+    await navigate('learn');await overflow();await shot(`reader-${width}-${theme}`);
+    await navigate('cards');await overflow();await shot(`flashcards-${width}-${theme}`);
+    report.checks.push({views:['learn','cards'],theme,width,overflow:false});
+  }
+  await page.setViewportSize({width:390,height:900});await page.evaluate(()=>OmniTheme.setPreference('dark'));
+  await page.evaluate(id=>{
+    const source=OmniProduct.getSource(id);
+    source.journey.chapters.push({id:'electron',title:'Perpindahan elektron',explanation:source.text});
+  },ids[1]);
+  await navigate('learn');
+  const chapterChooser=page.locator('.journey-outline');
+  const toolChooser=page.locator('.material-navigation .workspace-tool-chooser');
+  const toolSummary=toolChooser.locator(':scope > summary');
+  assert.equal(await chapterChooser.evaluate(node=>node.open),false);
+  assert.equal(await toolChooser.evaluate(node=>node.open),false);
+  await chapterChooser.locator('summary').focus();
+  await page.keyboard.press('Enter');
+  await chapterChooser.getByRole('button',{name:'2 Perpindahan elektron',exact:true}).focus();
+  await page.keyboard.press('Enter');
+  assert.equal(await page.locator('.journey-workspace article h2:focus').textContent(),'Perpindahan elektron');
+  assert.equal(await chapterChooser.evaluate(node=>node.open),false);
+  await toolSummary.focus();
+  await page.keyboard.press('Enter');
+  assert.equal(await toolChooser.getByRole('link',{name:'Riset',exact:true}).isVisible(),true);
+  assert.equal(await toolChooser.locator(':scope .workspace-tool-links > a:not([hidden])').count(),14);
+  await overflow();await shot('reader-tools-390-dark');
+  await page.keyboard.press('Escape');
+  assert.equal(await toolChooser.evaluate(node=>node.open),false);
+  assert.equal(await toolSummary.evaluate(node=>node===document.activeElement),true);
+  await page.keyboard.press('Enter');
+  const cardsLink=toolChooser.locator('a[data-view=cards]');
+  assert.equal(await cardsLink.getAttribute('href'),'/dashboard?view=cards');
+  await cardsLink.focus();
+  await page.keyboard.press('Enter');
+  await page.waitForURL('**/dashboard?view=cards');
+  await page.locator('.study-title:focus').waitFor();
+  assert.equal(await page.evaluate(()=>OmniProduct.getCurrentSource().id),ids[1]);
+  await page.evaluate(()=>history.back());
+  await page.waitForURL('**/dashboard?view=learn');
+  await page.getByRole('heading',{name:'Perpindahan elektron',exact:true}).waitFor();
+  assert.equal(await toolChooser.evaluate(node=>node.open),false);
+  assert.equal(await page.locator('.journey-source').getAttribute('href'),'/dashboard?view=sources');
+  await overflow();await shot('03-learning-workspace-mobile');
   await navigate('cards');
   await page.getByText('Apa yang berpindah pada ikatan ion?',{exact:true}).waitFor();await overflow();
   const positions=await page.evaluate(()=>({content:document.querySelector('.study-workspace .content-panel').getBoundingClientRect().y,tools:document.querySelector('.study-tools').getBoundingClientRect().y}));
   assert.ok(positions.tools < positions.content, 'Mobile study tools must remain above long results');
+  const compactStudyTools=page.locator('.study-tools .workspace-tool-chooser');
+  assert.equal(await compactStudyTools.evaluate(node=>node.open),false);
+  assert.equal(await page.locator('#teachingMode').isVisible(),false);
+  await compactStudyTools.locator(':scope > summary').click();
+  assert.equal(await compactStudyTools.getByRole('link',{name:'Podcast',exact:true}).isVisible(),true);
+  assert.equal(await compactStudyTools.locator('a[data-view=cards]').getAttribute('aria-current'),'page');
+  await compactStudyTools.locator(':scope > summary').click();
+  const card=page.locator('.omni-review-card');
+  const management=page.locator('.omni-card-management');
+  for(const width of [360,1440]) {
+    await page.setViewportSize({width,height:900});
+    assert.equal(await management.evaluate(node=>node.open), false);
+    const front=await card.boundingBox();
+    assert.ok(front.y<900,'Active card must begin within the initial viewport');
+    await card.focus();await page.keyboard.press('Enter');
+    const back=await card.boundingBox();
+    assert.ok(back.height>front.height,'The revealed long answer must expand the card');
+    assert.ok((await page.locator('.omni-review-grades').boundingBox()).y >= back.y+back.height,'Ratings must remain below the answer');
+    await overflow();await shot(`flashcards-long-answer-${width}`,true);
+    await card.focus();await page.keyboard.press('Enter');
+  }
+  await page.setViewportSize({width:390,height:900});
   assert.equal(await page.locator('.study-outline').evaluate(node => node.open), false);
   await page.locator('.study-outline summary').click();
   assert.equal(await page.locator('.study-outline .study-chapters').isVisible(), true);
@@ -233,6 +302,6 @@ async function run() {
   assert.equal(await page.evaluate(async id=>(await OmniLocalLibrary.readFile(id,1)).text(),revisedSource),'original fixture bytes');
   assert.deepEqual(errors,[]);
   report.status='ASSERTIONS_PASSED_VISUAL_REVIEW_PENDING';report.inferenceCalls=calls;
-  report.behavior='PASS: seven tools × seven widths × two themes without AI, source-bound chapter/content isolation, original source retained after rejected analysis, saved deck on refresh, contextual chat, source review action and mobile overflow.';
+  report.behavior='PASS: seven tools × seven widths × two themes without AI, keyboard tool and chapter selection, route history and focus, source-bound content, original preservation, saved deck on refresh and contextual chat.';
 }
 run().catch(async error=>{report.status=browser?'FAIL':'BLOCKED';report.failures.push(error.stack || String(error));if(page&&!page.isClosed())try{await page.screenshot({path:path.join(output,'study-assertion-failure.png')});}catch{}process.exitCode=1;}).finally(async()=>{await browser?.close();server?.kill();await fs.mkdir(output,{recursive:true});await fs.writeFile(path.join(output,'STUDY-STATUS.json'),JSON.stringify(report,null,2));console.log(JSON.stringify(report));});

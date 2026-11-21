@@ -91,6 +91,7 @@
     const subjectNames = value => Array.isArray(value)
       ? value.filter(name => typeof name === 'string') : [];
     function library(pinned = false, heading = pinned ? "Materi disematkan" : "Catatan") {
+      const listFirst = ['home', 'dashboard', 'notes', 'pinned'].includes(view);
       const folders = [...new Set([...subjectNames(profile.subjects), ...sources.map(s => s.subject)].filter(Boolean))]
         .sort((a, b) => a.localeCompare(b, 'id'));
       const node = section(
@@ -100,6 +101,10 @@
       const [search, type, subject, sort] =
           node.querySelectorAll("input,select"),
         results = node.querySelector(".master-library");
+      results.classList.toggle('list', listFirst);
+      for (const button of node.querySelectorAll('[data-layout]')) {
+        button.setAttribute('aria-pressed', String(button.dataset.layout === (listFirst ? 'list' : 'grid')));
+      }
       const kind = (s) =>
         assistantLessonLabel(s) ? 'tutor' : /youtube/.test(s.meta?.sourceUrl || s.meta?.youtubeUrl || "")
           ? "youtube"
@@ -234,6 +239,56 @@
         } catch (error) { status.textContent = error.message; button.disabled = false; }
       };
     }
+    function openSourcePicker(trigger, onSelect) {
+      const dialog = document.createElement('dialog');
+      dialog.className = 'create-material-dialog home-source-picker';
+      dialog.setAttribute('aria-labelledby', 'homeSourcePickerTitle');
+      dialog.append(window.OmniHtml.fragment('<h2 id="homeSourcePickerTitle">Pilih sumber untuk tutor</h2><label>Cari sumber<input type="search" autofocus></label><p role="status"></p><ul class="source-picker-results"></ul><div class="panel-actions"><button type="button" data-picker-close>Batal</button><button type="button" data-open="sources">Buka pustaka sumber</button></div>'));
+      const search = dialog.querySelector('input');
+      const status = dialog.querySelector('[role=status]');
+      const results = dialog.querySelector('ul');
+      const entries = sources.filter(source => source.text?.trim());
+      let selected = false;
+      function draw() {
+        const query = search.value.trim().toLocaleLowerCase('id');
+        const matches = entries.filter(source => [lessonTitle(source), source.name, source.subject].some(value =>
+          String(value || '').toLocaleLowerCase('id').includes(query)));
+        status.textContent = matches.length ? `${matches.length} sumber` : entries.length
+          ? 'Tidak ada sumber yang cocok.'
+          : 'Unggah atau tinjau teks sumber di pustaka terlebih dahulu.';
+        results.replaceChildren(...matches.map(source => {
+          const row = document.createElement('li');
+          const button = document.createElement('button');
+          const label = document.createElement('strong');
+          const folder = document.createElement('span');
+          button.type = 'button';
+          label.textContent = lessonTitle(source);
+          folder.textContent = source.subject || source.name || 'Tanpa folder';
+          button.append(label, folder);
+          button.onclick = () => {
+            if (!api.selectSource(source.id)) {
+              status.textContent = 'Tunggu proses saat ini selesai sebelum mengganti sumber.';
+              return;
+            }
+            selected = true;
+            dialog.close();
+            onSelect(source);
+          };
+          row.append(button);
+          return row;
+        }));
+      }
+      search.oninput = draw;
+      dialog.querySelector('[data-picker-close]').onclick = () => dialog.close();
+      dialog.querySelector('[data-open=sources]').addEventListener('click', () => dialog.close());
+      dialog.addEventListener('close', () => {
+        dialog.remove();
+        if (!selected && trigger.isConnected) trigger.focus();
+      }, {once:true});
+      draw();
+      document.body.append(dialog);
+      dialog.showModal();
+    }
     if (view === "home") {
       const hero = host.querySelector('.master-heading');
       hero.classList.add('home-hero');
@@ -255,22 +310,26 @@
           <button type="button" data-transcript><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m10 9 5 3-5 3z"/></svg>YouTube</button>
           <button class="primary" type="submit">Kirim <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5m-5 5 5-5 5 5"/></svg></button>
         </div><span id="recordStatus" role="status"></span>
-      </form>
       <div class="home-chat-settings">
         <fieldset class="chat-scope"><legend>Konteks jawaban</legend>
           <button type="button" data-chat-scope="general">Tanya umum</button>
           <button type="button" data-chat-scope="document">Berdasarkan materi</button>
         </fieldset>
-      <div class="home-source-context"><span></span><strong></strong><button type="button" data-choose-source></button></div>
-      </div>`;
+      <div class="home-source-context"><span></span><strong></strong><button type="button" data-choose-source aria-haspopup="dialog"></button><button type="button" data-open="learn" hidden>Baca materi</button></div>
+      </div></form>`;
       const selectedSource = api.getCurrentSource();
       const chatScope = api.getChatScope();
       chat.classList.toggle('has-source', Boolean(selectedSource) && chatScope === 'document');
       const context = chat.querySelector('.home-source-context');
       context.querySelector('span').textContent = chatScope === 'document' ? 'Sumber percakapan' : 'Percakapan umum';
-      context.querySelector('strong').textContent = selectedSource ? lessonTitle(selectedSource) : '';
-      context.querySelector('button').textContent = selectedSource ? 'Ganti materi' : 'Pilih materi';
-      if (selectedSource?.journey?.chapters?.length) context.insertAdjacentHTML('beforeend', action('Baca materi', 'learn'));
+      const pick = context.querySelector('[data-choose-source]');
+      const read = context.querySelector('[data-open=learn]');
+      function showSource(source) {
+        context.querySelector('strong').textContent = source ? lessonTitle(source) : '';
+        pick.textContent = source ? 'Ganti materi' : 'Pilih materi';
+        read.hidden = !source?.journey?.chapters?.length;
+      }
+      showSource(selectedSource);
       for (const choice of chat.querySelectorAll('[data-chat-scope]')) {
         choice.setAttribute('aria-pressed', String(choice.dataset.chatScope === chatScope));
         choice.disabled = choice.dataset.chatScope === 'document' && !selectedSource;
@@ -343,10 +402,16 @@
       const collection = library(false, 'Catatan belajarmu');
       collection.classList.add('home-library', 'workspace-library');
       collection.querySelector('h2').insertAdjacentHTML('afterend', '<a class="manage-folders" href="/dashboard?view=subjects" data-view="subjects">Kelola folder</a>');
-      context.querySelector('[data-choose-source]').onclick = () => {
-        if (sources.length) collection.querySelector('input[type=search]').focus();
-        else api.navigate('sources');
-      };
+      pick.onclick = () => openSourcePicker(pick, source => {
+        showSource(source);
+        context.querySelector('span').textContent = 'Sumber percakapan';
+        chat.classList.add('has-source');
+        for (const button of chat.querySelectorAll('[data-chat-scope]')) {
+          button.disabled = false;
+          button.setAttribute('aria-pressed', String(button.dataset.chatScope === 'document'));
+        }
+        draftInput.focus();
+      });
     }
     if (view === "dashboard") {
       const hour = new Date().getHours();
@@ -371,7 +436,8 @@
         event.stopPropagation();
         if (api.selectSource(dashboard.reviewSourceId)) api.navigate('cards');
       });
-      library(false, 'Catatan belajarmu').classList.add('dashboard-resources', 'workspace-library');
+      const collection = library(false, 'Catatan belajarmu');
+      collection.classList.add('dashboard-resources', 'workspace-library');
       const timer = section('Timer fokus', window.OmniHtml.fragment('<div class="focus-timer"></div>'));
       timer.classList.add('dashboard-focus');
       import('./focus-timer.js').then(({ mountTimer }) => {
@@ -384,7 +450,10 @@
       planning.className = 'dashboard-planning-column';
       planning.setAttribute('aria-label', 'Fokus dan aktivitas');
       planning.append(timer, host.querySelector('.dashboard-weekly'), host.querySelector('.dashboard-recent'));
-      host.append(planning);
+      const overview = document.createElement('div');
+      overview.className = 'dashboard-overview';
+      overview.append(collection, planning);
+      host.append(overview);
       const video = section(
         "Lanjutkan dari video",
         window.OmniHtml.fragment(`<p>Video, transkrip, dan ide penting dalam satu tempat.</p><div class="panel-actions"><button data-upload>Unggah video</button>${action("YouTube & transkrip", "sources")}</div><div class="master-video"></div>`),
@@ -420,7 +489,7 @@
     if (view === "notes") {
       host.querySelector('.master-heading p').textContent = 'Materi, bab, dan catatan belajarmu dalam satu koleksi.';
       host.querySelector('.master-heading').insertAdjacentHTML('beforeend', `<div class="panel-actions">${action('Tambah sumber','sources')}${sources.length ? action('Edit catatan aktif','note-editor') : ''}</div>`);
-      library();
+      library(false, 'Catatan tersimpan').classList.add('workspace-library');
     }
     if (view === "subjects") {
       const names = [
@@ -486,7 +555,7 @@
         node.querySelector('.subject-no-match').hidden = !items.length || visible > 0;
       };
       node.querySelector('.subject-search').oninput=sortSubjects;node.querySelector('.subject-sort').onchange=sortSubjects;sortSubjects();
-      section(
+      const assignment = section(
         "Kelompokkan materi",
         window.OmniHtml.fragment(sources
           .map(
@@ -494,13 +563,18 @@
               `<label class="master-assignment">${escape(lessonTitle(s))}<select data-assign="${escape(s.id)}"><option value="">Tanpa pelajaran</option>${names.map((n) => `<option ${s.subject === n ? "selected" : ""}>${escape(n)}</option>`).join("")}</select></label>`,
           )
           .join("") || "<p>Unggah materi terlebih dahulu.</p>"),
-      ).onchange = (e) => {
+      );
+      assignment.onchange = (e) => {
         if (e.target.dataset.assign)
           commit((s) => {
             s.sources.find((x) => x.id === e.target.dataset.assign).subject =
               e.target.value;
           }, () => render(host, view, api));
       };
+      const subjectLayout = document.createElement('div');
+      subjectLayout.className = 'management-columns';
+      subjectLayout.append(node, assignment);
+      host.append(subjectLayout);
     }
     if (view === "streaks") {
       host.querySelector('.master-heading p').textContent = 'Lihat hari aktif, poin, dan latihan yang perlu diulang.';
@@ -514,11 +588,20 @@
       }).join('')}</div></div><div class="activity-legend"><span><i aria-hidden="true"></i>Belum tercatat</span><span><i class="studied" aria-hidden="true"></i>Ada aktivitas</span></div><p class="activity-footnote">Riwayat dibatasi 1.000 aktivitas terbaru. Warna menunjukkan aktivitas, bukan tingkat penguasaan.</p>`));
       calendar.classList.add('activity-calendar-panel');
       const labels={lesson:'Bab dipelajari',quiz:'Jawaban kuis',review:'Ulangan flashcard',note:'Catatan disimpan'};
-      section('Riwayat terbaru', window.OmniHtml.fragment(events.length ? `<ul class="study-history">${events.slice(-20).reverse().map(event=>`<li><div><strong>${escape(labels[event.type]||'Aktivitas belajar')}</strong><p>${escape(event.topic||'Tanpa topik')}</p></div><div><time datetime="${escape(event.day)}">${escape(event.day)}</time><span>${Number(event.points)||0} XP</span></div></li>`).join('')}</ul>` : `<div class="progress-empty"><h3>Mulai dari satu pelajaran</h3><p>Selesaikan bab, jawab kuis, atau ulangi flashcard. Aktivitasmu akan tercatat di sini.</p>${action('Buka materi','notes')}</div>`));
+      const history = section('Riwayat terbaru', window.OmniHtml.fragment(events.length ? `<ul class="study-history">${events.slice(-20).reverse().map(event=>`<li><div><strong>${escape(labels[event.type]||'Aktivitas belajar')}</strong><p>${escape(event.topic||'Tanpa topik')}</p></div><div><time datetime="${escape(event.day)}">${escape(event.day)}</time><span>${Number(event.points)||0} XP</span></div></li>`).join('')}</ul>` : `<div class="progress-empty"><h3>Mulai dari satu pelajaran</h3><p>Selesaikan bab, jawab kuis, atau ulangi flashcard. Aktivitasmu akan tercatat di sini.</p>${action('Buka materi','notes')}</div>`));
+      const activityLayout = document.createElement('div');
+      activityLayout.className = 'management-columns';
+      activityLayout.append(calendar, history);
+      host.append(activityLayout);
     }
     if (view === "leaderboard") {
-      host.querySelector('.master-heading p').textContent = 'Bandingkan dengan progresmu sendiri dari hari ke hari.';
-      section('Belajar bersama', window.OmniHtml.fragment(`<div class="ranking-empty"><svg viewBox="0 0 48 48" width="64" height="64" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M16 7h16v12c0 8-16 8-16 0V7Zm0 4H8v6c0 6 8 7 8 7m16-13h8v6c0 6-8 7-8 7M24 25v12m-8 4h16"/></svg><h2>Peringkat bersama belum tersedia</h2><p>Aktivitas dan poin belajarmu tetap tersimpan secara pribadi.</p><dl class="ranking-personal"><div><dt>Total XP</dt><dd>${metrics.xp.toLocaleString('id-ID')}</dd></div><div><dt>Hari beruntun</dt><dd>${summary.streak}</dd></div><div><dt>Level</dt><dd>${metrics.level}</dd></div></dl><div class="panel-actions">${action('Lihat progresku','streaks')}${action('Lanjutkan belajar','notes')}</div></div>`));
+      host.querySelector('.master-heading p').remove();
+      const personal = section('Progres pribadi', window.OmniHtml.fragment(`<dl class="ranking-personal"><div><dt>Total XP</dt><dd>${metrics.xp.toLocaleString('id-ID')}</dd></div><div><dt>Hari beruntun</dt><dd>${summary.streak}</dd></div><div><dt>Level</dt><dd>${metrics.level}</dd></div></dl><div class="panel-actions">${action('Lihat progresku','streaks')}${action('Lanjutkan belajar','notes')}</div>`));
+      const availability = section('Peringkat bersama belum tersedia', 'Aktivitas dan poin belajarmu tersimpan secara pribadi di perangkat ini.');
+      const rankingLayout = document.createElement('div');
+      rankingLayout.className = 'management-columns';
+      rankingLayout.append(availability, personal);
+      host.append(rankingLayout);
     }
     if (view === "profile") {
       host.querySelector('.master-heading p').textContent = 'Kelola identitas, preferensi, dan data belajarmu.';
@@ -594,7 +677,13 @@
           tabButtons[next].focus();
         });
       });
-      host.insertBefore(profileTabs, preferences);
+      const profileSettings = document.createElement('div');
+      profileSettings.className = 'profile-settings';
+      profileSettings.append(profileTabs, ...profileSections);
+      const profileLayout = document.createElement('div');
+      profileLayout.className = 'management-columns profile-layout';
+      profileLayout.append(profileSettings, host.querySelector('.profile-overview'));
+      host.append(profileLayout);
       activateProfileTab(0);
       try {
         const response = await fetch("/api/account/me");

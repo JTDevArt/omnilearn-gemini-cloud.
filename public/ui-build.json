@@ -1,7 +1,7 @@
 {
-  "uiBuild": "omnilearn-v153-layout-1",
+  "uiBuild": "omnilearn-v18-candidate-1",
   "sourceCommit": null,
-  "baseCommit": "a5ce722c680f943483f63148c9d8601920612eb7",
-  "design": "Centered tutor entry and study dashboard",
-  "status": "release"
+  "baseCommit": "a42d638382d9efa89c09c4585bb3ae854ccf9252",
+  "design": "Source-aware tutor, compact collections, and study planning",
+  "status": "candidate"
 }

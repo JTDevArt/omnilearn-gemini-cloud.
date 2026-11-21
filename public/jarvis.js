@@ -184,14 +184,47 @@
     const exercise = chapter.practice?.question
       ? `<h3>Coba jelaskan sendiri</h3><p>${safe(chapter.practice.question)}</p><textarea aria-label="Jawaban latihan" placeholder="Coba tulis pemahamanmu…"></textarea><details><summary>Lihat jawaban dan pembahasan</summary><div class="md-rendered">${renderMarkdownToSafeHtml([chapter.practice.answer, chapter.practice.explanation].filter(Boolean).join('\n\n'))}</div></details>`
       : '';
-    panel.innerHTML = window.OmniHtml.sanitize(`<div class="panel-actions"><h1>${safe(source.journey.title)}</h1><span>${source.completedChapters.length}/${chapters.length} bab ditandai selesai</span></div><progress max="${chapters.length}" value="${source.completedChapters.length}" aria-label="Progres bab"></progress><div class="journey-workspace"><nav aria-label="Bab pembelajaran">${chapters.map((c, i) => `<button data-chapter="${safe(c.id)}" class="${c.id === chapter.id ? 'active' : ''}">${source.completedChapters.includes(c.id) ? '✓' : i + 1} ${safe(c.title)}</button>`).join('')}</nav><article><h2>${safe(chapter.title)}</h2><p>${safe(chapter.objective)}</p><div class="md-rendered">${renderMarkdownToSafeHtml(chapter.explanation)}</div>${chapter.example ? `<h3>Contoh</h3><div class="md-rendered">${renderMarkdownToSafeHtml(chapter.example)}</div>` : ''}${chapter.formula ? `<div class="md-rendered">${renderMarkdownToSafeHtml(chapter.formula)}</div>` : ''}${Array.isArray(chapter.sourceReferences) && chapter.sourceReferences.length ? `<p class="note-status">${chapter.sourceReferences.map(safe).join(' · ')}</p>` : ''}${chapter.recap ? `<h3>Rangkuman bab</h3><div class="md-rendered">${renderMarkdownToSafeHtml(chapter.recap)}</div>` : ''}<div class="panel-actions"><button data-edit-chapter>Edit bab</button>${source.journeyOriginal ? '<button data-original-journey>Lihat versi AI asli</button>' : ''}</div>${exercise}<div class="panel-actions"><button data-complete>✓ Tandai sudah dipelajari</button><button data-ask-chapter>Tanya tutor tentang bab ini</button><button data-next-chapter ${chapters.indexOf(chapter) === chapters.length - 1 ? 'disabled' : ''}>Bab berikutnya →</button></div><p>Penanda selesai mencatat aktivitasmu; bukan penilaian otomatis atas penguasaan materi.</p></article></div>`);
+    const chapterIndex = chapters.indexOf(chapter);
+    panel.innerHTML = window.OmniHtml.sanitize(`
+      <header class="journey-heading">
+        <div class="panel-actions">
+          <h1>${safe(source.lessonTitle || source.journey.title)}</h1>
+          <a class="journey-source" href="/dashboard?view=sources" data-view="sources">Lihat sumber</a>
+        </div>
+        <p class="journey-progress">${source.completedChapters.length}/${chapters.length} bab ditandai selesai</p>
+        <progress max="${chapters.length}" value="${source.completedChapters.length}" aria-label="Progres bab"></progress>
+      </header>
+      <div class="journey-workspace">
+        <details class="journey-outline" ${matchMedia('(max-width: 900px)').matches ? '' : 'open'}>
+          <summary>Bab ${chapterIndex + 1} dari ${chapters.length}</summary>
+          <nav aria-label="Bab pembelajaran">
+            ${chapters.map((c, i) => `<button type="button" data-chapter="${safe(c.id)}" ${c.id === chapter.id ? 'class="active" aria-current="step"' : ''}>${source.completedChapters.includes(c.id) ? '✓' : i + 1} ${safe(c.title)}</button>`).join('')}
+          </nav>
+        </details>
+        <article>
+          <h2 tabindex="-1">${safe(chapter.title)}</h2>
+          <p>${safe(chapter.objective)}</p>
+          <div class="md-rendered">${renderMarkdownToSafeHtml(chapter.explanation)}</div>
+          ${chapter.example ? `<h3>Contoh</h3><div class="md-rendered">${renderMarkdownToSafeHtml(chapter.example)}</div>` : ''}
+          ${chapter.formula ? `<div class="md-rendered">${renderMarkdownToSafeHtml(chapter.formula)}</div>` : ''}
+          ${Array.isArray(chapter.sourceReferences) && chapter.sourceReferences.length ? `<p class="note-status">${chapter.sourceReferences.map(safe).join(' · ')}</p>` : ''}
+          ${chapter.recap ? `<h3>Rangkuman bab</h3><div class="md-rendered">${renderMarkdownToSafeHtml(chapter.recap)}</div>` : ''}
+          <div class="panel-actions"><button data-edit-chapter>Edit bab</button>${source.journeyOriginal ? '<button data-original-journey>Lihat versi AI asli</button>' : ''}</div>
+          ${exercise}
+          <div class="panel-actions">
+            <button data-complete>✓ Tandai sudah dipelajari</button>
+            <button data-ask-chapter>Tanya tutor tentang bab ini</button>
+            <button data-next-chapter ${chapterIndex === chapters.length - 1 ? 'disabled' : ''}>Bab berikutnya →</button>
+          </div>
+          <p>Penanda selesai mencatat aktivitasmu; bukan penilaian otomatis atas penguasaan materi.</p>
+        </article>
+      </div>`);
     const tools = document.createElement('aside');
     tools.className = 'journey-tools';
     tools.setAttribute('aria-label', 'Alat belajar');
     tools.innerHTML = '<h2>Alat belajar</h2><button data-open="summary">Ringkas dengan AI</button><button data-open="note-editor">Buat catatan</button><button data-open="cards">Buat flashcard</button><button data-open="quiz">Latihan soal</button><button data-open="chat">Tanya AI</button>';
     panel.querySelector('.journey-workspace').append(tools);
     const title = panel.querySelector('h1');
-    if (source.lessonTitle) title.textContent = source.lessonTitle;
     if (source.meta?.origin?.startsWith('tutor-')) {
       const origin = document.createElement('p');
       origin.className = 'note-status';
@@ -228,14 +261,15 @@
       const close=document.createElement('button');close.textContent='Tutup';close.onclick=()=>dialog.close();
       dialog.append(title,text,close);document.body.append(dialog);dialog.showModal();dialog.onclose=()=>dialog.remove();
     });
-    panel.querySelectorAll('[data-chapter]').forEach(
-      (button) =>
-        (button.onclick = () => {
-          source.activeChapter = button.dataset.chapter;
-          api.persist();
-          renderJourney(panel, api);
-        })
-    );
+    function showChapter(id) {
+      source.activeChapter = id;
+      api.persist();
+      renderJourney(panel, api);
+      panel.querySelector('.journey-workspace article h2').focus();
+    }
+    for (const button of panel.querySelectorAll('[data-chapter]')) {
+      button.onclick = () => showChapter(button.dataset.chapter);
+    }
     panel.querySelector('[data-complete]').onclick = () => {
       if (!source.completedChapters.includes(chapter.id))
         source.completedChapters.push(chapter.id);
@@ -255,12 +289,8 @@
       chatInput.focus();
     };
     panel.querySelector('[data-next-chapter]').onclick = () => {
-      const next = chapters[chapters.indexOf(chapter) + 1];
-      if (next) {
-        source.activeChapter = next.id;
-        api.persist();
-        renderJourney(panel, api);
-      }
+      const next = chapters[chapterIndex + 1];
+      if (next) showChapter(next.id);
     };
   }
   window.OmniJarvis = { renderQuiz, renderJourney };

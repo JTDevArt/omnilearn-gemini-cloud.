@@ -9,7 +9,7 @@ await page.locator('#productMenu').click();assert.equal(await page.locator('.pro
 for(const view of ['home','dashboard','subjects','notes','exams','streaks','leaderboard','updates','profile']) {await page.locator('nav[aria-label="Menu utama"] [data-view='+view+']').click();assert.equal(await page.locator('nav[aria-label="Menu utama"] [data-view='+view+']').getAttribute('aria-current'),'page');}
 await page.goBack();await page.waitForFunction(()=>document.querySelector('[data-view=updates]').classList.contains('active'));
 await page.goForward();await page.waitForFunction(()=>document.querySelector('[data-view=profile]').classList.contains('active'));
-await page.setViewportSize({width:390,height:844});assert.equal(await page.locator('#productMenu').getAttribute('aria-expanded'),'false');assert.equal(await page.locator('.product-sidebar').evaluate(n=>n.inert),true);
+await page.setViewportSize({width:390,height:844});await page.locator('#productMenu[aria-expanded="false"]').waitFor();assert.equal(await page.locator('.product-sidebar').evaluate(n=>n.inert),true);
 await page.locator('#productMenu').click();assert.equal(await page.locator('.product-sidebar').getAttribute('aria-modal'),'true');
 await page.keyboard.press('Shift+Tab');assert.equal(await page.evaluate(()=>document.activeElement.id),'shellLogout');await page.keyboard.press('Tab');assert.equal(await page.evaluate(()=>document.activeElement.classList.contains('menu-product')),true);
 await page.keyboard.press('Escape');assert.equal(await page.locator('#productMenu').getAttribute('aria-expanded'),'false');assert.equal(await page.evaluate(()=>document.activeElement.id),'productMenu');
@@ -21,7 +21,7 @@ await page.goto(base+'/dashboard?view=home');await page.locator('.master-compose
 assert.equal(await page.evaluate(()=>OmniProduct.snapshot().sources.find(s=>s.name==='Lesson').notes),'Keep my lesson notes.');let uploadRoute;await page.route('**/api/upload',route=>{uploadRoute=route;});
 await page.evaluate(()=>{void OmniUploads.enqueue([new File(['Background extraction lesson.'],'background.txt',{type:'text/plain'})]);});
 await page.waitForFunction(()=>uploadInFlight);
-await page.evaluate(()=>OmniProduct.navigate('profile'));await page.locator('input[name=name]').waitFor();
+await page.evaluate(()=>OmniProduct.navigate('profile'));await page.getByRole('textbox',{name:'Nama tampilan'}).waitFor();
 while(!uploadRoute)await new Promise(resolve=>setTimeout(resolve,10));
 await uploadRoute.fulfill({json:{status:'completed',filename:'background.txt',text:'Background extraction lesson.',pageCount:1}});
 await page.waitForFunction(()=>OmniProduct.snapshot().sources.some(s=>s.name==='background.txt' && s.meta.uploadState==='completed'));

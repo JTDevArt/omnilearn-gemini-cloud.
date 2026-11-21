@@ -63,11 +63,14 @@ async function run() {
     await page.locator('.home-composer [type=submit]').click();
     await page.getByText('Jawaban uji tersimpan.',{exact:true}).waitFor();
     assert.equal(requests,1);
+    await page.locator('#homeQuestion').fill('Draf untuk sumber');
     await page.getByRole('button',{name:'Pilih materi',exact:true}).or(page.getByRole('button',{name:'Ganti materi',exact:true})).click();
-    assert.equal(await page.getByRole('searchbox',{name:'Cari catatan',exact:true}).evaluate(node=>node===document.activeElement),true);
-    const chosen = homeNotes.filter({has:page.getByRole('heading',{name:'Ikatan kimia',exact:true})});
-    await chosen.getByLabel('Kelola Ikatan kimia',{exact:true}).click();
-    await chosen.getByRole('button',{name:'Pakai di tutor',exact:true}).click();
+    const picker = page.getByRole('dialog',{name:'Pilih sumber untuk tutor',exact:true});
+    const search = picker.getByRole('searchbox',{name:'Cari sumber',exact:true});
+    assert.equal(await search.evaluate(node=>node===document.activeElement),true);
+    await search.fill('Kimia');
+    await picker.getByRole('button',{name:'Ikatan kimia Kimia',exact:true}).click();
+    assert.equal(await page.locator('#homeQuestion').inputValue(),'Draf untuk sumber');
     await page.locator('.home-session.has-source').waitFor();
     assert.equal(await page.locator('.home-source-context strong').textContent(),'Ikatan kimia');
     assert.equal(await page.getByRole('button',{name:'Berdasarkan materi',exact:true}).getAttribute('aria-pressed'),'true');

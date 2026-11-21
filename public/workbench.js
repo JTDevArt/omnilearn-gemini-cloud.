@@ -215,8 +215,9 @@
     const saveSession = () => { if (ready) options.onSessionChange?.({cardKeys:cards.map(card=>JSON.stringify([card.front,card.back])),order:[...order],cursor,flipped,dueOnly}); };
     host.replaceChildren();
     const root = element('section', 'omni-flashcards'); root.tabIndex = -1;
-    const header = element('div', 'omni-wb-heading');
-    header.append(element('h2', '', 'Sedikit demi sedikit, makin ingat.'), element('p', '', 'Pikirkan jawabannya, balik kartu, lalu nilai pemahamanmu.'));
+    root.setAttribute('aria-label', 'Latihan flashcard');
+    const management = element('details', 'omni-card-management');
+    management.append(element('summary', '', 'Kelola kartu'));
     const statistics = element('div', 'omni-review-stats'); statistics.setAttribute('aria-label', 'Statistik pengulangan');
     const controls = element('div', 'omni-wb-actions');
     const message = element('p', 'omni-note-status'); message.setAttribute('role','status');
@@ -253,7 +254,11 @@
       const card = currentCard();
       stage.hidden = !card;
       drawStats();
-      if (!card) { message.textContent = cards.length ? 'Selesai untuk sesi ini. Latih semua kartu atau kembali saat jadwal berikutnya.' : 'Belum ada kartu. Tambahkan kartu atau buat dari materi dengan AI.'; return; }
+      if (!card) {
+        management.open = true;
+        message.textContent = cards.length ? 'Selesai untuk sesi ini. Latih semua kartu atau kembali saat jadwal berikutnya.' : 'Belum ada kartu. Tambahkan kartu atau buat dari materi dengan AI.';
+        return;
+      }
       progress.textContent = `${cursor + 1} / ${order.length} kartu${dueOnly ? ' jatuh tempo' : ''} · ${statusText(reviews[keyFor(card)])}`;
       render(front,card.front); render(back,card.back);
       front.setAttribute('aria-hidden','false'); back.setAttribute('aria-hidden','true');
@@ -338,7 +343,8 @@
         download(text,'omnilearn-flashcards.md','text/markdown;charset=utf-8');
       }));
     stage.append(progress,cardArea,navigation,assessments);
-    root.append(header,statistics,controls,formHost,stage,message);host.append(root);
+    management.append(statistics,controls,formHost);
+    root.append(stage,message,management);host.append(root);
     cardArea.addEventListener('click',event=>{if(!event.target.closest('a'))flipCard();});
     const keyboard = event => {
       if (disposed || !root.isConnected || host.hidden || event.altKey || event.ctrlKey || event.metaKey || event.target.closest('input,textarea,select,[contenteditable=true]')) return;

@@ -8,7 +8,7 @@ const data = JSON.parse(readFileSync(file, 'utf8'));
 
 test('release manifest is valid with unique semantic versions and real commit hashes', () => {
   const checked = validateReleaseManifest(data);
-  assert.equal(checked.releases[0].version, '1.0.0');
+  assert.equal(checked.releases[0].version, '1.1.0');
   assert.equal(checked.releases[0].status, 'in-development');
   assert.ok(checked.releases[0].changes.length > 0);
 });

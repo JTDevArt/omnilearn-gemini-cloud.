@@ -2,6 +2,40 @@
   "schemaVersion": 1,
   "releases": [
     {
+      "version": "1.1.0",
+      "title": "OmniLearn V18",
+      "releasedAt": null,
+      "status": "in-development",
+      "summary": "Pilih sumber langsung dari tutor, kelola catatan di samping timer, dan kembali ke bab atau ujian yang sedang dikerjakan.",
+      "changes": [
+        {
+          "title": "Coba kembali tanpa menggandakan giliran tutor. OmniLearn membaca JSON berpagar dari Gemini dan memeriksa rujukan setelah mengurai isinya.",
+          "category": "AI & OCR",
+          "status": "implemented-local",
+          "files": ["public/app.js", "server.js"],
+          "commit": "91b8aec40a5ade544118907bf49c4b4890c41fca"
+        },
+        {
+          "title": "Pertahankan nomor halaman saat ekstraksi PDF gagal sebagian. Hasil OCR dari dokumen utuh memerlukan penanda halaman.",
+          "category": "AI & OCR",
+          "status": "implemented-local",
+          "files": ["server.js", "lib/ocr-pages.js"],
+          "commit": "91b8aec40a5ade544118907bf49c4b4890c41fca"
+        },
+        {
+          "title": "Tata ulang Beranda, Dashboard, koleksi, Ujian, Profil, dan ruang belajar dengan kontrol yang menyesuaikan ukuran layar.",
+          "category": "UI/UX",
+          "status": "implemented-local",
+          "files": ["public/dashboard-shell.js", "public/study-shell.js", "public/exam-workspace.js"],
+          "commit": null
+        }
+      ],
+      "knownLimitations": [
+        "Akses Gemini langsung, mutu OCR langsung, dan publikasi produksi belum diverifikasi.",
+        "Peringkat bersama belum tersedia. Progres pribadi berasal dari aktivitas yang tersimpan."
+      ]
+    },
+    {
       "version": "1.0.0",
       "title": "OmniLearn AI — rilis awal",
       "releasedAt": null,

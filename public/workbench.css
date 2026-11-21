@@ -11,8 +11,18 @@
 @media(prefers-reduced-motion:reduce){.omni-review-card-inner{transition:none}}
 @media print{.omni-note-toolbar,.omni-wb-actions,.omni-note-footer{display:none}.omni-note-layout{display:block}.omni-note-layout>.omni-note-pane:first-child{display:none}.omni-note-preview{border:0;min-height:0;padding:0}}
 
-.omni-flashcards .omni-wb-heading h2 {
-  font-size:clamp(20px,2.2vw,25px);
+.omni-card-management {
+  margin-block-start:var(--space-18);
+  padding:0;
+  border:0;
+  border-block-start:1px solid var(--border);
+}
+.omni-card-management>summary {
+  padding:var(--space-10) 0;
+  min-height:var(--control-height);
+  font-size:var(--font-label);
+  font-weight:700;
+  color:var(--review-amber);
 }
 .omni-flashcards .omni-review-stats {
   gap:0;
@@ -33,6 +43,12 @@
 .omni-flashcards .omni-review-back {
   background:var(--review-amber-soft);
   border-bottom:4px solid var(--review-amber);
+}
+.omni-review-card:not(.is-flipped) .omni-review-back,
+.omni-review-card.is-flipped .omni-review-front {
+  position:absolute;
+  inset:0;
+  overflow:hidden;
 }
 .omni-flashcards .omni-review-face { min-width:0; }
 .omni-flashcards .omni-card-progress { color:var(--review-amber); }

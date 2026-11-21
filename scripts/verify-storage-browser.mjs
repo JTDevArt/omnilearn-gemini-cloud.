@@ -68,14 +68,15 @@ try {
     OmniLocalLibrary.save = () => Promise.reject(new Error('Storage fixture full'));
     OmniProduct.navigate('profile');
   });
-  await page.locator('input[name=name]').fill('Unsaved learner');
-  await page.getByRole('button', {name:'Simpan',exact:true}).click();
+  await page.getByRole('textbox', {name:'Nama tampilan'}).fill('Unsaved learner');
+  await page.getByRole('button', {name:'Simpan preferensi',exact:true}).click();
   await page.getByText('Belum tersimpan di perangkat. Storage fixture full', {exact:true}).waitFor();
   assert.equal(await page.evaluate(() => OmniProduct.storageStatus().unsavedChanges), true);
   assert.equal(await page.evaluate(() => !dispatchEvent(new Event('beforeunload', {cancelable:true}))), true);
   assert.equal(await page.getByText('Preferensi tersimpan di pustaka perangkat.', {exact:true}).count(), 0);
   await page.evaluate(() => OmniProduct.navigate('sources'));
   page.on('dialog', dialog => dialog.accept());
+  await page.locator('.source-card-tools > summary').click();
   await page.locator('[data-action=delete]').click();
   await page.waitForFunction(() => OmniProduct.storageStatus().pendingWrites === 0);
   assert.equal(await page.evaluate(() => OmniProduct.snapshot().sources.length), 1);
@@ -85,11 +86,13 @@ try {
   // Older malformed optional fields remain recoverable and do not crash Subjects.
   await page.evaluate(async () => { await OmniProduct.updateDashboard(s => {s.profile.subjects = 42;}); });
   await page.goto(`${base}/dashboard?view=subjects`);
+  await page.locator('.subject-add > summary').click();
   await page.locator('input[name=subject]').fill('Math');
   await page.getByRole('button', {name:'Tambah',exact:true}).click();
   await page.getByRole('heading', {name:'Math',exact:true}).waitFor();
   assert.equal(await page.evaluate(() => OmniProduct.snapshot().profile.legacySubjects), 42);
   await page.evaluate(() => OmniProduct.navigate('sources'));
+  await page.locator('.source-card-tools > summary').click();
   await page.locator('[data-action=delete]').click();
   await page.waitForFunction(() => OmniProduct.snapshot().sources.length === 0 && OmniProduct.storageStatus().pendingWrites === 0);
   await page.evaluate(() => OmniLocalLibrary.flush());

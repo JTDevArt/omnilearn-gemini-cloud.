@@ -459,8 +459,8 @@ async function checkAI() {
     setStatus('ready', 'Gemini Cloud siap');
     chatFeedback.textContent = '';
   } else if (data && !data.ready) {
-    setStatus('error', 'Secret Gemini belum tersedia');
-    chatFeedback.textContent = 'Tambahkan GEMINI_API_KEY melalui Settings → Secrets di Google AI Studio Build Mode.';
+    setStatus('error', 'Tutor belum siap');
+    chatFeedback.textContent = 'Tutor belum tersedia. Materi dan catatan tetap dapat dibuka.';
   } else {
     setStatus('error', 'Backend belum berjalan');
     chatFeedback.textContent = 'Backend Node.js belum merespons atau sedang dimuat ulang.';

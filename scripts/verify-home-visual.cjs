@@ -67,8 +67,13 @@ async function checkLayout(view,width,theme) {
   } else {
     assert.ok(measurements.level.y>=measurements.stats.bottom,'Level panel follows statistics');
     assert.ok(measurements.library.y>=measurements.level.bottom,'Collection follows the wide level panel');
-    assert.ok(measurements.timer.y>=measurements.library.bottom,'Focus and activity follow the collection');
-    assert.ok(Math.abs(measurements.level.width-measurements.library.width)<2,'Level and collection use the full dashboard width');
+    if (width >= 1100) {
+      assert.ok(measurements.timer.x>=measurements.library.x+measurements.library.width,'Focus sits alongside the collection');
+      assert.ok(Math.abs(measurements.timer.y-measurements.library.y)<2,'Study planning aligns with the collection');
+    } else {
+      assert.ok(measurements.timer.y>=measurements.library.bottom,'Focus follows the collection on narrow screens');
+      assert.ok(Math.abs(measurements.level.width-measurements.library.width)<2,'Collection spans the dashboard on narrow screens');
+    }
   }
   report.checks.push({view,width,theme,...measurements});
 }
