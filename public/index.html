@@ -29,7 +29,14 @@
 <link rel="stylesheet" href="/exam-workspace.css">
 <link rel="stylesheet" href="/app.css">
 </head>
-<body data-ui-build="omnilearn-v18-candidate-1">
+<body data-ui-build="omnilearn-v19-candidate-1">
+<section class="app-startup" id="appStartup" aria-label="Mulai OmniLearn">
+  <strong class="app-startup-brand" aria-label="OmniLearn"><span aria-hidden="true">✳</span> omni<span>learn</span></strong>
+  <p id="appStartupStatus" role="status">Membuka ruang belajar…</p>
+  <a class="btn btn-primary" id="appStartupRetry" href="" hidden>Muat ulang</a>
+  <noscript><p>Aktifkan JavaScript untuk membuka ruang belajar.</p></noscript>
+</section>
+<script src="/app-startup.js"></script>
 <header class="shell topbar" id="home">
   <a class="brand" href="#home" aria-label="OmniLearn beranda"><span class="brand-mark">✳</span><span>omni <span class="app-inline-1">learn</span></span></a>
   <nav class="nav" id="nav"><a href="#cara-kerja">Cara kerja</a><a href="#fitur">Fitur</a><a href="#jelajahi">Jelajahi ilmu</a><a href="#ruang-belajar">Ruang belajar</a></nav>
@@ -80,15 +87,14 @@
 <section class="workspace-wrap" id="ruang-belajar"><div class="shell">
  <div class="section-head"><div><div class="kicker">Ruang belajar AI</div><h2>Satu materi. Banyak cara memahami.</h2></div><p class="section-desc">Unggah materi atau mulai dari pertanyaan. Tutor AI membantu menjelaskan, merangkum, dan membuat latihan melalui Gemini Cloud.</p></div>
  <div class="workspace">
-  <div class="workspace-head"><div><h3>Mau belajar apa hari ini?</h3><p id="materialLabel">Belum ada materi · Mulai dari pertanyaan atau unggah catatanmu</p></div><div class="head-actions"><span class="ai-status" id="aiStatus">● Memeriksa Gemini Cloud…</span><input class="upload-input" id="materialFile" type="file" accept=".pdf,.docx,.pptx,.txt,.mp3,.wav,.mp4,.mov"><button class="btn btn-soft" id="uploadButton" type="button">＋ Tambah materi</button></div></div>
+  <div class="workspace-head"><div><h3>Mau belajar apa hari ini?</h3><p id="materialLabel">Belum ada materi · Mulai dari pertanyaan atau unggah catatanmu</p></div><div class="head-actions"><span class="ai-status" id="aiStatus">Memeriksa layanan belajar…</span><input class="upload-input" id="materialFile" type="file" accept=".pdf,.docx,.pptx,.txt,.mp3,.wav,.mp4,.mov"><button class="btn btn-soft" id="uploadButton" type="button">＋ Tambah materi</button></div></div>
   <div class="workspace-body">
    <aside class="side-panel"><div class="side-label">Materi kamu</div><div id="materialList"><div class="lesson active"><span class="lesson-icon">💡</span>Pertanyaan bebas</div></div><div class="privacy-note">🔒 Riwayat chat terisolasi per sesi tab browser (sessionStorage) dan tidak dibagikan ke pengguna lain. Dokumen hanya diproses sementara di memori. Konten yang dikirim ke Tutor AI diproses oleh penyedia Gemini Cloud untuk menghasilkan jawaban.</div></aside>
    <div class="content-panel">
     <div class="ai-setup"><div><strong>Teman belajar OmniLearn</strong><p>Mulai dari pertanyaan sederhana. Aku bantu menjelaskan, merangkum, dan menyusun latihan dari materimu.</p></div><span class="status">Gemini Cloud</span></div>
     <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Pilih atau jatuhkan dokumen"><span class="dropzone-icon">↑</span><strong>Taruh materimu di sini. Kita pelajari bareng.</strong><span>PDF, DOCX, PPTX, TXT, MP3, WAV, MP4, atau MOV · OCR otomatis untuk PDF hasil scan · Maksimal 15 MB</span><span class="dropzone-hint">Klik untuk memilih file, atau seret dari perangkatmu</span></div>
     <div class="setup-progress" id="uploadProgress" role="status" aria-live="polite">
-      <div class="setup-progress-top"><span id="uploadProgressLabel">Mengunggah dokumen…</span><span id="uploadProgressStage">Tahap 1 dari 7</span></div>
-      <div class="progress"><span class="app-inline-2" id="uploadProgressBar"></span></div>
+      <span id="uploadProgressLabel"></span>
     </div>
     <div class="tabs" role="tablist" aria-label="Alat belajar"><button class="tab active" data-tab="chat">Tutor AI</button><button class="tab" data-tab="summary">Ringkasan</button><button class="tab" data-tab="quiz">Kuis</button><button class="tab" data-tab="cards">Flashcard</button><button class="tab" data-tab="map">Peta konsep</button><button class="tab" data-tab="plan">Rencana 7 hari</button><button class="tab" data-tab="translate">Penerjemah</button><button class="tab" data-tab="research">Asisten riset</button></div>
     <div class="app-inline-3 task-options show" id="languageToolbar">
@@ -143,7 +149,7 @@
     <div class="tool-output" id="toolOutput"><h4>Kita mulai dari yang kamu butuhkan.</h4><p class="placeholder">Tulis pertanyaan dengan bahasamu sendiri, atau unggah materi supaya kita bisa membahasnya bersama.</p><div class="key-points"><span>Tanya apa saja</span><span>Belajar bertahap</span><span>Latihan dari materi</span></div></div>
     <div class="chat-messages" id="chatMessages" aria-live="polite"></div>
     <form class="chat-row" id="chatForm"><input id="chatInput" placeholder="Tanyakan apa saja tentang materi atau topikmu…" aria-label="Tulis pertanyaan" autocomplete="off"><button id="sendButton" aria-label="Kirim pertanyaan">↑</button></form>
-    <div class="tool-actions"><button class="tool-action" id="clearChat">Hapus chat</button><button class="tool-action" id="copyOutput">Salin hasil</button><span id="chatRequestActions"><button type="button" id="cancelChat" hidden>Batalkan jawaban</button><button type="button" id="retryChat" hidden>Coba pertanyaan lagi</button></span><span class="small-muted" id="chatFeedback">Memeriksa koneksi Gemini Cloud…</span></div>
+    <div class="tool-actions"><button class="tool-action" id="clearChat">Hapus chat</button><button class="tool-action" id="copyOutput">Salin hasil</button><span id="chatRequestActions"><button type="button" id="cancelChat" hidden>Batalkan jawaban</button><button type="button" id="retryChat" hidden>Coba pertanyaan lagi</button></span><span class="small-muted" id="chatFeedback" role="status"></span></div>
    </div>
   </div>
  </div>

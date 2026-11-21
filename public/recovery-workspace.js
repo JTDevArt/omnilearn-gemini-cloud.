@@ -3,47 +3,26 @@ const el = (tag, text) => {
   if (text !== undefined) n.textContent = text;
   return n;
 };
-export function providerNoticeText(data) {
+let lastProviderResult = '';
+function providerNoticeText(data) {
   return data?.model
     ? `${data.fallbackUsed ? 'Model cadangan digunakan. ' : ''}Model: ${data.model}${data.cacheHit ? ' · hasil tersimpan' : ''}. Periksa informasi penting dari sumber.`
     : '';
 }
 export function providerNotice(data) {
-  let notice = document.querySelector('#providerNotice');
-  if (!notice) {
-    notice = el('p');
-    notice.id = 'providerNotice';
-    notice.className = 'provider-notice';
-    notice.setAttribute('role', 'status');
-    document.querySelector('#toolOutput')?.before(notice);
-  }
-  notice.hidden = !data?.model;
-  notice.textContent = providerNoticeText(data);
+  lastProviderResult = providerNoticeText(data);
 }
-export async function renderRecovery(host, api) {
+export function renderRecovery(host, api) {
   host.replaceChildren(
     el('h1', 'Permintaan tersimpan'),
     el(
       'p',
-      'Permintaan yang terhenti tetap tersimpan di perangkat. Coba kembali secara manual setelah model tersedia; aplikasi tidak mengulang terus-menerus.'
+      'Permintaan yang terhenti tetap tersimpan di perangkat. Coba kembali saat layanan tersedia.'
     )
   );
   const status = el('p');
   status.setAttribute('role', 'status');
   host.append(status);
-  try {
-    const state = await safeRequestJson('/api/provider/status');
-    if (!status.isConnected) return;
-    for (const model of state.models)
-      host.append(
-        el(
-          'p',
-          `${model.model}: ${model.state}${model.reason ? ' · ' + model.reason : ''}${model.retryAt > Date.now() ? ' · coba setelah ' + new Date(model.retryAt).toLocaleString('id-ID') : ''}`
-        )
-      );
-  } catch (error) {
-    status.textContent = error.message;
-  }
   const tasks = api.pendingTasks();
   if (!tasks.length)
     host.append(el('p', 'Belum ada permintaan yang menunggu.'));
@@ -76,5 +55,28 @@ export async function renderRecovery(host, api) {
     row.append(retry, remove);
     host.append(row);
   }
+  const diagnostics = el('details');
+  diagnostics.append(el('summary', 'Diagnostik layanan'));
+  if (lastProviderResult) diagnostics.append(el('p', lastProviderResult));
+  const serviceStatus = el('p');
+  serviceStatus.setAttribute('role', 'status');
+  diagnostics.append(serviceStatus);
+  let checked = false;
+  diagnostics.ontoggle = async () => {
+    if (!diagnostics.open || checked) return;
+    checked = true;
+    serviceStatus.textContent = 'Memeriksa layanan…';
+    try {
+      const state = await safeRequestJson('/api/provider/status');
+      serviceStatus.textContent = '';
+      for (const model of state.models) {
+        diagnostics.append(el('p', `${model.model}: ${model.state}${model.reason ? ' · ' + model.reason : ''}${model.retryAt > Date.now() ? ' · coba setelah ' + new Date(model.retryAt).toLocaleString('id-ID') : ''}`));
+      }
+    } catch (error) {
+      checked = false;
+      serviceStatus.textContent = error.message;
+    }
+  };
+  host.append(diagnostics);
 }
-window.OmniRecovery = { notice: providerNotice, text: providerNoticeText, render: renderRecovery };
+window.OmniRecovery = { notice: providerNotice, render: renderRecovery };

@@ -215,8 +215,9 @@ export async function renderAccount(host, api) {
         'p',
         'Pustaka tamu dan tiap akun disimpan terpisah di perangkat. Ekspor ZIP sebelum masuk jika ingin memindahkan data tamu ke akun.'
       ),
-      form
     );
+    action('Cadangkan pustaka tamu', () => window.OmniBackup.open(api));
+    host.append(form);
     action('Daftar akun', async () => {
       const result = await request('/api/account/register', {
         email: form.elements.email.value,

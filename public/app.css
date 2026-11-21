@@ -1,6 +1,39 @@
 /* Static presentation extracted from the application document. */
 .app-inline-1{font-weight:500}
-.app-inline-2{width:14%}
 .app-inline-3{margin-bottom:var(--space-8)}
 .app-inline-4{padding-top:var(--space-12)}
 .app-inline-5{padding-top:var(--space-10)}
+
+.app-startup {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  grid-auto-rows: min-content;
+  place-content: center;
+  justify-items: center;
+  gap: var(--space-12);
+  padding: var(--space-24);
+  text-align: center;
+  background: var(--background);
+  color: var(--text-primary);
+}
+.app-startup[hidden], .app-startup [hidden] { display: none; }
+body:has(.app-startup:not([hidden])) { overflow: hidden; }
+body:has(.app-startup:not([hidden])) > :not(.app-startup) { visibility: hidden; }
+.app-startup-brand {
+  font: 750 var(--type-display)/1.15 var(--font-display);
+  letter-spacing: -.045em;
+}
+.app-startup-brand span:first-child { color: var(--primary); }
+.app-startup-brand span:last-child { color: var(--review-amber); }
+.app-startup p { margin: 0; }
+@media (prefers-reduced-motion: no-preference) {
+  .app-startup:not([data-state=failed]) .app-startup-brand {
+    animation: app-startup-enter var(--motion-emphasis) var(--ease-ui) both;
+  }
+}
+@keyframes app-startup-enter {
+  from { opacity: .65; transform: translateY(var(--space-4)); }
+}
+.study-loading { justify-content: space-between; flex-wrap: wrap; }

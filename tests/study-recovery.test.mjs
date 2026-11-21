@@ -59,7 +59,7 @@ test('a selected document without extracted text cannot silently produce a gener
     document: {querySelector:()=>null}, $:()=>({value:'auto'}), sessionId:'test',
     safeRequestJson: async () => { calls++; return {answer:'Jawaban tanpa sumber'}; },
   });
-  await assert.rejects(ctx.askAI({scope:'document',material:'',materialId:'scan',message:'Ringkas sumber ini'}), /teks sumber/);
+  await assert.rejects(ctx.askAI({scope:'document',material:'',materialId:'scan',message:'Ringkas sumber ini'}, undefined, () => {}), /teks sumber/);
   assert.equal(calls, 0);
 });
 

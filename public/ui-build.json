@@ -1,7 +1,7 @@
 {
-  "uiBuild": "omnilearn-v18-candidate-1",
+  "uiBuild": "omnilearn-v19-candidate-1",
   "sourceCommit": null,
-  "baseCommit": "a42d638382d9efa89c09c4585bb3ae854ccf9252",
-  "design": "Source-aware tutor, compact collections, and study planning",
+  "baseCommit": "e11fdca7862371cd2a07db94b7662804e1c31360",
+  "design": "Study recovery, product loading, and privacy controls",
   "status": "candidate"
 }

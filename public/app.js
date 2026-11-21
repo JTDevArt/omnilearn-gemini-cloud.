@@ -9,8 +9,6 @@ const taskOptions = $('taskOptions');
 const quizOptions = $('quizOptions');
 const uploadProgress = $('uploadProgress');
 const uploadProgressLabel = $('uploadProgressLabel');
-const uploadProgressStage = $('uploadProgressStage');
-const uploadProgressBar = $('uploadProgressBar');
 const dropzone = $('dropzone');
 
 // Remove any legacy shared localStorage chat so conversations are strictly isolated per tab session
@@ -91,29 +89,21 @@ function getCleanFetch() {
 }
 
 // Recover expired/cleared __SECURE-aistudio_auth_token cookie via a hidden navigation iframe
-function refreshAuthBridgeViaHiddenFrame(timeoutMs = 3500) {
+function refreshAuthBridgeViaHiddenFrame(signal) {
   return new Promise((resolve) => {
-    let settled = false;
     const frame = document.createElement('iframe');
-    frame.style.display = 'none';
+    frame.hidden = true;
     const done = () => {
-      if (settled) return;
-      settled = true;
-      window.setTimeout(() => {
-        try { frame.remove(); } catch (_) {}
-      }, 200);
+      window.clearTimeout(timer);
+      signal.removeEventListener('abort', done);
+      frame.remove();
       resolve();
     };
-    const timer = window.setTimeout(done, timeoutMs);
-    frame.onload = () => {
-      window.clearTimeout(timer);
-      done();
-    };
-    frame.onerror = () => {
-      window.clearTimeout(timer);
-      done();
-    };
+    const timer = window.setTimeout(done, 3500);
+    frame.onload = done;
+    frame.onerror = done;
     frame.src = `/api/health?auth_warmup=${Date.now()}`;
+    signal.addEventListener('abort', done, { once: true });
     document.body.appendChild(frame);
   });
 }
@@ -415,18 +405,13 @@ function setBusy(value) {
   });
 }
 
-// 7-Stage Upload Progress Indicator (no fake percentages)
-function setUploadStage(stageNum, labelText, visible = true) {
-  const clampedStage = Math.max(1, Math.min(7, Number(stageNum) || 1));
-  uploadProgress.classList.toggle('show', visible);
+function setUploadProgress(labelText) {
+  uploadProgress.classList.add('show');
   uploadProgressLabel.textContent = labelText;
-  uploadProgressStage.textContent = `Tahap ${clampedStage} dari 7`;
-  const stepWidth = Math.round((clampedStage / 7) * 100);
-  uploadProgressBar.style.width = `${stepWidth}%`;
 }
 
 // Pre-flight GET health check keeps container auth bridge token cache warm before POST requests
-async function warmAuthAndHealthCheck(allowIframeRecovery = false) {
+async function warmAuthAndHealthCheck(allowIframeRecovery = false, signal = AbortSignal.timeout(9000)) {
   const doCheck = async () => {
     try {
       const f = getCleanFetch();
@@ -434,7 +419,8 @@ async function warmAuthAndHealthCheck(allowIframeRecovery = false) {
         method: 'GET',
         headers: { 'Accept': 'application/json' },
         cache: 'no-store',
-        credentials: 'same-origin'
+        credentials: 'same-origin',
+        signal: AbortSignal.any([signal, AbortSignal.timeout(2500)])
       });
       if (!res.ok) return null;
       const ct = res.headers.get('content-type') || '';
@@ -446,25 +432,16 @@ async function warmAuthAndHealthCheck(allowIframeRecovery = false) {
   };
 
   let health = await doCheck();
-  if (!health && allowIframeRecovery) {
-    await refreshAuthBridgeViaHiddenFrame(3500);
-    health = await doCheck();
+  if (!health && allowIframeRecovery && !signal.aborted) {
+    await refreshAuthBridgeViaHiddenFrame(signal);
+    if (!signal.aborted) health = await doCheck();
   }
   return health;
 }
 
 async function checkAI() {
   const data = await warmAuthAndHealthCheck(true);
-  if (data && data.ready) {
-    setStatus('ready', 'Gemini Cloud siap');
-    chatFeedback.textContent = '';
-  } else if (data && !data.ready) {
-    setStatus('error', 'Tutor belum siap');
-    chatFeedback.textContent = 'Tutor belum tersedia. Materi dan catatan tetap dapat dibuka.';
-  } else {
-    setStatus('error', 'Backend belum berjalan');
-    chatFeedback.textContent = 'Backend Node.js belum merespons atau sedang dimuat ulang.';
-  }
+  setStatus(data?.ready ? 'ready' : 'error', data?.ready ? 'Tutor siap' : 'Tutor belum tersedia');
 }
 
 // Keep auth token cache warm every 25 seconds (under the 60s Lua public token TTL)
@@ -473,8 +450,9 @@ window.setInterval(() => {
 }, 25000);
 
 // XMLHttpRequest fallback immune to _aistudio-iframe.js window.fetch override
-function requestViaXhr(url, { method = 'GET', headers = {}, body = null, timeoutMs = 45000, reqId = '' } = {}) {
+function requestViaXhr(url, { method = 'GET', headers = {}, body = null, timeoutMs = 45000, reqId = '', signal } = {}) {
   return new Promise((resolve, reject) => {
+    signal?.throwIfAborted();
     const xhr = new XMLHttpRequest();
     xhr.open(method, url, true);
     xhr.withCredentials = true;
@@ -513,6 +491,10 @@ function requestViaXhr(url, { method = 'GET', headers = {}, body = null, timeout
       reject(err);
     };
 
+    const abort = () => xhr.abort();
+    xhr.onabort = () => reject(signal?.reason || new DOMException('Request aborted.', 'AbortError'));
+    xhr.onloadend = () => signal?.removeEventListener('abort', abort);
+    signal?.addEventListener('abort', abort, { once: true });
     xhr.send(body);
   });
 }
@@ -521,22 +503,15 @@ async function safeRequestJson(url, options = {}, { timeoutMs = 45000, stageCont
   const reqId = generateClientRequestId(stageContext);
   const method = (options.method || 'GET').toUpperCase();
 
-  if (method === 'POST') {
-    await warmAuthAndHealthCheck(true);
-  }
-
   const controller = new AbortController();
+  const cancelled = () => Object.assign(new Error('Permintaan dibatalkan karena materi atau konteks berubah.'), {isCancelled:true});
   let abortedByCaller = false;
   const onExternalAbort = () => {
     abortedByCaller = true;
     controller.abort();
   };
   if (externalSignal) {
-    if (externalSignal.aborted) {
-      const abortErr = new Error('Permintaan dibatalkan karena materi atau konteks berubah.');
-      abortErr.isCancelled = true;
-      throw abortErr;
-    }
+    if (externalSignal.aborted) throw cancelled();
     externalSignal.addEventListener('abort', onExternalAbort, { once: true });
   }
   const timeoutTimer = window.setTimeout(() => controller.abort(), timeoutMs);
@@ -547,6 +522,8 @@ async function safeRequestJson(url, options = {}, { timeoutMs = 45000, stageCont
   headers.set('X-Session-Id', sessionId);
 
   try {
+    if (method === 'POST') await warmAuthAndHealthCheck(true, controller.signal);
+    controller.signal.throwIfAborted();
     const f = getCleanFetch();
     const response = await f(url, {
       ...options,
@@ -558,13 +535,8 @@ async function safeRequestJson(url, options = {}, { timeoutMs = 45000, stageCont
 
     return await window.OmniAIResponse.read(response, reqId, {url,method});
   } catch (err) {
-    window.clearTimeout(timeoutTimer);
-
-    if (abortedByCaller || err.isCancelled) {
-      const cancelErr = new Error('Permintaan dibatalkan karena materi berubah.');
-      cancelErr.isCancelled = true;
-      throw cancelErr;
-    }
+    if (abortedByCaller || err.isCancelled) throw cancelled();
+    if (controller.signal.aborted) throw window.OmniAIResponse.transport(controller.signal.reason, reqId);
 
     // Separate HTTP errors from network/timeout errors
     if (err.isHttpError) {
@@ -579,7 +551,7 @@ async function safeRequestJson(url, options = {}, { timeoutMs = 45000, stageCont
     if (method !== 'GET' && method !== 'HEAD') throw window.OmniAIResponse.transport(err, reqId);
 
     // If fetch failed due to iframe shim or expired auth bridge cookie, recover and retry via XMLHttpRequest
-    await warmAuthAndHealthCheck(true);
+    await warmAuthAndHealthCheck(true, controller.signal);
     try {
       const plainHeaders = {};
       if (options.headers && typeof options.headers === 'object' && !(options.headers instanceof Headers)) {
@@ -590,11 +562,16 @@ async function safeRequestJson(url, options = {}, { timeoutMs = 45000, stageCont
         headers: plainHeaders,
         body: options.body || null,
         timeoutMs,
-        reqId
+        reqId,
+        signal: controller.signal
       });
     } catch (xhrErr) {
+      if (abortedByCaller) throw cancelled();
+      if (controller.signal.aborted) throw window.OmniAIResponse.transport(controller.signal.reason, reqId);
       if (xhrErr.isHttpError || xhrErr.isTimeout) throw xhrErr;
-      const health = await warmAuthAndHealthCheck(false);
+      const health = await warmAuthAndHealthCheck(false, controller.signal);
+      if (abortedByCaller) throw cancelled();
+      if (controller.signal.aborted) throw window.OmniAIResponse.transport(controller.signal.reason, reqId);
       if (!health) {
         throw new Error(`Layanan backend sedang tidak dapat dijangkau. Periksa koneksi jaringan Anda lalu coba lagi. (ID: ${reqId})`);
       }
@@ -608,8 +585,12 @@ async function safeRequestJson(url, options = {}, { timeoutMs = 45000, stageCont
   }
 }
 
-async function askAI(context, externalSignal) {
-  if (context.scope === 'document' || context.material.trim()) await window.OmniProduct?.ensureAnalysis(externalSignal);
+async function askAI(context, externalSignal, onProgress) {
+  if (context.scope === 'document' || context.material.trim()) {
+    onProgress('Memeriksa materi…');
+    await window.OmniProduct?.ensureAnalysis(externalSignal);
+  }
+  onProgress('Menyusun penjelasan…');
   const data = await safeRequestJson('/api/chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -655,12 +636,12 @@ async function sendChat(event) {
   chatInput.value = '';
   chatMessages.querySelectorAll('.ai-error').forEach(node => node.remove());
   const question = addMessage('user', message);
-  const pending = addMessage('assistant', 'Gemini sedang berpikir…', 'pending');
+  const pending = addMessage('assistant', 'Menyiapkan jawaban…', 'pending');
   chatRetry = {message, version: capturedVersion, question, answer: pending};
   setBusy(true);
-  chatFeedback.textContent = 'Tutor sedang menyusun penjelasan.';
+  chatFeedback.textContent = '';
   try {
-    const data = await askAI(request, abortController.signal);
+    const data = await askAI(request, abortController.signal, message => { pending.textContent = message; });
     const answer = data.answer;
     if (abortController.signal.aborted || capturedVersion !== materialVersion) return;
     pending.classList.remove('pending');
@@ -677,8 +658,8 @@ async function sendChat(event) {
       chatHistory.push({ role: 'user', content: message }, { role: 'assistant', content: answer });
       saveSessionState();
     }
-    setStatus('ready', 'Gemini Cloud tersambung');
-    chatFeedback.textContent = window.OmniRecovery?.text(data) || 'Jawaban dibuat oleh OmniLearn AI. Periksa fakta penting dari sumber tepercaya.';
+    setStatus('ready', 'Tutor siap');
+    chatFeedback.textContent = 'Jawaban siap. Periksa informasi penting dari sumber tepercaya.';
     return true;
   } catch (error) {
     pending.classList.remove('pending');
@@ -1269,12 +1250,30 @@ async function runTool(task, customTopic = '', forceRegenerate = false) {
   const requestToken = ++activeRequestToken;
   const capturedMaterialVersion = materialVersion;
 
+  const loading = document.createElement('div');
+  loading.className = 'study-loading';
+  const status = document.createElement('p');
+  status.setAttribute('role', 'status');
+  const cancel = document.createElement('button');
+  cancel.type = 'button';
+  cancel.textContent = 'Batalkan pembuatan';
+  cancel.onclick = () => abortController.abort();
+  const initiator = document.activeElement;
+  loading.append(status, cancel);
   toolOutput.classList.remove('md-rendered');
-  toolOutput.innerHTML = window.OmniHtml.sanitize(`<div class="study-loading"><span class="study-spinner" aria-hidden="true"></span><span>${taskNames[task]} sedang disusun…</span></div>`);
-  chatFeedback.textContent = `AI sedang menyusun ${taskNames[task].toLowerCase()}…`;
+  toolOutput.replaceChildren(loading);
+  chatFeedback.textContent = '';
   setBusy(true);
   try {
-    if (materialText.trim() && task !== 'translate') await window.OmniProduct?.ensureAnalysis(abortController.signal);
+    if (materialText.trim() && task !== 'translate') {
+      status.textContent = 'Memeriksa materi…';
+      await window.OmniProduct?.ensureAnalysis(abortController.signal);
+    }
+    status.textContent = {
+      quiz: 'Menyusun soal dan kunci jawaban…',
+      cards: 'Memilih konsep dan menyusun kartu…',
+      map: 'Menyusun konsep dan hubungannya…',
+    }[task] || `Menyusun ${taskNames[task].toLowerCase()}…`;
     const data = await safeRequestJson('/api/study', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1307,8 +1306,9 @@ async function runTool(task, customTopic = '', forceRegenerate = false) {
       renderMaterialBadgeAndSidebar();
     }
 
-    const result = data.result || 'Gemini tidak menghasilkan teks.';
-    const formattedMarkdown = result.trim();
+    const formattedMarkdown = typeof data.result === 'string' ? data.result.trim() : '';
+    if (!formattedMarkdown)
+      throw window.OmniAIResponse.failure({data:{code:'INVALID_AI_OUTPUT'},requestId:data.requestId || ''});
     lastOutput = formattedMarkdown;
     lastOutputHtml = renderMarkdownToSafeHtml(formattedMarkdown);
 
@@ -1365,7 +1365,12 @@ async function runTool(task, customTopic = '', forceRegenerate = false) {
     }
     chatFeedback.textContent = `${taskNames[task]} selesai dibuat${data.outputLanguage?.name ? ` (${data.outputLanguage.name})` : ''}.`;
   } catch (error) {
-    if (error.isCancelled || requestToken !== activeRequestToken || capturedMaterialVersion !== materialVersion) {
+    if (requestToken !== activeRequestToken || capturedMaterialVersion !== materialVersion) return;
+    if (error.isCancelled || abortController.signal.aborted) {
+      setBusy(false);
+      selectTab(task, customTopic);
+      chatFeedback.textContent = 'Pembuatan dibatalkan. Materi tetap tersimpan.';
+      if (initiator instanceof HTMLElement) initiator.focus({preventScroll:true});
       return;
     }
     window.OmniProduct?.deferTask('/api/study',{task,materialId,sourceVersion:window.OmniProduct?.sourceRequest().sourceVersion,topic,summaryStyle,difficulty:quizDifficulty,questionType:document.querySelector('#quizQuestionType')?.value,outputLanguage,count,targetLanguage:$('targetLanguage').value},error);
@@ -1492,7 +1497,7 @@ async function submitUploadInitialRequest(fileBuffer, fileName, mimeType, reqId,
   return safeRequestJson('/api/upload', {method:'POST',headers:{'X-Upload-Mode':'async','X-Upload-Id':reqId},body:form},
     {timeoutMs:window.OmniCapabilities?.uploadMode === 'sync' ? 120000 : 45000,stageContext:'upload',externalSignal:signal});
 }
-async function pollUploadJobStatus(jobId, reqId, signal, onProgress) {
+async function pollUploadJobStatus(jobId, signal, onProgress) {
   const startTime=Date.now();
   while (Date.now()-startTime<150000) {
     signal?.throwIfAborted();
@@ -1501,9 +1506,7 @@ async function pollUploadJobStatus(jobId, reqId, signal, onProgress) {
     if (data.status==='completed') return data;
     if (data.status==='cancelled') throw Object.assign(new Error('Unggahan dibatalkan.'),{isCancelled:true});
     if (data.status==='failed') throw Object.assign(new Error(data.error || 'Ekstraksi gagal.'),{isHttpError:true,code:data.code});
-    const stage=Number(data.stageNumber)||3;
-    setUploadStage(stage,data.stageLabel,true);
-    onProgress?.(stage,data.stageLabel);
+    onProgress(data);
     await new Promise(resolve=>setTimeout(resolve,950));
   }
   throw new Error('Pemrosesan belum selesai. Coba lagi untuk melanjutkan pemeriksaan pekerjaan yang sama.');
@@ -1518,7 +1521,6 @@ async function uploadFile(file, task = {}) {
   const dotIdx = fileName.lastIndexOf('.');
   const ext = dotIdx >= 0 ? fileName.slice(dotIdx).toLowerCase() : '';
 
-  setUploadStage(2, 'Memvalidasi file…', true);
   if (!allowed.includes(ext)) {
     const msg = `Format file "${ext || 'tidak dikenal'}" tidak didukung. Gunakan PDF, DOCX, PPTX, TXT, MP3, WAV, MP4, atau MOV. (ID: ${reqId})`;
     throw new Error(msg);
@@ -1535,37 +1537,44 @@ async function uploadFile(file, task = {}) {
 
   uploadInFlight = true;
   setBusy(true);
-  setUploadStage(1, `Mengunggah dokumen (${fileName} · ${formatFileSize(file.size)})…`, true);
-  chatFeedback.textContent = 'Tahap 1 dari 7 · Mengunggah dokumen ke server…';
+  function reportUpload(stage, label) {
+    if (task.onProgress) task.onProgress(stage, label);
+    else setUploadProgress(label);
+  }
+  function reportExtraction(data) {
+    const stage = Number(data.stageNumber) || 0;
+    const status = {
+      1: 'Mengunggah file…',
+      2: 'Memeriksa file…',
+      5: 'Mengenali teks dari gambar atau halaman pindai…',
+      6: 'Memeriksa hasil pembacaan…',
+    }[stage] || (stage ? 'Membaca isi file…' : 'Memeriksa status unggahan…');
+    reportUpload(stage, status);
+  }
+  reportUpload(1, 'Menyiapkan file…');
 
   try {
     signal?.throwIfAborted();
     const fileBuffer = await file.arrayBuffer();
     signal?.throwIfAborted();
-    setUploadStage(2, 'Memvalidasi file…', true);
-    chatFeedback.textContent = 'Tahap 2 dari 7 · Memvalidasi file…';
+    reportUpload(1, task.jobId ? 'Memeriksa unggahan sebelumnya…' : 'Mengunggah file…');
 
     const initData = task.jobId ? {jobId:task.jobId,status:'accepted'} : await submitUploadInitialRequest(fileBuffer, fileName, file.type, reqId, signal);
     if(initData.jobId) task.onJob?.(initData.jobId);
 
     let finalData = initData;
     if (initData.jobId && initData.status !== 'completed') {
-      const currentStage = Number(initData.stageNumber) || 3;
-      const currentLabel = initData.stageLabel || 'Membaca halaman…';
-      setUploadStage(currentStage, currentLabel, true);
-      chatFeedback.textContent = `Tahap ${currentStage} dari 7 · ${currentLabel}`;
-      finalData = await pollUploadJobStatus(initData.jobId, initData.requestId || reqId, signal, task.onProgress);
+      reportExtraction(initData);
+      finalData = await pollUploadJobStatus(initData.jobId, signal, reportExtraction);
     }
 
     signal?.throwIfAborted();
     if (!String(finalData.text || '').trim()) throw new Error('Tidak ada teks yang dapat diekstrak. File asli tetap tersedia.');
+    reportUpload(6, 'Menyimpan hasil pembacaan…');
     if (task.sourceId) {
       await window.OmniProduct.finishUpload(task.sourceId, finalData);
-      task.onProgress?.(7, 'Teks tersimpan · tinjau hasil ekstraksi');
       return finalData;
     }
-    setUploadStage(6, 'Menyiapkan materi…', true);
-    chatFeedback.textContent = 'Tahap 6 dari 7 · Menyiapkan materi…';
 
     cancelActiveStudyRequest();
     materialVersion++;
@@ -1596,11 +1605,6 @@ async function uploadFile(file, task = {}) {
       throw new Error(`Tidak ada teks yang dapat diekstrak dari dokumen "${materialName}". (ID: ${finalData.requestId || reqId})`);
     }
 
-    setUploadStage(7, 'Selesai', true);
-    window.setTimeout(() => {
-      uploadProgress.classList.remove('show');
-    }, 2400);
-
     chatHistory = [];
     chatMessages.innerHTML = '';
     renderMaterialBadgeAndSidebar();
@@ -1609,8 +1613,8 @@ async function uploadFile(file, task = {}) {
     await window.OmniProduct?.saveOriginal(file);
 
     const ocrStatusLabel = materialMeta.ocrUsed
-      ? (materialMeta.extractionMode === 'pdf-hybrid-ocr' ? 'Digunakan (PDF Campuran: Text Layer + OCR)' : 'Digunakan (OCR Gemini)')
-      : 'Tidak diperlukan (Text Layer Terbaca)';
+      ? (materialMeta.extractionMode === 'pdf-hybrid-ocr' ? 'PDF campuran: teks asli dan OCR' : 'Teks dibaca dengan OCR')
+      : 'Tidak diperlukan';
     const detectedLangLabel = materialMeta.detectedLanguage?.name || 'Otomatis';
 
     const summaryCardLines = [
@@ -1636,7 +1640,7 @@ async function uploadFile(file, task = {}) {
       'assistant',
       `Dokumen **${materialName}** (${formatFileSize(materialMeta.fileSize)}, ${materialMeta.pageCount} halaman, bahasa **${detectedLangLabel}**, ${materialMeta.characters.toLocaleString('id-ID')} karakter · Status OCR: **${ocrStatusLabel}**) sudah siap dipelajari di sesi ini.${materialMeta.partialReadNotice ? ` *(${materialMeta.partialReadNotice})*` : ''} Silakan ajukan pertanyaan atau pilih fitur belajar di atas.`
     );
-    chatFeedback.textContent = `Tahap 7 dari 7 · Selesai (${materialMeta.characters.toLocaleString('id-ID')} karakter diekstrak).`;
+    chatFeedback.textContent = `Pembacaan selesai. ${materialMeta.characters.toLocaleString('id-ID')} karakter tersedia untuk ditinjau.`;
     toast(materialMeta.ocrUsed ? 'Dokumen berhasil dibaca dengan OCR otomatis.' : 'Dokumen berhasil ditambahkan.');
   } catch (error) {
     if (!task.sourceId) updateUploadError(error.message || `Gagal mengunggah dokumen. (ID: ${reqId})`);

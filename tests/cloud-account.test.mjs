@@ -31,8 +31,14 @@ function fixture() {
   return {
     docs,
     fetcher: async (url, options = {}) => {
-      const u = new URL(url),
-        body = options.body ? JSON.parse(options.body) : {},
+      const u = new URL(url);
+      if (u.hostname === 'securetoken.googleapis.com') {
+        const refresh = new URLSearchParams(options.body);
+        return refresh.get('refresh_token') === 'fixture-refresh'
+          ? response({ id_token: 'token-alice', refresh_token: 'fixture-refresh' })
+          : response({}, 400);
+      }
+      const body = options.body ? JSON.parse(options.body) : {},
         token = new Headers(options.headers)
           .get('Authorization')
           ?.replace(/^Bearer /, ''),
@@ -185,6 +191,12 @@ test('account HTTP routes use HttpOnly cookies and protect cloud data with verif
     );
     assert.equal((await login.json()).idToken, undefined);
     const cookie = cookies.map((value) => value.split(';')[0]).join('; ');
+    const restored = await fetch(base + '/api/account/me', {
+      headers: { cookie: 'omni_refresh=fixture-refresh' },
+    });
+    assert.equal(restored.status, 200);
+    assert.equal((await restored.json()).user.uid, 'alice');
+    assert.equal(restored.headers.getSetCookie().length, 2);
     const result = await fetch(base + '/api/cloud/library', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Cookie: cookie },
@@ -217,4 +229,32 @@ test('missing Firebase configuration is explicit and cannot become fake authenti
     accounts.verify('token-alice'),
     (error) => error.code === 'CLOUD_NOT_CONFIGURED'
   );
+});
+
+test('a rejected provider identity cannot set session cookies on login or renewal', async () => {
+  const tokens = { idToken: 'rejected', refreshToken: 'fixture-refresh' };
+  const app = express();
+  app.use(express.json());
+  installAccountRoutes(app, { accounts: {
+    requireConfig() {},
+    login: async () => tokens,
+    refresh: async () => tokens,
+    verify: async () => { throw Object.assign(new Error('Unverified'), {status:401}); },
+  } });
+  app.use((error, _req, res, _next) => res.sendStatus(error.status));
+  const server = app.listen(0, '127.0.0.1');
+  await new Promise(resolve => server.once('listening', resolve));
+  const base = 'http://127.0.0.1:' + server.address().port;
+  try {
+    for (const [path, method, cookie] of [
+      ['login', 'POST', ''],
+      ['me', 'GET', 'omni_refresh=fixture-refresh'],
+      ['me', 'GET', 'omni_id=old; omni_refresh=fixture-refresh'],
+      ['refresh', 'POST', 'omni_id=old; omni_refresh=fixture-refresh'],
+    ]) {
+      const response = await fetch(base + '/api/account/' + path, {method, headers:{cookie}});
+      assert.equal(response.status, 401);
+      assert.deepEqual(response.headers.getSetCookie(), []);
+    }
+  } finally { server.close(); }
 });

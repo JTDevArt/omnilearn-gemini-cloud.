@@ -1,7 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
-import { fileURLToPath } from 'node:url';
+const material = '[Page 1]\nA radius joins the centre to the circle boundary.';
+
+function post(fixture, route, body) {
+  return fetch(fixture.base + route, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sessionId: 'v19-study-fixture', ...body }),
+  });
+}
 async function fixture(mode) {
   let output='';
   const child=spawn(process.execPath,['--import',new URL('./fixtures/reliability-preload.mjs',import.meta.url).href,'server.js'], {
@@ -26,14 +33,14 @@ test('real routes and official SDK preserve safe failure classification and boun
     ['rate',429,'GEMINI_RATE_LIMIT','rate-limit',1],
     ['network',500,'GEMINI_NETWORK_ERROR','network',2],
     ['empty',422,'INVALID_AI_OUTPUT','invalid-response',2],
-    ['citation',422,'INVALID_AI_OUTPUT','invalid-response',2],
+    ['citation',422,'INVALID_AI_OUTPUT','invalid-response',3],
     ['malformed',422,'INVALID_AI_OUTPUT',null,4],
     ['success',200,null,null,2],
   ]) await t.test(mode,async()=>{
     const f=await fixture(mode);
     try {
       const route=mode==='malformed'?'/api/study':'/api/chat';
-      const body=mode==='malformed'?{task:'cards',count:1,topic:'Geometry',sessionId:'http-test'}:{message:'Explain a radius',sessionId:'http-test'};
+      const body=mode==='malformed'?{task:'cards',count:1,topic:'Geometry',sessionId:'http-test'}:{message:'Explain a radius',sessionId:'http-test',...(mode==='citation'?{material,scope:'document'}:{})};
       for(let i=0;i<2;i++) {
         const response=await fetch(f.base+route,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
         const data=await response.json();
@@ -85,17 +92,74 @@ test('structured output accepts a JSON fence and rejects decoded fabricated page
   for (const [mode, status] of [['fenced-cards',200], ['encoded-citation',422]]) {
     const f = await fixture(mode);
     try {
-      const response = await fetch(f.base + '/api/study', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({task:'cards', count:5, topic:'Geometry', sessionId:'cards-syntax'}),
+      const response = await post(f, '/api/study', { task:'cards', count:5, topic:'Geometry',
+        ...(mode === 'encoded-citation' ? { material, scope:'document' } : {}),
       });
       const payload = await response.json();
       assert.equal(response.status,status,JSON.stringify(payload));
       if (status === 200) assert.equal(payload.structuredData.cards.length,5);
       else assert.equal(payload.code,'INVALID_AI_OUTPUT');
-      assert.equal(f.calls(),1);
+      assert.equal(f.calls(), status === 200 ? 1 : 2);
     } finally { f.child.kill(); }
   }
+});
+
+test('only a real document constrains tutor page references', async () => {
+  const general = await fixture('general-marker');
+  const document = await fixture('blueprint-citation');
+  try {
+    const unbound = await post(general, '/api/chat', { scope:'general', material, message:'Explain the literal label [Page 999].' });
+    const answer = await unbound.json();
+    assert.equal(unbound.status, 200, JSON.stringify(answer));
+    assert.match(answer.answer, /literal notation/);
+    assert.equal(answer.sourceAnalysis, null);
+    assert.equal(general.calls(), 1);
+
+    const bound = await post(document, '/api/chat', { scope:'document', material, message:'Explain the radius in this source.' });
+    assert.equal(bound.status, 422);
+    assert.equal((await bound.json()).code, 'INVALID_AI_OUTPUT');
+  } finally {
+    general.child.kill();
+    document.child.kill();
+  }
+});
+
+test('cards, mindmap and lessons use the outer JSON object even when its text contains a code block', async t => {
+  for (const task of ['cards', 'map', 'journey']) await t.test(task, async () => {
+    const f = await fixture(`nested-${task}`);
+    try {
+      const response = await post(f, '/api/study', { task, count:5, topic:'JSON values' });
+      const data = await response.json();
+      assert.equal(response.status, 200, JSON.stringify(data));
+      assert.equal(data.structuredData.type, task);
+      assert.match(JSON.stringify(data.structuredData), /```json \[1, 2\]```/);
+      assert.equal(f.calls(), 1);
+    } finally { f.child.kill(); }
+  });
+});
+
+test('a summary that normalizes to empty uses one fallback', async () => {
+  const f = await fixture('empty-summary');
+  try {
+    const response = await post(f, '/api/study', { task:'summary', topic:'Radius' });
+    const data = await response.json();
+    assert.equal(response.status, 200, JSON.stringify(data));
+    assert.match(data.result, /joins the centre/);
+    assert.equal(data.fallbackUsed, true);
+    assert.equal(f.calls(), 2);
+  } finally { f.child.kill(); }
+});
+
+test('safety and truncation stop at the original candidate with the corresponding error', async t => {
+  for (const [mode, code] of [['safety', 'GEMINI_SAFETY_BLOCKED'], ['truncated', 'OUTPUT_TRUNCATED']]) await t.test(mode, async () => {
+    const f = await fixture(mode);
+    try {
+      const response = await post(f, '/api/study', { task:'cards', count:5, topic:'Geometry' });
+      assert.equal(response.status, 422);
+      assert.equal((await response.json()).code, code);
+      assert.equal(f.calls(), 1);
+    } finally { f.child.kill(); }
+  });
 });
 
 test('document chat and material generation require source text before calling Gemini', async () => {

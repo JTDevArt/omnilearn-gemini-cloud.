@@ -100,6 +100,27 @@ try {
   await page.waitForFunction(() => !!window.OmniProduct);
   assert.equal(await page.evaluate(() => OmniProduct.snapshot().sources.length), 0);
   assert.equal(await page.evaluate(() => OmniLocalLibrary.readFile('lesson', 1)), undefined);
+  const deletedId = await page.evaluate(async () => {
+    const source = OmniProduct.addSource({name:'Private.txt', text:'Text that must stay deleted.'});
+    await OmniProduct.saveOriginal(new File(['original-private'], 'Private.txt'));
+    sessionStorage.setItem('omnilearn-home-draft', 'private draft');
+    OmniProduct.navigate('privacy');
+    return source.id;
+  });
+  await page.getByRole('heading', {name:'Privasi & data',exact:true}).waitFor();
+  await page.getByRole('button', {name:'Cadangkan atau pulihkan ZIP',exact:true}).click();
+  await page.getByRole('button', {name:'Ekspor ZIP lengkap',exact:true}).waitFor();
+  await page.getByRole('button', {name:'Tutup',exact:true}).click();
+  await page.getByRole('button', {name:'Hapus pustaka di perangkat',exact:true}).click();
+  await page.waitForFunction(() => OmniProduct.snapshot().sources.length === 0 && OmniProduct.storageStatus().pendingWrites === 0);
+  await page.reload();
+  await page.waitForFunction(() => !!window.OmniProduct);
+  const erased = await page.evaluate(async id => ({
+    sources: OmniProduct.snapshot().sources.length,
+    original: (await OmniLocalLibrary.readFile(id, 1)) !== undefined,
+    draft: sessionStorage.getItem('omnilearn-home-draft'),
+  }), deletedId);
+  assert.deepEqual(erased, {sources:0, original:false, draft:null});
   assert.deepEqual(errors, []);
   console.log('Storage browser checks passed: originals, ZIP, revisions, rollback, account isolation, aborted transactions, tab conflicts, reload, failed saves and deletion.');
 } finally { await browser.close(); }

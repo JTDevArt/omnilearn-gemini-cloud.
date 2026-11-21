@@ -29,6 +29,7 @@
     sticky: ['▧', 'Tempel'],
     settings: ['⚙', 'Pengaturan'],
     account: ['♙', 'Akun & cloud'],
+    privacy: ['◇', 'Privasi & data'],
     recovery: ['↻', 'Permintaan tersimpan'],
   };
   const tools = new Set([
@@ -273,6 +274,11 @@
   document.body.insertBefore(top, document.querySelector('main'));
   const profileLink=document.createElement('a');profileLink.className='master-profile';profileLink.href='/dashboard?view=profile';profileLink.dataset.view='profile';profileLink.textContent=profile.name || 'Profil';top.append(profileLink);
   sidebar.querySelector('#shellTheme').onclick = () => window.OmniTheme?.cycle();
+  const privacyLink = document.createElement('a');
+  privacyLink.href = '/dashboard?view=privacy';
+  privacyLink.dataset.view = 'privacy';
+  privacyLink.textContent = 'Privasi & data';
+  sidebar.querySelector('[data-view=account]').after(privacyLink);
   top.querySelector('#homeModeSwitch').onclick = () => navigate(current === 'home' ? 'dashboard' : 'home');
   sidebar.querySelector('#shellLogout').onclick = async () => {
     try {
@@ -443,8 +449,6 @@
     const language = $('outputLanguage').value;
     // The server may have restarted since the local blueprint was saved. Always
     // confirm its hash/version in the server cache before starting a second task.
-    chatFeedback.textContent =
-      'Menganalisis materi dan memeriksa bukti sebelum membuat hasil…';
     const result = await safeRequestJson(
       '/api/source/analyze',
       {
@@ -1507,6 +1511,27 @@
     if (view === 'video') window.OmniVideo.render(panel, window.OmniProduct);
     if (view === 'account')
       window.OmniAccounts.render(panel, window.OmniProduct);
+    if (view === 'privacy') {
+      panel.replaceChildren(window.OmniHtml.fragment(`
+        <h1>Privasi &amp; data</h1>
+        <section class="master-section">
+          <h2>Pustaka di perangkat ini</h2>
+          <p>Dokumen asli, catatan, percakapan, dan progres tersimpan di browser. Pustaka tamu dan tiap akun terpisah. Pustaka tetap ada setelah keluar dari akun.</p>
+          <div class="panel-actions"><button type="button" data-open-device-backup>Cadangkan atau pulihkan ZIP</button><button type="button" data-delete-session>Hapus pustaka di perangkat</button></div>
+        </section>
+        <section class="master-section">
+          <h2>Pemrosesan AI</h2>
+          <p>Gemini menerima pertanyaan dan materi yang kamu pilih untuk diproses. Gunakan dokumen yang boleh dibagikan. Riset daring dan caption YouTube memiliki layanan tersendiri ketika diaktifkan.</p>
+        </section>
+        <section class="master-section">
+          <h2>Akun dan sinkronisasi</h2>
+          <p>Firebase menangani akun jika terhubung. Sinkronisasi yang kamu aktifkan mengirim teks dan hasil belajar ke Firestore. File asli tetap di perangkat.</p>
+          <p>Penghapusan pustaka perangkat tidak menghapus akun atau salinan cloud. Penghapusan akun dari aplikasi belum tersedia.</p>
+          <a href="/dashboard?view=account" data-view="account">Buka pengaturan akun</a>
+        </section>
+      `));
+      panel.querySelector('[data-open-device-backup]').onclick = () => window.OmniBackup.open(window.OmniProduct);
+    }
     if (view === 'recovery')
       window.OmniRecovery.render(panel, window.OmniProduct);
     if (view === 'journey')
@@ -1993,6 +2018,10 @@
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     }
     if (button.hasAttribute('data-delete-session')) {
+      if (busy || uploadInFlight) {
+        toast('Tunggu hingga proses belajar selesai sebelum menghapus pustaka.');
+        return;
+      }
       if (
         !confirm(
           'Hapus pustaka lokal yang sedang aktif beserta file aslinya? Data cloud dan pustaka akun lain tidak ikut dihapus. Ekspor cadangan terlebih dahulu jika diperlukan.'
@@ -2000,6 +2029,7 @@
       )
         return;
       window.OmniAccounts?.pause();
+      setBusy(true);
       try {
         await window.OmniLocalLibrary.clear();
         libraryEpoch = (await window.OmniLocalLibrary.load()).clearedAt;
@@ -2007,6 +2037,8 @@
       } catch (error) {
         toast('Data perangkat belum berhasil dihapus: ' + error.message);
         return;
+      } finally {
+        setBusy(false);
       }
       sources = [];
       activity = { events: [] };
@@ -2016,8 +2048,15 @@
       freeDeck = [];
       freeReviews = {};
       pendingTasks = [];
+      materialId = materialName = materialText = '';
+      materialMeta = null;
+      chatScope = 'general';
       for (const storageKey of [
         key,
+        SESSION_MATERIAL_KEY,
+        SESSION_CHAT_KEY,
+        'omnilearn-home-draft',
+        'omnilearn-tool-options',
         'omnilearn-free-note',
         'omnilearn-activity',
         'omnilearn-profile',
@@ -2026,6 +2065,8 @@
       ])
         sessionStorage.removeItem(storageKey);
       $('clearChat').click();
+      window.OmniProductSourceChange?.();
+      renderMaterialBadgeAndSidebar();
       navigate('learn');
     }
     if (button.hasAttribute('data-spoken-last')) {
@@ -2081,5 +2122,9 @@
   }
   persist();
   window.OmniUploads?.restore();
-  navigate(initial.get('tool') || initial.get('view') || 'dashboard', false);
-})();
+  await navigate(initial.get('tool') || initial.get('view') || 'dashboard', false);
+  window.OmniAppStartup?.complete();
+})().catch(error => {
+  console.error('OmniLearn initialization failed.', error?.name || 'Error');
+  window.OmniAppStartup?.fail();
+});

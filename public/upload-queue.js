@@ -12,8 +12,7 @@
     for(const task of tasks) {
       const row=element('article'); row.className='upload-row';row.dataset.upload=task.sourceId;
       const title=element('strong',task.name),status=element('p',task.message || labels[task.state]);status.setAttribute('role','status');
-      const progress=element('progress');progress.max=7;progress.value=task.stage || 0;progress.setAttribute('aria-label',`Tahap pemrosesan ${task.name}`);
-      row.append(title,status,progress);
+      row.append(title,status);
       if(['queued','running'].includes(task.state)) {
         const cancel=element('button','Batalkan');cancel.type='button';
         cancel.onclick=()=>{
@@ -85,7 +84,10 @@
           task.controller.signal.throwIfAborted();
           await uploadFile(task.file,{sourceId:task.sourceId,requestId:task.requestId,jobId:task.jobId,signal:task.controller.signal,
             onJob:id=>{task.jobId=id;if(task.cancelled)cancelJob(id);},
-            onProgress:(stage,message)=>{task.stage=stage;task.message=message;draw();}});
+            onProgress:(stage,message)=>{
+              if (task.stage===stage && task.message===message) return;
+              task.stage=stage;task.message=message;draw();
+            }});
           task.state='completed';task.stage=7;task.message='Teks dan file asli tersimpan. Tinjau sebelum analisis AI.';task.file=null;
         } catch(error) {
           task.state=task.cancelled || error.isCancelled || error.name==='AbortError'?'cancelled':'failed';
