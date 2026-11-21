@@ -8,7 +8,7 @@
 
   function failure({status = 0, data = {}, requestId = '', contentType = '', retryAfter = '', method = '', url = ''} = {}) {
     const code = typeof data.code === 'string' ? data.code.slice(0,80) : '';
-    const sourceMismatch = /EVIDENCE|SOURCE_ANALYSIS|BLUEPRINT|SOURCE_MISMATCH|PARTIAL_SOURCE|INSUFFICIENT_SOURCE/.test(code);
+    const sourceMismatch = /EVIDENCE|SOURCE_ANALYSIS|BLUEPRINT|SOURCE_MISMATCH|PARTIAL_SOURCE|INSUFFICIENT_SOURCE|SOURCE_TEXT_REQUIRED/.test(code);
     let kind = 'unexpected', title = 'Respons belum bisa dibaca', message = 'Coba lagi. Jika tetap terjadi, muat ulang halaman.';
     if (code === 'CROSS_SITE_REQUEST') {
       kind = 'origin'; title = 'Permintaan lintas situs ditolak';

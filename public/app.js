@@ -274,7 +274,7 @@ function attachChatMaterialAction(messageNode, question, answer) {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
-              task: 'journey', tutorConversation, sessionId, material, materialId, materialName,
+              task: 'journey', scope, tutorConversation, sessionId, material, materialId, materialName,
               sourceVersion, sourcePartial, acceptPartial, outputLanguage: $('outputLanguage').value,
             }),
           }, {timeoutMs:120000, stageContext:'chat-material', externalSignal});
@@ -608,20 +608,14 @@ async function safeRequestJson(url, options = {}, { timeoutMs = 45000, stageCont
   }
 }
 
-async function askAI(message, externalSignal) {
-  const outputLanguage = $('outputLanguage') ? $('outputLanguage').value : 'auto';
-  const context = window.OmniProduct?.chatRequestContext?.() || {
-    history: chatHistory.slice(-24), material: materialText, materialId, materialName,
-    learningContext: window.OmniProduct?.context?.(), ...window.OmniProduct?.sourceRequest(),
-  };
+async function askAI(context, externalSignal) {
   if (context.scope === 'document' || context.material.trim()) await window.OmniProduct?.ensureAnalysis(externalSignal);
   const data = await safeRequestJson('/api/chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      ...context, message, sessionId,
+      ...context, sessionId,
       teachingMode: document.querySelector('#teachingMode')?.value || 'standard',
-      outputLanguage,
     })
   }, { timeoutMs: 120000, stageContext: 'chat', externalSignal });
   if (typeof data.answer !== 'string' || !data.answer.trim())
@@ -649,17 +643,24 @@ async function sendChat(event) {
   const abortController = new AbortController();
   activeStudyAbortController = abortController;
   const capturedVersion = materialVersion;
-  chatRetry = {message, sourceId: materialId};
+  const product = window.OmniProduct;
+  const context = product?.chatRequestContext() || {history: chatHistory.slice(-24), material: materialText, materialId, materialName};
+  const request = {...context, message, outputLanguage: $('outputLanguage')?.value || 'auto'};
+  if (chatRetry?.version === capturedVersion && chatRetry.message === message) {
+    chatRetry.question.remove();
+    chatRetry.answer.remove();
+  }
   $('retryChat').hidden = true;
   $('cancelChat').hidden = false;
   chatInput.value = '';
   chatMessages.querySelectorAll('.ai-error').forEach(node => node.remove());
-  addMessage('user', message);
+  const question = addMessage('user', message);
   const pending = addMessage('assistant', 'Gemini sedang berpikir…', 'pending');
+  chatRetry = {message, version: capturedVersion, question, answer: pending};
   setBusy(true);
   chatFeedback.textContent = 'Tutor sedang menyusun penjelasan.';
   try {
-    const data = await askAI(message, abortController.signal);
+    const data = await askAI(request, abortController.signal);
     const answer = data.answer;
     if (abortController.signal.aborted || capturedVersion !== materialVersion) return;
     pending.classList.remove('pending');
@@ -667,7 +668,11 @@ async function sendChat(event) {
     lastOutput = answer;
     lastOutputHtml = pending.innerHTML;
     attachChatMaterialAction(pending, message, answer);
-    if (window.OmniProduct?.commitChatExchange) window.OmniProduct.commitChatExchange(message, answer);
+    chatRetry = null;
+    if (product) {
+      product.commitChatExchange(message, answer);
+      product.clearDeferredTask('/api/chat', request);
+    }
     else {
       chatHistory.push({ role: 'user', content: message }, { role: 'assistant', content: answer });
       saveSessionState();
@@ -684,7 +689,7 @@ async function sendChat(event) {
       $('retryChat').hidden = false; return;
     }
     $('retryChat').hidden = false;
-    window.OmniProduct?.deferTask('/api/chat',{...window.OmniProduct.chatRequestContext(),message,outputLanguage:$('outputLanguage').value},error);
+    product?.deferTask('/api/chat',request,error);
     if (!chatInput.value) chatInput.value = message;
     window.OmniAIResponse.render(pending, error, {onScope: scope => {
       if (window.OmniProduct?.setChatScope(scope)) {
@@ -1687,7 +1692,7 @@ dropzone.addEventListener('drop', event => {
 let chatRetry = null;
 $('cancelChat').onclick = () => { activeStudyAbortController?.abort(); };
 $('retryChat').onclick = () => {
-  if (!chatRetry || chatRetry.sourceId !== materialId || busy) return;
+  if (!chatRetry || chatRetry.version !== materialVersion || busy) return;
   chatInput.value = chatRetry.message; void sendChat();
 };
 $('chatForm').addEventListener('submit', sendChat);

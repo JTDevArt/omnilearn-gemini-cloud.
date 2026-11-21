@@ -8,6 +8,8 @@ test('OCR only accepts requested page identities and never assigns unmarked mult
   assert.equal(parseOcrPagesMap('[Page 2] Formula x = 3.\n[Halaman 4] Tabel: nilai 7.',[2,4]).get(4),'Tabel: nilai 7.');
   assert.equal(parseOcrPagesMap('Unmarked mixed pages',[2,4]).size,0);
   assert.equal(parseOcrPagesMap('Single page text',[2]).get(2),'Single page text');
+  assert.equal(parseOcrPagesMap('Unmarked full-PDF response', [2], { allowUnmarkedSingle: false }).size, 0);
+  assert.equal(parseOcrPagesMap('[Page 2] Marked PDF text', [2], { allowUnmarkedSingle: false }).get(2), 'Marked PDF text');
   assert.throws(()=>parseOcrPagesMap('[Halaman 99] Invented page',[2]),e=>e.code==='INVALID_OCR_OUTPUT');
   assert.throws(()=>parseOcrPagesMap('[Halaman 2]\n[Halaman 2] Two',[2]),e=>e.code==='INVALID_OCR_OUTPUT');
   assert.throws(()=>parseOcrPagesMap('[Halaman 2] One\n[Halaman 2] Duplicate',[2]),e=>e.code==='INVALID_OCR_OUTPUT');

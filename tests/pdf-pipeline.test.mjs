@@ -98,6 +98,13 @@ test('mixed PDF keeps native page one and OCR page two in order', async () => {
   );
   assert.equal(result.pageQuality.length, 2);
 });
+
+test('a failed native page read leaves later text on its original page', async () => {
+  const result = await upload(['read-error', 'text']);
+  assert.match(result.text, /\[Halaman 1\][\s\S]*deterministic test transport[\s\S]*\[Halaman 2\][\s\S]*Native text/);
+  assert.deepEqual(result.pageQuality.map(({ page, method }) => [page, method]), [[1, 'ocr'], [2, 'native-text']]);
+});
+
 async function sendFile(name,buffer,{session='upload-fixture',id='upload-'+name,sync=false}={}) {
   const form=new FormData();form.append('file',new Blob([buffer]),name);form.append('sessionId',session);
   const response=await fetch(base+'/api/upload'+(sync?'?sync=1':''),{method:'POST',headers:{'X-Session-Id':session,'X-Upload-Id':id},body:form});

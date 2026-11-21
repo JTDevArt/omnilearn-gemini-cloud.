@@ -21,6 +21,7 @@ async function fixture(mode) {
 test('real routes and official SDK preserve safe failure classification and bounded transport calls', async t=>{
   for (const [mode,status,code,kind,calls] of [
     ['auth',500,'GEMINI_AUTH_ERROR','authentication',1],
+    ['permission',500,'GEMINI_AUTH_ERROR','authentication',1],
     ['daily',429,'GEMINI_DAILY_QUOTA','daily-quota',1],
     ['rate',429,'GEMINI_RATE_LIMIT','rate-limit',1],
     ['network',500,'GEMINI_NETWORK_ERROR','network',2],
@@ -78,4 +79,39 @@ test('a valid deck with unescaped LaTeX in its JSON survives using the existing 
     assert.match(payload.structuredData.cards[0].back,/\\Delta/);
     assert.equal(f.calls(),1);
   } finally {f.child.kill();}
+});
+
+test('structured output accepts a JSON fence and rejects decoded fabricated page markers', async () => {
+  for (const [mode, status] of [['fenced-cards',200], ['encoded-citation',422]]) {
+    const f = await fixture(mode);
+    try {
+      const response = await fetch(f.base + '/api/study', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({task:'cards', count:5, topic:'Geometry', sessionId:'cards-syntax'}),
+      });
+      const payload = await response.json();
+      assert.equal(response.status,status,JSON.stringify(payload));
+      if (status === 200) assert.equal(payload.structuredData.cards.length,5);
+      else assert.equal(payload.code,'INVALID_AI_OUTPUT');
+      assert.equal(f.calls(),1);
+    } finally { f.child.kill(); }
+  }
+});
+
+test('document chat and material generation require source text before calling Gemini', async () => {
+  const f = await fixture('success');
+  try {
+    for (const [route, body] of [
+      ['/api/chat',{message:'Explain this source'}],
+      ['/api/study',{task:'journey',tutorConversation:'Explain this source.'}],
+    ]) {
+      const response = await fetch(f.base + route,{
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({...body, scope:'document', materialId:'unavailable', material:''}),
+      });
+      assert.equal(response.status,422);
+      assert.equal((await response.json()).code,'SOURCE_TEXT_REQUIRED');
+    }
+    assert.equal(f.calls(),0);
+  } finally { f.child.kill(); }
 });

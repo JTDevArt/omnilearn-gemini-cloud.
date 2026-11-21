@@ -308,10 +308,17 @@ function asText(value, max = 50000) {
 }
 
 function requestMaterial(req, cachedEntry) {
+  if (req.body?.scope === 'general') return '';
   if (typeof req.body?.material === 'string' && req.body.material.length > MAX_MATERIAL_CHARS) {
     throw createApiError('Materi melampaui batas 50.000 karakter. Bagi sumber menjadi beberapa bagian.', { status: 413, code: 'SOURCE_TOO_LONG', stage: 'source-validate' });
   }
-  return asText(req.body?.material, MAX_MATERIAL_CHARS) || cachedEntry?.text || '';
+  const submitted = asText(req.body?.material, MAX_MATERIAL_CHARS);
+  if (req.body?.scope === 'document' && !submitted) {
+    throw createApiError('Teks sumber belum tersedia. Tinjau hasil ekstraksi di Sumber.', {
+      status:422, code:'SOURCE_TEXT_REQUIRED', stage:'source-validate',
+    });
+  }
+  return submitted || cachedEntry?.text || '';
 }
 
 function classifyProviderError(error, stage = 'gemini-generate') {
@@ -366,12 +373,13 @@ async function generateText({
         }
         if (sourceContext !== undefined) validateSourceReferences(text, sourceContext, stage);
         if (responseMimeType === 'application/json') {
+          let data;
           try {
-            let data;
+            const jsonText = text.match(/^```(?:json)?[ \t]*\r?\n([\s\S]*?)\r?\n```$/i)?.[1] ?? text;
             try {
-              data = JSON.parse(text);
+              data = JSON.parse(jsonText);
             } catch {
-              data = JSON.parse(sanitizeJsonLatexEscapes(text));
+              data = JSON.parse(sanitizeJsonLatexEscapes(jsonText));
             }
             if (!data || typeof data !== 'object') throw new Error('Expected structured JSON.');
             if (validateOutput && validateOutput(text, data) === false) throw new Error('Invalid schema.');
@@ -381,6 +389,7 @@ async function generateText({
             error.invalidStructuredOutput = true;
             throw error;
           }
+          if (sourceContext !== undefined) validateSourceReferences(JSON.stringify(data), sourceContext, stage);
         }
         const usage = response.usageMetadata;
         return { text, usage: usage ? { inputTokens: usage.promptTokenCount ?? null, outputTokens: usage.candidatesTokenCount ?? null, totalTokens: usage.totalTokenCount ?? null } : null };
@@ -551,12 +560,14 @@ async function inspectPdfTextLayer(buffer, signal) {
           const avgLineLen = nonEmptyLines.length > 0
             ? nonSpace / nonEmptyLines.length
             : 0;
-          pageTexts.push(cleaned);
-          pageStats.push({
+          // pdf-parse can skip a failed page without reporting it to the caller.
+          const index = pageData.pageNumber - 1;
+          pageTexts[index] = cleaned;
+          pageStats[index] = {
             nonSpace,
             lineCount: Math.max(lineCount, nonEmptyLines.length),
             avgLineLen
-          });
+          };
           return cleaned;
         });
       }
@@ -670,7 +681,7 @@ async function extractPdfWithGeminiOcr(buffer, inspection, onProgress = null, si
   }
 
   const collectedOcrMap = new Map();
-  let actualModelUsed = MODEL;
+  let actualModelUsed = null;
   let ocrRetried = false;
   let interruptedError = null;
   const preprocessing = [];
@@ -701,8 +712,9 @@ async function extractPdfWithGeminiOcr(buffer, inspection, onProgress = null, si
         const { text: rawOcrText, actualModel } = await runOcrForPagesBatch(
           base64Pdf, pagesToRequest, totalPages, isMixed, inspection.hasImagesOrDiagrams, images, signal
         );
-        actualModelUsed = actualModel || MODEL;
-        const parsedMap = parseOcrPagesMap(rawOcrText, pagesToRequest);
+        const parsedMap = parseOcrPagesMap(rawOcrText, pagesToRequest, {
+          allowUnmarkedSingle: images.length > 0 || totalPages === 1
+        });
         for (const [page, content] of parsedMap) {
           const cleanContent = deduplicateExtractedText(content);
           const existing = collectedOcrMap.get(page) || '';
@@ -710,6 +722,7 @@ async function extractPdfWithGeminiOcr(buffer, inspection, onProgress = null, si
           if ((hasReadableOcrText(cleanContent) && cleanContent.length >= existing.length) ||
               (!hasReadableOcrText(existing) && isBlankOcrPage(cleanContent))) {
             collectedOcrMap.set(page, cleanContent);
+            actualModelUsed = actualModel;
           }
         }
       } catch (error) {

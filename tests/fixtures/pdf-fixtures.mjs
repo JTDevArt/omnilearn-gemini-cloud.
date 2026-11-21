@@ -29,6 +29,9 @@ export async function pdfFixture(types = ['text']) {
         ])
       );
       commands = 'q 595 0 0 842 0 0 cm /Im0 Do Q';
+    } else if (type === 'read-error') {
+      commands =
+        'BT /F1 12 Tf 40 780 Td (Simulated native reader error on this page.) Tj ET';
     } else
       commands =
         'BT /F1 12 Tf 40 780 Td (Native text: a radius joins the centre to the boundary of a circle.) Tj 0 -24 Td (A diameter passes through the centre and is twice the radius.) Tj ET';

@@ -1,5 +1,22 @@
 // TEST ONLY: Node --import explicitly installs this transport in a child server.
 // No production route or environment switch loads this module.
+import { createRequire } from 'node:module';
+import { pdfFixture } from './pdf-fixtures.mjs';
+
+const require = createRequire(import.meta.url);
+const pdfjs = require('pdf-parse/lib/pdf.js/v1.10.100/build/pdf.js');
+const seedDocument = await pdfjs.getDocument(new Uint8Array(await pdfFixture())).promise;
+const pagePrototype = Object.getPrototypeOf(await seedDocument.getPage(1));
+const getTextContent = pagePrototype.getTextContent;
+pagePrototype.getTextContent = async function (...args) {
+  const content = await getTextContent.apply(this, args);
+  if (content.items.some(item => item.str.includes('Simulated native reader error on this page.'))) {
+    throw new Error('Fixture native page read failed');
+  }
+  return content;
+};
+await seedDocument.destroy();
+
 const originalFetch = globalThis.fetch;
 globalThis.fetch = async (input, options = {}) => {
   const url = String(input?.url || input);

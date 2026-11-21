@@ -17,12 +17,19 @@ async function run() {
       });
       server.once('exit', code => { clearTimeout(timeout); reject(Error('Server exited '+code)); });
     });
-    browser = await chromium.launch({headless:true, args:['--no-sandbox','--disable-dev-shm-usage']});
+    browser = await chromium.launch({headless:true, executablePath:process.env.CHROMIUM_PATH, args:['--no-sandbox','--disable-dev-shm-usage']});
     const page = await browser.newPage({viewport:{width:390,height:844},reducedMotion:'reduce'});
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
     const answer = 'Relativitas khusus membahas ruang dan waktu.';
-    await page.route('**/api/chat', route => route.fulfill({json:{answer}}));
+    let failChat = true;
+    await page.route('**/api/chat', route => {
+      if (failChat) {
+        failChat = false;
+        return route.fulfill({status:503,json:{code:'GEMINI_UNAVAILABLE'}});
+      }
+      return route.fulfill({json:{answer}});
+    });
     await page.route('**/api/source/analyze', route => route.fulfill({json:{blueprint:{title:'Fisika',topics:[]}}}));
     let fail = true;
     let request;
@@ -44,7 +51,14 @@ async function run() {
       return page.getByRole('dialog',{name:'Jadikan Materi',exact:true});
     };
     await page.goto(base+'/dashboard?view=home');
-    const dialog = await send('Jelaskan teori relativitas Einstein');
+    const prompt = 'Jelaskan teori relativitas Einstein';
+    await page.locator('#homeQuestion').fill(prompt);
+    await page.locator('.home-composer [type=submit]').click();
+    await page.locator('#retryChat').click();
+    await page.getByRole('button',{name:'Jadikan Materi',exact:true}).last().click();
+    assert.equal(await page.locator('#chatMessages .user').filter({hasText:prompt}).count(),1);
+    assert.equal(await page.evaluate(()=>OmniProduct.pendingTasks().length),0);
+    const dialog = page.getByRole('dialog',{name:'Jadikan Materi',exact:true});
     const retry = dialog.getByRole('button',{name:'Coba susun ulang',exact:true});
     await retry.waitFor();
     assert.deepEqual(await page.evaluate(()=>OmniProduct.snapshot().sources),[]);

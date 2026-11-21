@@ -604,6 +604,12 @@
       pendingTasks = pendingTasks.filter((task) => task.id !== id);
       persist();
     },
+    clearDeferredTask(route, body) {
+      const { material, history, learningContext, ...clean } = body;
+      const key = JSON.stringify([route, clean]);
+      const task = pendingTasks.find(task => task.key === key);
+      if (task) window.OmniProduct.removeTask(task.id);
+    },
     deferTask(route, body, error) {
       if (
         error?.isCancelled ||
@@ -613,10 +619,7 @@
         !['/api/chat', '/api/study'].includes(route)
       )
         return;
-      const clean = { ...body };
-      delete clean.material;
-      delete clean.history;
-      delete clean.learningContext;
+      const { material, history, learningContext, ...clean } = body;
       const key = JSON.stringify([route, clean]);
       const previousTask = pendingTasks.find(task => task.key === key);
       if (previousTask) {
