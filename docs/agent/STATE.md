@@ -1,21 +1,22 @@
-# OmniLearn V18 state
+# OmniLearn V19 state
 
-Updated 21 November 2026. Branch `codex/omnilearn-v18`, based on remote `main` at `a42d638382d9efa89c09c4585bb3ae854ccf9252`. Last verified executable commit `c36a91fdff081f3e72aa5125736d39d3c4f38213`. This ledger follows that commit. Check `git rev-parse HEAD` and `git status --short --branch` before resuming.
+Updated 21 November 2026. Work branch `codex/omnilearn-v19` starts from verified remote `main` at `e11fdca7862371cd2a07db94b7662804e1c31360`. Verified product commit `7883a79`, candidate marker `omnilearn-v19-candidate-1`. Check `git status --short --branch` and `git rev-parse HEAD` before resuming.
 
-## Verified work
+## Verified locally
 
-- `91b8aec` fixes duplicate tutor retry turns, clears successful deferred retries, requires source text for document mode, reads fenced Gemini JSON, validates escaped page markers, and keeps native PDF and OCR page identities.
-- `c36a91f` rebuilds twelve primary screens. Home selects a source inside the composer. Dashboard pairs the collection with study planning on wide screens. The lesson reader has mobile tool and chapter choosers. Flashcards put recall first. Exams lead with the current attempt and start controls. Notes, subjects, sources, activity, ranking availability, profile, release history and landing use the existing OmniLearn data and identity.
-- Dependency files and storage schemas are unchanged. Browser checks verified existing original bytes, revisions, rollback, namespace separation, IndexedDB transactions, post-reload progress and notes, and exam attempts.
-- `npm run lint`, `npm test` (187 passing), `npm run build`, `git diff --check` and `npm audit --omit=dev` passed. The audit reported zero advisories.
-- All seven browser commands in the visual workflow passed locally. Additional browser checks passed for upload, navigation, storage, exams and the full learning workspace. The study flows used synthetic provider responses and real local scoring, original file reads and persistence.
-- The local candidate marker is `omnilearn-v18-candidate-1`. Chromium passed 96 combinations of 12 screens, widths 1440, 768, 390 and 360, and light/dark themes with reduced motion. Twenty-four candidate screenshots were compared with available OmniLearn baseline captures. Those captures use synthetic library records, with differing counts on some screens. Workspace and landing had separate keyboard, contrast and visual checks. Temporary capture paths are `/tmp/omnilearn-v18-matrix`, `/tmp/omnilearn-v18-comparisons`, `/tmp/omnilearn-v18-workspace` and `/tmp/omnilearn-v18-landing-after`.
+- [PRD](../../PRD.md) covers target users, production routes, AI, storage, Google auth, privacy, visual checks and release criteria. The [reference map](../design/PELAJARIN_REFERENCE_MAP.md) uses UNKNOWN for V19 timecodes and separates earlier recorded findings.
+- General tutor answers can mention ordinary page notation. Document output still checks references against the actual source. Flashcards, mindmaps, chapters and quiz use the normalized output from the validated parse. Content-free summaries get bounded recovery. Provider safety and truncation have distinct errors.
+- Startup reflects initialization and first route rendering. The app has a recovery timeout. Tutor, document and study generation show real work stages and support cancellation where available. Technical provider results remain in diagnostics.
+- Firebase-issued identity is verified before setting session cookies, including renewal. HTTP fixtures cover valid restoration and denial without cookies. Guest ZIP backup uses the existing archive flow. The Privasi & data page discloses current processing and uses actual backup and device erase controls.
+- The storage browser regression deletes a selected source and original bytes, then reloads and checks that the data and tutor draft stay erased. ZIP, revision, rollback, owner isolation and earlier storage checks still pass. The privacy route passed eight theme/width cases with four screenshots in `/tmp/omnilearn-v19-privacy`.
+- Local lint, build and 197 tests passed. Provider and OCR checks use fixtures. Report actual production results separately. [V19 task ledger](TASKS.md)
+- Chromium passed startup, cancel-before-send, timeout and explicit retry, model diagnostics, upload, workspace and tutor-to-material. The Home visual verifier passed 98 checks. The HTML safety browser gate passed.
 
 ## Open gates
 
-- The branch is on GitHub. Draft PR creation returned `Post "https://api.github.com/graphql": Forbidden` from this environment. The [GitHub PR creation page](https://github.com/JTDevArt/omnilearn-gemini-cloud./pull/new/codex/omnilearn-v18) is available to the repository owner. Check the PR's GitHub workflow results before requesting explicit owner merge approval. This V18 approval requirement supersedes older notes about standing approval.
-- Public production and Pelajarin probes encountered proxy denial. The historic non-JSON 403 remains unresolved. The local Express origin denial is JSON and distinct from the Gemini permission-denied fixture. Correlate the historical request ID, route and time with the host trace if available.
-- The local health check shows Gemini is unconfigured. Live inference, model entitlement, OCR quality and alternate-provider thresholds remain unverified. Use secure server-side credentials and an owner-approved zero-cost allocation for synthetic checks. No substitute provider received student data. Shared rankings remain unavailable, and the screen shows real personal progress.
-- Owner screenshots and recordings cited by earlier research are absent from this workspace. See [RECON.md](RECON.md) for provenance and the reference limits. Local screenshots verify OmniLearn layout only.
+- VIDEO-1 (04:22), VIDEO-2 (08:59) and current defect screenshots are absent from the available attachments and workspace Library. Video layout comparison and the related screen redesign remain open.
+- Firebase and Gemini credentials are absent from the runtime. Google sign-in, real provider benchmarks, live OCR, cross-device account revocation and account deletion remain unverified or unimplemented. Device erase does not delete cloud copies.
+- First-login consent, Terms, retention commitments, contact and age or guardian handling require approved policy inputs and verification. The device privacy disclosures describe current behavior.
+- V18 is on remote main. Its last live health attempt returned HTTP 403. The V19 branch was pushed. Draft PR creation returned GitHub GraphQL Forbidden. GitHub CI and live V19 remain unverified. Merge and production releases require owner authorization. [Open draft PR](https://github.com/JTDevArt/omnilearn-gemini-cloud./pull/new/codex/omnilearn-v19)
 
-Next release task. Open the PR and confirm GitHub gates. After owner approval and deployment, compare the public `/ui-build.json`, `/api/health` and page marker, then exercise the approved synthetic tutor and OCR cases on the deployed URL.
+Next eligible batch. Attach the reference recordings for one timestamp pass. Confirm the approved identity and privacy settings before wiring or accepting Google onboarding. Independently verify public build identity and a synthetic workflow after a V19 deployment.
